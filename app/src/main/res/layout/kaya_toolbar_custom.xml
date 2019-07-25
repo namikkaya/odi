@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.v7.widget.Toolbar
+        android:contentInsetLeft="-1dp"
+        android:contentInsetStart="-1dp"
+        app:contentInsetLeft="-1dp"
+        app:contentInsetStart="-1dp"
+        android:contentInsetRight="-1dp"
+        android:contentInsetEnd="-1dp"
+        app:contentInsetRight="-1dp"
+        app:contentInsetEnd="-1dp"
+        android:layout_marginTop="-2dp"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        app:titleTextColor="@color/White"
+        android:orientation="vertical"
+        android:background="@color/White">
+
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:background="@color/colorPrimary"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:weightSum="100">
+
+        <!-- sol alan -->
+        <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="20"
+                android:gravity="center">
+
+            <!--
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="sol" />-->
+
+            <ImageButton
+                    android:id="@+id/myBackButton"
+                    android:scaleType="fitStart"
+                    android:layout_gravity="left"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@null"
+                    android:padding="10dp"
+                    android:src="@drawable/back_actionbar_button_icon"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+
+        </LinearLayout>
+
+        <!-- orta alan -->
+        <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="60"
+                android:gravity="center">
+
+            <TextView
+                    android:textColor="@color/White"
+                    android:textSize="@dimen/kolayTitleSize"
+                    android:textStyle="bold"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/kolaj" />
+
+        </LinearLayout>
+
+
+        <!-- sağ alan -->
+
+        <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="20"
+                android:gravity="center">
+
+
+            <Button
+                    android:id="@+id/mySaveButton"
+                    android:textColor="@drawable/textbutton_savebutton"
+                    android:layout_marginRight="4dp"
+                    android:padding="5dp"
+                    android:background="@null"
+                    android:textAlignment="textEnd"
+                    android:textAllCaps="false"
+                    android:textSize="15sp"
+                    android:text="Kaydet"
+                    android:textStyle="normal"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+</android.support.v7.widget.Toolbar>

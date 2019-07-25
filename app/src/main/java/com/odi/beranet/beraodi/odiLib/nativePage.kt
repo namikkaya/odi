@@ -11,9 +11,10 @@ enum class nativePage {
 }
 
 enum class Activity_Result (val value:Int) {
-    CAMERA(1),
-    GALLERY(2),
-    CROP(3)
+    CAMERA(1), //photo camera
+    GALLERY(2), // photo gallery
+    CROP(3), // crop
+    PHOTO_COLLAGE(4)
 }
 
 enum class Permission_Result(val value:Int) {

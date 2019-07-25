@@ -16,6 +16,7 @@ import android.media.MediaScannerConnection
 import android.os.*
 import android.provider.MediaStore
 import android.support.annotation.NonNull
+import com.odi.beranet.beraodi.Activities.galeryActivity
 import com.odi.beranet.beraodi.odiLib.*
 import com.yalantis.ucrop.UCrop
 import java.io.*
@@ -60,12 +61,16 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         oneSignalConfiguration()
     }
 
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    // MANAGERS
     private fun managersConfiguration() {
         finder = textFinder()
         photoController = photoViewModel(this)
         myFileManager = odiFileManager()
     }
 
+    // mainActivity için navigasyon barı
     private fun navigationBarConfiguration() {
         myActionBar = supportActionBar
         myActionBar?.let {
@@ -92,8 +97,8 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
 
 
 
+            // her click ten sonra finder a sorulur nereye gidileceği finder dan gelen dönüşe göre karar verilir.
             webView?.webChromeClient = object : WebChromeClient() {
-
 
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage.let {
@@ -103,41 +108,13 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
                                 nativePageDecider(it)
                             }
                         }
-
                     }
-
-                    return true //super.onConsoleMessage(consoleMessage)
-
+                    return true
                 }
             }
         }
 
     }
-
-    private fun webViewOnLoad(userId:String?) {
-        if (userId != null) {
-            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=$userId")
-            webView?.reload()
-            println("$TAG webViewOnLoad : $userId kullanıcının id si server a gönderildi")
-        }else {
-            if (singleton.onesignal_playerId != null) {
-                webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
-                webView?.reload()
-            }else {
-                webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=")
-                webView?.reload()
-            }
-        }
-
-    }
-
-    /////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////
-    // webView Click Listener
-    override fun onClick(url: String?) {
-        System.out.println("$TAG onClick: url: $url")
-    }
-    //-------------------------------------------------------------------
 
 
     // onesignal configuration--
@@ -157,6 +134,8 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             }
         }
     }
+    //-------------------------------------------------------------------
+    //-------------------------------------------------------------------
 
     // HAREKET
     fun nativePageDecider(page:nativePage){
@@ -172,7 +151,11 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             }
 
             nativePage.photoCollage -> {
-                println(TAG + "fotoğraf kolajı aç")
+
+                val intent = Intent(this, galeryActivity::class.java)
+                //intent.putExtra("keyIdentifier", value)
+
+                startActivityForResult(intent, Activity_Result.PHOTO_COLLAGE.value )
             }
 
             nativePage.videoPlayer -> {
@@ -183,68 +166,58 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
 
     }
 
+    private fun webViewOnLoad(userId:String?) {
+        if (userId != null) {
+            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=$userId")
+            webView?.reload()
+            println("$TAG webViewOnLoad : $userId kullanıcının id si server a gönderildi")
+        }else {
+            if (singleton.onesignal_playerId != null) {
+                webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
+                webView?.reload()
+            }else {
+                webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=")
+                webView?.reload()
+            }
+        }
+    }
+
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    // webView Click Listener
+    override fun onClick(url: String?) {
+        System.out.println("$TAG onClick: url: $url")
+    }
+    //-------------------------------------------------------------------
+
+
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-
-
-        println("$TAG resultCode: $resultCode")
-
         // PHOTO GALLERY
-        if (requestCode == Activity_Result.GALLERY.value && resultCode == Activity.RESULT_OK) { // galeri
+        if (requestCode == Activity_Result.GALLERY.value && resultCode == Activity.RESULT_OK) {
             println(TAG + "onActivityResult galeri dönüşü")
-            if (data != null)
-            {
-
+            if (data != null) {
                 val contentURI = data!!.data
                 val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
 
                 val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
                 cropper.withAspectRatio(1F, 1F)
                 cropper.start(this)
-                /*
-                try
-                {
-                    val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
-                    val path = saveImage(bitmap)
-
-                    var myFile = File(path)
-                    sendProfilePhoto(myFile)
-
-                    imageView!!.setImageBitmap(bitmap)
-
-
-
-
-                }
-                catch (e: IOException) {
-                    e.printStackTrace()
-                    Toast.makeText(this@MainActivity, "Failed!", Toast.LENGTH_SHORT).show()
-                }
-                */
-
             }
-
         }
         // CAMERA
-        else if (requestCode == Activity_Result.CAMERA.value && resultCode == Activity.RESULT_OK) { // camera
-
-
-            val myBitmap = grabImage(photoController?.picUri!!) // image view basar
-            //imageView?.setImageBitmap(myBitmap)
-
-            //sendProfilePhoto(photoController!!.imageFile!!)
-
+        else if (requestCode == Activity_Result.CAMERA.value && resultCode == Activity.RESULT_OK) {
             val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
-
             val cropper = UCrop.of(photoController!!.picUri!!, Uri.fromFile(File(cacheDir, destinationFileName)))
             cropper.withAspectRatio(1F, 1F)
             cropper.start(this)
-
         }
+        // CROP
         else if (requestCode == UCrop.REQUEST_CROP) {
             handleCropResult(data!!)
         }
-
+        // Bildirim
         if (resultCode == Activity.RESULT_OK) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             webView?.reload()

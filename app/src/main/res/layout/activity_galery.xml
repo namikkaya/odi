@@ -5,72 +5,96 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         tools:context=".Activities.galeryActivity">
 
     <LinearLayout
-            android:weightSum="100"
             android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-        <!-- üst Kısım -->
+        <include android:id="@+id/userActivityToolBar"
+                 layout="@layout/kaya_toolbar_custom"/>
+
         <LinearLayout
-                android:orientation="horizontal"
-                android:layout_weight="60"
                 android:weightSum="100"
-                android:background="@color/common_google_signin_btn_text_light_disabled"
+                android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="0dp">
+                android:layout_height="match_parent">
 
-            <!-- üst kısım sol -->
+            <!-- üst Kısım -->
             <LinearLayout
-                    android:background="@color/cardview_dark_background"
+                    android:orientation="horizontal"
                     android:layout_weight="60"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent">
-
-            </LinearLayout>
-
-            <!-- üst kısım sağ -->
-            <LinearLayout
                     android:weightSum="100"
-                    android:orientation="vertical"
-                    android:layout_weight="40"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent">
+                    android:background="@color/common_google_signin_btn_text_light_disabled"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp">
 
-                <!-- üst sağ üst -->
+                <!-- üst kısım sol -->
                 <LinearLayout
-                        android:background="@color/browser_actions_divider_color"
-                        android:layout_weight="50"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp">
+                        android:background="@color/cardview_dark_background"
+                        android:layout_weight="60"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent">
+
+                    <com.github.chrisbanes.photoview.PhotoView
+                            android:overScrollMode="ifContentScrolls"
+                            android:id="@+id/LeftImage"
+                            android:layout_weight="1"
+                            android:cropToPadding="true"
+                            android:scaleType="centerCrop"
+                            android:tag="img_left"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"/>
+
 
                 </LinearLayout>
 
-                <!-- üst sağ alt -->
+                <!-- üst kısım sağ -->
                 <LinearLayout
-                        android:layout_weight="50"
-                        android:layout_width="match_parent"
-                        android:layout_height="0dp">
+                        android:weightSum="100"
+                        android:orientation="vertical"
+                        android:layout_weight="40"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent">
+
+                    <!-- üst sağ üst -->
+                    <LinearLayout
+                            android:background="@color/browser_actions_divider_color"
+                            android:layout_weight="50"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp">
+
+                    </LinearLayout>
+
+                    <!-- üst sağ alt -->
+                    <LinearLayout
+                            android:layout_weight="50"
+                            android:layout_width="match_parent"
+                            android:layout_height="0dp">
+
+                    </LinearLayout>
+
 
                 </LinearLayout>
-
 
             </LinearLayout>
 
+            <LinearLayout
+                    android:layout_weight="40"
+                    android:background="@color/browser_actions_bg_grey"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp">
+
+            </LinearLayout>
+
+
         </LinearLayout>
-
-        <LinearLayout
-                android:layout_weight="40"
-                android:background="@color/browser_actions_bg_grey"
-                android:layout_width="match_parent"
-                android:layout_height="0dp">
-
-        </LinearLayout>
-
 
     </LinearLayout>
+
+
 
 
 
