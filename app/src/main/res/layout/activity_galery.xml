@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".Activities.galeryActivity">
+
+    <LinearLayout
+            android:weightSum="100"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <!-- üst Kısım -->
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_weight="60"
+                android:weightSum="100"
+                android:background="@color/common_google_signin_btn_text_light_disabled"
+                android:layout_width="match_parent"
+                android:layout_height="0dp">
+
+            <!-- üst kısım sol -->
+            <LinearLayout
+                    android:background="@color/cardview_dark_background"
+                    android:layout_weight="60"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent">
+
+            </LinearLayout>
+
+            <!-- üst kısım sağ -->
+            <LinearLayout
+                    android:weightSum="100"
+                    android:orientation="vertical"
+                    android:layout_weight="40"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent">
+
+                <!-- üst sağ üst -->
+                <LinearLayout
+                        android:background="@color/browser_actions_divider_color"
+                        android:layout_weight="50"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp">
+
+                </LinearLayout>
+
+                <!-- üst sağ alt -->
+                <LinearLayout
+                        android:layout_weight="50"
+                        android:layout_width="match_parent"
+                        android:layout_height="0dp">
+
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+                android:layout_weight="40"
+                android:background="@color/browser_actions_bg_grey"
+                android:layout_width="match_parent"
+                android:layout_height="0dp">
+
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+
+
+</android.support.constraint.ConstraintLayout>
