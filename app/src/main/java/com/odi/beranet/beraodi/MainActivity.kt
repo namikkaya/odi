@@ -6,26 +6,20 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.ActionBar
-import android.support.v7.app.AlertDialog
-import android.view.View
 import android.webkit.*
 import com.ahmadnemati.clickablewebview.ClickableWebView
 import com.ahmadnemati.clickablewebview.listener.OnWebViewClicked
-import com.odi.beranet.beraodi.Activities.galeryActivity
 import com.odi.beranet.beraodi.MainActivityMVVM.photoViewModel
 import com.onesignal.OneSignal
-import com.onesignal.SyncService
 import android.widget.Toast
-import android.graphics.BitmapFactory
 import android.media.MediaScannerConnection
 import android.os.*
 import android.provider.MediaStore
-import android.support.v4.content.FileProvider
-import android.widget.ImageView
+import android.support.annotation.NonNull
 import com.odi.beranet.beraodi.odiLib.*
+import com.yalantis.ucrop.UCrop
 import java.io.*
 import java.lang.Exception
-import java.text.SimpleDateFormat
 import java.util.*
 
 
@@ -42,7 +36,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     // -- object
     var webView:ClickableWebView? = null
     var myActionBar:ActionBar? = null
-    var imageView: ImageView? = null
+    //var imageView: ImageView? = null
 
     // -- class
     var finder:textFinder? = null
@@ -55,7 +49,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        imageView = findViewById(R.id.imageView)
+        //imageView = findViewById(R.id.imageView)
         configuration()
     }
 
@@ -78,7 +72,6 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             myActionBar?.hide()
         }
     }
-
 
     // ui desing (web sayfası yükleniyor)
     private fun webViewConfiguration() {
@@ -106,9 +99,9 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
                     consoleMessage.let {
                         val message: String? = consoleMessage?.message()
                         if (message != null) {
-                            finder?.inspector(message, {
+                            finder?.inspector(message) {
                                 nativePageDecider(it)
-                            })
+                            }
                         }
 
                     }
@@ -122,9 +115,18 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     }
 
     private fun webViewOnLoad(userId:String?) {
-        userId?.let {
-            //System.out.println(TAG + " webViewOnLoad: http://odi.odiapp.com.tr")
-            webView?.loadUrl("http://odi.odiapp.com.tr")
+        if (userId != null) {
+            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=$userId")
+            webView?.reload()
+            println("$TAG webViewOnLoad : $userId kullanıcının id si server a gönderildi")
+        }else {
+            if (singleton.onesignal_playerId != null) {
+                webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
+                webView?.reload()
+            }else {
+                webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=")
+                webView?.reload()
+            }
         }
 
     }
@@ -133,7 +135,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     /////////////////////////////////////////////////////////////////////
     // webView Click Listener
     override fun onClick(url: String?) {
-        System.out.println(TAG + " onClick: url: $url")
+        System.out.println("$TAG onClick: url: $url")
     }
     //-------------------------------------------------------------------
 
@@ -142,13 +144,15 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     private fun oneSignalConfiguration() {
         OneSignal.idsAvailable { userId, registrationId ->
             if (registrationId != null) {
-                System.out.println(TAG + " onesignal userId: $userId")
+                System.out.println("$TAG onesignal userId: $userId")
+                webViewOnLoad(userId)
                 singleton.onesignal_playerId = userId
                 singleton.onesignal_registrationId = registrationId
-                webViewOnLoad(userId)
+                println("$TAG oneSignalConfiguration: Notification için id eklendi")
+
             }else {
                 // timer kurulacak...
-                System.out.println(TAG + " oneSignalConfiguration: HATA player id alınamadı...")
+                System.out.println("$TAG oneSignalConfiguration: HATA player id alınamadı...")
                 webViewOnLoad(null)
             }
         }
@@ -179,7 +183,6 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
 
     }
 
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -193,23 +196,31 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             {
 
                 val contentURI = data!!.data
+                val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
+
+                val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
+                cropper.withAspectRatio(1F, 1F)
+                cropper.start(this)
+                /*
                 try
                 {
                     val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, contentURI)
                     val path = saveImage(bitmap)
 
-
                     var myFile = File(path)
                     sendProfilePhoto(myFile)
 
-                    Toast.makeText(this@MainActivity, "Image Saved!", Toast.LENGTH_SHORT).show()
                     imageView!!.setImageBitmap(bitmap)
+
+
+
 
                 }
                 catch (e: IOException) {
                     e.printStackTrace()
                     Toast.makeText(this@MainActivity, "Failed!", Toast.LENGTH_SHORT).show()
                 }
+                */
 
             }
 
@@ -219,77 +230,41 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
 
 
             val myBitmap = grabImage(photoController?.picUri!!) // image view basar
-            imageView?.setImageBitmap(myBitmap)
+            //imageView?.setImageBitmap(myBitmap)
 
-            sendProfilePhoto(photoController!!.imageFile!!)
+            //sendProfilePhoto(photoController!!.imageFile!!)
 
-            //cropIntent()
+            val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
 
-
-
-            //performCrop(uri)
+            val cropper = UCrop.of(photoController!!.picUri!!, Uri.fromFile(File(cacheDir, destinationFileName)))
+            cropper.withAspectRatio(1F, 1F)
+            cropper.start(this)
 
         }
-        // CROP
-        else if (requestCode == Activity_Result.CROP.value && resultCode == Activity.RESULT_OK) {
-            println(TAG + " cropUri: " + cropUri)
+        else if (requestCode == UCrop.REQUEST_CROP) {
+            handleCropResult(data!!)
+        }
 
-            /*
-            if (data != null) {
-
-                if (data.extras != null) {
-                    println(TAG + " image ataması yapılması gerekiyor...")
-                    var bundle:Bundle = data.extras
-                    var bitmap:Bitmap = bundle.getParcelable("data")
-                    imageView?.setImageBitmap(bitmap)
-                }
-
-            }
-            */
-
-
+        if (resultCode == Activity.RESULT_OK) {
+            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
+            webView?.reload()
         }
     }
 
-    var cropUri:Uri? = null
-    private fun performCrop(picUri:Uri) {
-        println(TAG + " performCrop: $picUri")
-        try {
-            val cropIntent = Intent("com.android.camera.action.CROP")
-            cropIntent.setDataAndType(picUri, "image/*")
-            cropIntent.putExtra("crop", "true")
-            cropIntent.putExtra("aspectX", 2)
-            cropIntent.putExtra("aspectY", 2)
-            cropIntent.putExtra("outputX", 256)
-            cropIntent.putExtra("outputY", 256)
-            cropIntent.putExtra("return-data", true)
+    private fun handleCropResult(@NonNull result:Intent) {
 
-            //ile = new File(Environment.getExternalStorageDirectory(), "tmp_" + String.valueOf(System.currentTimeMillis()) + ".jpg");
+        val resultUri: Uri? = UCrop.getOutput(result)
 
-            val imageFilePath = Environment.getExternalStorageDirectory().absolutePath + "/temp_crop2.jpg"
-            val myFile = File(imageFilePath)
-            cropUri = FileProvider.getUriForFile(applicationContext, applicationContext.packageName + ".provider", myFile)
+        if (resultUri != null) {
+            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, resultUri)
+            val path = saveImage(bitmap)
 
-            cropIntent.putExtra(MediaStore.EXTRA_OUTPUT, cropUri)
-            cropIntent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString())
+            var myFile = File(path)
+            sendProfilePhoto(myFile)
 
-            startActivityForResult(cropIntent, Activity_Result.CROP.value)
-        } catch (anfe: ActivityNotFoundException) {
-            println(TAG + " performCrop Error: " + anfe.message)
-            val toast = Toast.makeText(this, "Bu cihaz fotoğraf editlemeyi desteklemiyor.", Toast.LENGTH_LONG)
-            toast.show()
+        } else {
+            Toast.makeText(this, "Resim düzenlenirken bir hata oluştu.", Toast.LENGTH_SHORT).show()
         }
-    }
-
-
-    private fun cropIntent() {
-        var photoPickerIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        photoPickerIntent.setType("image/*")
-        photoPickerIntent.putExtra("crop", "true")
-
-        photoPickerIntent.putExtra(MediaStore.EXTRA_OUTPUT, cropUri)
-        photoPickerIntent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString())
-        startActivityForResult(photoPickerIntent, Activity_Result.CROP.value)
     }
 
     private fun getImageUri(context: Context, inImage: Bitmap): Uri {
@@ -318,15 +293,6 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         return bitmap
 
     }
-
-    private fun convertBitmap(imgUri:Uri) {
-        var options:BitmapFactory.Options = BitmapFactory.Options();
-        options.inSampleSize = 4
-
-        var bitmap:Bitmap = BitmapFactory.decodeFile(imgUri.path, options)
-        imageView?.setImageBitmap(bitmap)
-    }
-
 
     // save library image
     fun saveImage(myBitmap: Bitmap):String {
@@ -359,11 +325,9 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         return ""
     }
 
-
     private fun sendProfilePhoto(oldFile:File) {
         val userUserId:String = singleton.userId!!
         val file = myFileManager?.renameFile(oldFile, "profilImage_$userUserId", ".jpg")
-
 
         Thread(Runnable {
             val multipart = MultipartUtility(singleton.FILE_UPLOAD_URL, "UTF-8")
@@ -387,6 +351,9 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         }
     }
 
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    // Delegate --- upload
     /**
      * MultiPartUtility den tetiklenir.
      */
@@ -398,6 +365,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         }
     }
 
+    //-------------------------------------------------------------------
 
     // Interface_profilPhotoUploadStatus => trigger
     fun workerThread(status: String) {
