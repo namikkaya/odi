@@ -68,4 +68,8 @@ dependencies {
     // değişiklik
     implementation 'com.github.chrisbanes:PhotoView:2.0.0'
 
+    // glide
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
+
 }

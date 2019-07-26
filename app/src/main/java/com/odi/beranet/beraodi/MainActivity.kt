@@ -155,7 +155,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
                 val intent = Intent(this, galeryActivity::class.java)
                 //intent.putExtra("keyIdentifier", value)
 
-                startActivityForResult(intent, Activity_Result.PHOTO_COLLAGE.value )
+                startActivityForResult(intent, Activity_Result.PHOTO_COLLAGE.value)
             }
 
             nativePage.videoPlayer -> {
@@ -219,6 +219,13 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         }
         // Bildirim
         if (resultCode == Activity.RESULT_OK) {
+            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
+            webView?.reload()
+        }
+
+        //println("$TAG resultGalleryActivity: resultCode: $resultCode -- perKod: " + Activity_Result.PHOTO_COLLAGE.value)
+        if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
+            println("$TAG resultGalleryActivity: RELOADED")
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             webView?.reload()
         }
@@ -311,7 +318,6 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
 
         uploadProfilePhotoMessageHandler = object : Handler(Looper.getMainLooper()) {
             override fun handleMessage(message: Message) {
-                println("$TAG  sendProfilePhoto message: $message " + message.obj)
                 val msg: String? = message.obj as? String
                 msg.let { value ->
                     if (value.equals("suc")) {

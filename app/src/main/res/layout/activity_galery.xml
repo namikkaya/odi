@@ -24,6 +24,7 @@
 
             <!-- üst Kısım -->
             <LinearLayout
+                    android:padding="@dimen/galleryTitleCollagePadding"
                     android:orientation="horizontal"
                     android:layout_weight="60"
                     android:weightSum="100"
@@ -33,12 +34,15 @@
 
                 <!-- üst kısım sol -->
                 <LinearLayout
-                        android:background="@color/cardview_dark_background"
+                        android:id="@+id/leftContainer"
+                        android:layout_margin="@dimen/galleryTitleCollagePadding"
+                        android:background="@drawable/gallery_image_border_normal"
                         android:layout_weight="60"
                         android:layout_width="0dp"
                         android:layout_height="match_parent">
 
                     <com.github.chrisbanes.photoview.PhotoView
+
                             android:overScrollMode="ifContentScrolls"
                             android:id="@+id/LeftImage"
                             android:layout_weight="1"
@@ -61,18 +65,45 @@
 
                     <!-- üst sağ üst -->
                     <LinearLayout
-                            android:background="@color/browser_actions_divider_color"
+                            android:id="@+id/rightTopContainer"
+                            android:background="@drawable/gallery_image_border_normal"
+                            android:layout_margin="@dimen/galleryTitleCollagePadding"
                             android:layout_weight="50"
                             android:layout_width="match_parent"
-                            android:layout_height="0dp">
+                            android:layout_height="0dp"
+                            android:orientation="vertical">
+
+                        <com.github.chrisbanes.photoview.PhotoView
+                                android:overScrollMode="ifContentScrolls"
+                                android:id="@+id/RightTopImage"
+                                android:layout_weight="1"
+                                android:cropToPadding="true"
+                                android:scaleType="centerCrop"
+                                android:tag="img_left"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"/>
 
                     </LinearLayout>
 
                     <!-- üst sağ alt -->
                     <LinearLayout
+                            android:background="@drawable/gallery_image_border_normal"
+                            android:id="@+id/rightBottamContainer"
+                            android:layout_margin="@dimen/galleryTitleCollagePadding"
                             android:layout_weight="50"
                             android:layout_width="match_parent"
-                            android:layout_height="0dp">
+                            android:layout_height="0dp"
+                            android:orientation="vertical">
+
+                        <com.github.chrisbanes.photoview.PhotoView
+                                android:overScrollMode="ifContentScrolls"
+                                android:id="@+id/RightBottomImage"
+                                android:layout_weight="1"
+                                android:cropToPadding="true"
+                                android:scaleType="centerCrop"
+                                android:tag="img_left"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"/>
 
                     </LinearLayout>
 
@@ -86,6 +117,17 @@
                     android:background="@color/browser_actions_bg_grey"
                     android:layout_width="match_parent"
                     android:layout_height="0dp">
+
+                <GridView
+                        android:id="@+id/gv_folder"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:columnWidth="90dp"
+                        android:numColumns="4"
+                        android:verticalSpacing="1dp"
+                        android:horizontalSpacing="1dp">
+
+                </GridView>
 
             </LinearLayout>
 

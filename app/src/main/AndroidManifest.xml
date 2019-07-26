@@ -23,10 +23,14 @@
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
 
-        <activity android:name=".Activities.galeryActivity">
-        </activity>
+        <activity android:name=".Activities.galeryActivity"
+                  android:screenOrientation="portrait"
+                  android:configChanges="orientation|keyboardHidden"
+        />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+                  android:screenOrientation="portrait"
+        >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 

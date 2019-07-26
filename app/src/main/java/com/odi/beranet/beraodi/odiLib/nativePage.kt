@@ -27,3 +27,9 @@ enum class HTTP_PROCESS_STATUS {
     fail,
     success
 }
+
+enum class SELECTED_CONTAINER {
+    LEFT,
+    RIGHT_TOP,
+    RIGHT_BOTTOM
+}
