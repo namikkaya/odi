@@ -63,7 +63,7 @@ dependencies {
     implementation 'com.ahmadnemati.clickablewebview:clickablewebview:1.1.2'
 
     // crop image
-    implementation 'com.github.yalantis:ucrop:2.2.3-native'
+    //implementation 'com.github.yalantis:ucrop:2.2.3-native'
     // photo touch
     // değişiklik
     implementation 'com.github.chrisbanes:PhotoView:2.0.0'
@@ -74,5 +74,6 @@ dependencies {
 
     // -photo için
     implementation 'com.facebook.fresco:fresco:2.0.0'
+    compile project(path: ':ucrop')
 
 }

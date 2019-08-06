@@ -195,14 +195,15 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
                             ratio = height.toFloat() / width!!.toFloat()
                         }
 
-                        println("oran: width $width height $height ratio w 1 ratio h $ratio")
 
                         val contentURI = Uri.fromFile(File(path))
                         val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
                         val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
+
                         if (ratio != null) {
                             cropper.withAspectRatio(1F, ratio!!)
                         }
+
                         cropper.start(this)
                     }
                 })
@@ -217,7 +218,6 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
                             ratio = height.toFloat() / width!!.toFloat()
                         }
 
-                        println("oran: width $width height $height ratio w 1 ratio h $ratio")
 
                         val contentURI = Uri.fromFile(File(path))
                         val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
@@ -240,7 +240,6 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
                             ratio = height.toFloat() / width!!.toFloat()
                         }
 
-                        println("oran: width $width height $height ratio w 1 ratio h $ratio")
 
                         val contentURI = Uri.fromFile(File(path))
                         val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
@@ -572,7 +571,6 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // selectedImage = SELECTED_CONTAINER.LEFT
         if (resultCode == Activity.RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
             handleCropResult(data!!)
         }
@@ -584,7 +582,6 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
 
         if (resultUri != null) {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, resultUri)
-            //val path = saveImage(bitmap)
 
             when (selectedImage) {
                 SELECTED_CONTAINER.LEFT -> {
