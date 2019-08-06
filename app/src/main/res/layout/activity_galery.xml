@@ -47,7 +47,7 @@
                             android:id="@+id/LeftImage"
                             android:layout_weight="1"
                             android:cropToPadding="true"
-                            android:scaleType="centerCrop"
+                            android:scaleType="fitXY"
                             android:tag="img_left"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"/>

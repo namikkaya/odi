@@ -223,7 +223,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             webView?.reload()
         }
 
-        //println("$TAG resultGalleryActivity: resultCode: $resultCode -- perKod: " + Activity_Result.PHOTO_COLLAGE.value)
+
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
             println("$TAG resultGalleryActivity: RELOADED")
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
@@ -271,7 +271,6 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         }
 
         return bitmap
-
     }
 
     // save library image
@@ -320,9 +319,9 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             override fun handleMessage(message: Message) {
                 val msg: String? = message.obj as? String
                 msg.let { value ->
-                    if (value.equals("suc")) {
+                    if (value.equals("suc")) { // başarılı
                         showUploadProfilePhotoAlert()
-                    }else if (value.equals("start")) {
+                    }else if (value.equals("start")) { // işleme başlandı
                         Toast.makeText(this@MainActivity, "Profil fotoğrafı işleme alındı. Yükleniyor...", Toast.LENGTH_SHORT).show()
                     }
                 }

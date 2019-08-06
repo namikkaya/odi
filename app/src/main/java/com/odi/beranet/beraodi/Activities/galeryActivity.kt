@@ -10,25 +10,33 @@ import android.database.Cursor
 import android.graphics.*
 import android.graphics.drawable.ColorDrawable
 import android.media.ExifInterface
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.*
 import android.support.v7.app.AppCompatActivity
 import android.provider.MediaStore
+import android.support.annotation.NonNull
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.util.Log
+import android.util.Size
+import android.view.MotionEvent
 import android.view.View
 import android.widget.*
 import com.github.chrisbanes.photoview.PhotoView
+import com.odi.beranet.beraodi.MainActivity
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.Model_images
 import com.odi.beranet.beraodi.odiLib.*
+import com.yalantis.ucrop.UCrop
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import java.util.ArrayList
+import java.util.*
 
 class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odiInterface {
+
 
     private var TAG: String = "galeryActivity: "
 
@@ -47,6 +55,7 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
 
     // - class
     private var gridViewAdapter: Adapter_PhotosFolder? = null
+
 
 
     // - values
@@ -75,8 +84,6 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
     }
 
     private fun uiConfig() {
-
-
         myBackButton = findViewById(R.id.myBackButton)
         myBackButton?.setOnClickListener(clickListener)
 
@@ -158,6 +165,7 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
         val path = al_images[p2].getAl_imagepath()?.get(0)
 
 
+        /*
         when (selectedImage) {
             SELECTED_CONTAINER.LEFT -> {
                 val myBitmap = getBitmap(path!!, leftImage!!)
@@ -166,12 +174,87 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
             SELECTED_CONTAINER.RIGHT_TOP -> {
                 val myBitmap = getBitmap(path!!, rightTopImage!!)
                 rightTopImage!!.setImageBitmap(myBitmap)
+
             }
             SELECTED_CONTAINER.RIGHT_BOTTOM -> {
                 val myBitmap = getBitmap(path!!, rightBottomImage!!)
                 rightBottomImage!!.setImageBitmap(myBitmap)
             }
+        }*/
+
+        var ratio:Float? = null
+
+        when (selectedImage) {
+            SELECTED_CONTAINER.LEFT -> {
+                leftContainer?.post(Runnable {
+                    run {
+                        val height = leftContainer?.height
+                        val width = leftContainer?.width
+
+                        if (height != null) {
+                            ratio = height.toFloat() / width!!.toFloat()
+                        }
+
+                        println("oran: width $width height $height ratio w 1 ratio h $ratio")
+
+                        val contentURI = Uri.fromFile(File(path))
+                        val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
+                        val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
+                        if (ratio != null) {
+                            cropper.withAspectRatio(1F, ratio!!)
+                        }
+                        cropper.start(this)
+                    }
+                })
+            }
+            SELECTED_CONTAINER.RIGHT_TOP -> {
+                rightTopContainer?.post(Runnable {
+                    run {
+                        val height = rightTopContainer?.height
+                        val width = rightTopContainer?.width
+
+                        if (height != null) {
+                            ratio = height.toFloat() / width!!.toFloat()
+                        }
+
+                        println("oran: width $width height $height ratio w 1 ratio h $ratio")
+
+                        val contentURI = Uri.fromFile(File(path))
+                        val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
+                        val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
+                        if (ratio != null) {
+                            cropper.withAspectRatio(1F, ratio!!)
+                        }
+                        cropper.start(this)
+                    }
+                })
+
+            }
+            SELECTED_CONTAINER.RIGHT_BOTTOM -> {
+                rightBottomContainer?.post(Runnable {
+                    run {
+                        val height = rightBottomContainer?.height
+                        val width = rightBottomContainer?.width
+
+                        if (height != null) {
+                            ratio = height.toFloat() / width!!.toFloat()
+                        }
+
+                        println("oran: width $width height $height ratio w 1 ratio h $ratio")
+
+                        val contentURI = Uri.fromFile(File(path))
+                        val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
+                        val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
+                        if (ratio != null) {
+                            cropper.withAspectRatio(1F, ratio!!)
+                        }
+                        cropper.start(this)
+                    }
+                })
+            }
         }
+
+
     }
 
 
@@ -222,6 +305,40 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
     }
 
     //-------------------------------------------------------------------
+    private fun getBitmapCopy(path: String, v: Size): Bitmap? {
+        try {
+            var b: Bitmap? = null
+            val o = BitmapFactory.Options()
+            o.inJustDecodeBounds = true
+
+            val matrix = Matrix()
+            val exifReader = ExifInterface(path)
+            val orientation = exifReader.getAttributeInt(ExifInterface.TAG_ORIENTATION, -1)
+            var rotate = 0
+            if (orientation == ExifInterface.ORIENTATION_NORMAL) {
+                // Do nothing. The original image is fine.
+            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_90) {
+                rotate = 90
+            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_180) {
+                rotate = 180
+            } else if (orientation == ExifInterface.ORIENTATION_ROTATE_270) {
+                rotate = 270
+            }
+            matrix.postRotate(rotate.toFloat())
+            try {
+                b = loadBitmap(path, rotate, v.width, v.height)
+
+            } catch (e: OutOfMemoryError) {
+            }
+
+            System.gc()
+            return b
+        } catch (e: Exception) {
+            Log.e("my tag", e.message, e)
+            return null
+        }
+
+    }
 
 
     private fun getBitmap(path: String, v: ImageView): Bitmap? {
@@ -316,6 +433,7 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
             val alert = builder.create()
             alert.show()
         }
+
         leftImage?.destroyDrawingCache()
         leftImage?.buildDrawingCache()
         val bitmap1 = Bitmap.createBitmap(leftImage?.drawingCache)
@@ -348,9 +466,7 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
             out.flush()
             out.close()
 
-
             MediaStore.Images.Media.insertImage(contentResolver, dest.absolutePath, dest.name, dest.name)
-
 
             filepath = dest.path
 
@@ -414,7 +530,7 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
             val builder = AlertDialog.Builder(this)
             builder.setMessage("Portre Kolajınız Kaydedildi.").setTitle("Odi")
                 .setCancelable(false)
-                .setPositiveButton("OK") { dialog, id ->
+                .setPositiveButton("Tamam") { dialog, id ->
                     val intent = Intent()
                     intent.putExtra("PLAY_SHOW", "done")
                     setResult(Activity.RESULT_FIRST_USER, intent)
@@ -453,4 +569,38 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
 
         }
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        // selectedImage = SELECTED_CONTAINER.LEFT
+        if (resultCode == Activity.RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
+            handleCropResult(data!!)
+        }
+    }
+
+    private fun handleCropResult(@NonNull result:Intent) {
+
+        val resultUri: Uri? = UCrop.getOutput(result)
+
+        if (resultUri != null) {
+            val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, resultUri)
+            //val path = saveImage(bitmap)
+
+            when (selectedImage) {
+                SELECTED_CONTAINER.LEFT -> {
+                    leftImage!!.setImageBitmap(bitmap)
+                }
+                SELECTED_CONTAINER.RIGHT_TOP -> {
+                    rightTopImage!!.setImageBitmap(bitmap)
+                }
+                SELECTED_CONTAINER.RIGHT_BOTTOM -> {
+                    rightBottomImage!!.setImageBitmap(bitmap)
+                }
+            }
+
+        } else {
+            Toast.makeText(this, "Resim düzenlenirken bir hata oluştu.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
 }
