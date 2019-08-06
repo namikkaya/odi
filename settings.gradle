@@ -1,1 +1,1 @@
-include ':app', ':ucrop'
+include ':app', ':ucrop', ':ftp4j-1.7.2'

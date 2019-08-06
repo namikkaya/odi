@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
           package="com.odi.beranet.beraodi">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
 
-    <uses-feature android:name="android.hardware.camera"
-                  android:required="true" />
-
+    <uses-feature
+            android:name="android.hardware.camera"
+            android:required="true"/>
 
     <application
             android:name=".ApplicationClass"
@@ -22,27 +23,25 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
-
-        <activity android:name=".Activities.galeryActivity"
-                  android:screenOrientation="portrait"
-                  android:configChanges="orientation|keyboardHidden"
-        />
-
-        <activity android:name=".MainActivity"
-                  android:screenOrientation="portrait"
-        >
+        <activity android:name=".Activities.upload_from_gallery">
+        </activity>
+        <activity
+                android:name=".Activities.galeryActivity"
+                android:configChanges="orientation|keyboardHidden"
+                android:screenOrientation="portrait"/>
+        <activity
+                android:name=".MainActivity"
+                android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-
         <activity
                 android:name="com.yalantis.ucrop.UCropActivity"
                 android:screenOrientation="portrait"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
-
 
         <provider
                 android:name="android.support.v4.content.FileProvider"
@@ -51,7 +50,7 @@
                 android:grantUriPermissions="true">
             <meta-data
                     android:name="android.support.FILE_PROVIDER_PATHS"
-                    android:resource="@xml/provider_paths" />
+                    android:resource="@xml/provider_paths"/>
         </provider>
     </application>
 

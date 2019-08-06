@@ -5,6 +5,7 @@ enum class nativePage {
     photoCollage,
     getPhotoAlbum,
     uploadShowReel,
+    uploadTanitim,
     cameraShowReel,
     uploadIdentification, // tanitim kartı yükleme
     cameraIdentification // tanitim kartı çekme

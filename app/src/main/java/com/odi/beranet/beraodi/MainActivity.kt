@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         navigationBarConfiguration()
         webViewConfiguration()
         oneSignalConfiguration()
+
+        asyncUploadFile().execute("naber")
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -104,8 +106,9 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
                     consoleMessage.let {
                         val message: String? = consoleMessage?.message()
                         if (message != null) {
-                            finder?.inspector(message) {
-                                nativePageDecider(it)
+                            finder?.inspector(message) { nativePage, sendId, buttonId ->
+                                println("odi parameters: sendId: $sendId buttonId $buttonId")
+                                nativePageDecider(nativePage,sendId,buttonId)
                             }
                         }
                     }
@@ -138,7 +141,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     //-------------------------------------------------------------------
 
     // HAREKET
-    fun nativePageDecider(page:nativePage){
+    fun nativePageDecider(page:nativePage, sendId:String?, buttonId:String?){
         when(page){
 
             nativePage.getPhotoAlbum -> {
@@ -369,6 +372,24 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             return
         }
     }
+    /*
+
+    private fun uploadVideoTask(){
+        LoadMediaTask(object : odiInterface {
+            override fun onStarted() {
+                // show progress bar
+            }
+
+            override fun onCompleted() {
+                // işlemler bitti uidesing
+            }
+
+            override fun onError(errorMessage: String?) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            }
+
+        }).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
+    }*/
 
 
 
