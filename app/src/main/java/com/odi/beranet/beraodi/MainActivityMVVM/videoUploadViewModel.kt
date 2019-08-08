@@ -10,16 +10,21 @@ import android.support.v4.content.ContextCompat
 import android.util.Log
 import com.odi.beranet.beraodi.MainActivity
 import com.odi.beranet.beraodi.odiLib.Permission_Result
-import com.odi.beranet.beraodi.odiLib.nativePage
+import com.odi.beranet.beraodi.odiLib.asyncUploadFile
 import java.io.*
 import java.lang.Exception
 
 class videoUploadViewModel (val _this: MainActivity) {
     private val TAG:String = "videoUploadViewModel"
 
+
     internal var outputDir2 =
         Environment.getExternalStorageDirectory().toString() + File.separator + "Odi_output" + File.separator + System.currentTimeMillis()
 
+
+    fun uploadFile(file:File) {
+        var upload = asyncUploadFile().execute(file)
+    }
 
     fun getImageUrlWithAuthority(context: Context, uri: Uri):String? {
         var inputStream:InputStream? = null
@@ -84,6 +89,7 @@ class videoUploadViewModel (val _this: MainActivity) {
 
             if (newFile.exists()) {
                 println("$TAG video dosyası var bulundu")
+                uploadFile(newFile)
             }else {
                 println("$TAG video dosyası yok bulunamadı")
             }

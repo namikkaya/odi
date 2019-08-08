@@ -199,13 +199,11 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 println(TAG + "upload Tanitim")
             }
 
-            nativePage.uploadShowReel -> {
+            nativePage.uploadShowReel -> { // SHOWREEL
+                // izin kontrollleri
                 videoUploadController?.check_writeRead_permission { status->
                     if (status == true) {
-                        println(TAG + "upload Show Real")
-                        val videoIntent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-                        videoIntent.type = "video/*"
-                        startActivityForResult(Intent.createChooser(videoIntent, "Video Seç"), Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value)
+                        openSelectVideo()
                     }
                 }
 
@@ -227,8 +225,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         } else
             return null
     }
-
-
 
     private fun webViewOnLoad(userId:String?) {
         println("$TAG $userId sayfanın yüklenmesi gerekiyor")
@@ -260,11 +256,8 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (Permission_Result.UPLOAD_VIDEO_GALLERY.value == requestCode) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                println(TAG + "upload Show Real")
-                val videoIntent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
-                videoIntent.type = "video/*"
-                startActivityForResult(Intent.createChooser(videoIntent, "Video Seç"), Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value)
 
+                openSelectVideo()
             }else {
                 setResult(RESULT_OK)
                 println("$TAG izin verilmedi okuma yazma")
@@ -314,7 +307,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         if (resultCode == Activity.RESULT_OK &&
             requestCode == Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value) {
-            println("$TAG onActivityResult: showReel")
 
             val selectedImageUri:Uri = data!!.data
 
@@ -334,14 +326,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         }
     }
 
+    // ucrop event dönüşü
     private fun handleCropResult(@NonNull result:Intent) {
-
         val resultUri: Uri? = UCrop.getOutput(result)
-
         if (resultUri != null) {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, resultUri)
             val path = saveImage(bitmap)
-
             var myFile = File(path)
             sendProfilePhoto(myFile)
 
@@ -475,7 +465,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     }
 
 
+    private fun openSelectVideo() {
+        val videoIntent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+        videoIntent.type = "video/*"
+        startActivityForResult(Intent.createChooser(videoIntent, "Video Seç"), Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value)
 
+    }
 
 
 
