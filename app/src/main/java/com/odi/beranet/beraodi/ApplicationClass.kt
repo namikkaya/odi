@@ -8,6 +8,7 @@ class ApplicationClass: Application() {
     override fun onCreate() {
         super.onCreate()
         // onesignal notification init
+
         OneSignal.startInit(this)
             .inFocusDisplaying(OneSignal.OSInFocusDisplayOption.Notification)
             .unsubscribeWhenNotificationsAreDisabled(true)

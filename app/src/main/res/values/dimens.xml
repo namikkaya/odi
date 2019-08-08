@@ -2,4 +2,8 @@
 <resources>
     <dimen name="kolayTitleSize">19dp</dimen>
     <dimen name="galleryTitleCollagePadding">2dp</dimen>
+    <dimen name="warningTextPadding">4dp</dimen>
+    <dimen name="warningTextTitleTextSize">20sp</dimen>
+    <dimen name="warningTextDescriptionSize">18sp</dimen>
+    <dimen name="warningContentMargin">16dp</dimen>
 </resources>

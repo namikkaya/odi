@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.*
 import android.graphics.Bitmap
 import android.net.Uri
-import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.ActionBar
 import android.webkit.*
 import com.ahmadnemati.clickablewebview.ClickableWebView
@@ -16,18 +15,25 @@ import android.media.MediaScannerConnection
 import android.os.*
 import android.provider.MediaStore
 import android.support.annotation.NonNull
+import com.odi.beranet.beraodi.Activities.baseActivity
 import com.odi.beranet.beraodi.Activities.galeryActivity
+import com.odi.beranet.beraodi.Activities.warningActivity
 import com.odi.beranet.beraodi.odiLib.*
 import com.yalantis.ucrop.UCrop
 import java.io.*
 import java.lang.Exception
 import java.util.*
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.util.Log
+import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 
 
-class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
+class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
 
     val TAG:String = "-MainActivity: "
+
 
     companion object {
         private val IMAGE_DIRECTORY = "/odi"
@@ -42,7 +48,9 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     // -- class
     var finder:textFinder? = null
     var photoController:photoViewModel? = null
+    var videoUploadController:videoUploadViewModel? = null
     var myFileManager: odiFileManager? = null
+
 
     // -- Handler
     var uploadProfilePhotoMessageHandler:Handler? = null
@@ -50,17 +58,45 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        //imageView = findViewById(R.id.imageView)
+
         configuration()
     }
+
+    var warningIntent:Intent? = null
+    override fun internetConnectionStatus(status: Boolean) {
+        warningIntent = Intent(this, warningActivity::class.java)
+        warningIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        warningIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        warningIntent?.putExtra("warningTitle", "Bağlantı Sorunu")
+        warningIntent?.putExtra("warningDescription", "İnternet bağlantınızda problem var. Lütfen bağlantınızı kontrol edip tekrar deneyin.")
+        if (!status) {
+            startActivity(warningIntent)
+        }else {
+            // internet geldiğinde tekrar ettir.
+            oneSignalConfiguration()
+        }
+    }
+
+
+    override fun onResume() {
+        super.onResume()
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+    }
+
 
     private fun configuration() {
         managersConfiguration()
         navigationBarConfiguration()
         webViewConfiguration()
         oneSignalConfiguration()
+        // internetConnectionStatus --> config devamı
 
-        asyncUploadFile().execute("naber")
+        //asyncUploadFile().execute("naber")
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -69,6 +105,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     private fun managersConfiguration() {
         finder = textFinder()
         photoController = photoViewModel(this)
+        videoUploadController = videoUploadViewModel(this)
         myFileManager = odiFileManager()
     }
 
@@ -85,19 +122,17 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         webView = findViewById(R.id.webView)
 
         webView?.let {
+
+            println("$TAG webview tanımlı")
             webView?.setOnWebViewClickListener(this)
 
             webView?.settings?.javaScriptEnabled = true
             webView?.settings?.allowFileAccess = true
             webView?.settings?.domStorageEnabled = true
 
-
-
             webView?.webViewClient = object : WebViewClient(){
 
             }
-
-
 
             // her click ten sonra finder a sorulur nereye gidileceği finder dan gelen dönüşe göre karar verilir.
             webView?.webChromeClient = object : WebChromeClient() {
@@ -122,6 +157,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
 
     // onesignal configuration--
     private fun oneSignalConfiguration() {
+        println("$TAG oneSignalConfiguration: start")
         OneSignal.idsAvailable { userId, registrationId ->
             if (registrationId != null) {
                 System.out.println("$TAG onesignal userId: $userId")
@@ -129,10 +165,9 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
                 singleton.onesignal_playerId = userId
                 singleton.onesignal_registrationId = registrationId
                 println("$TAG oneSignalConfiguration: Notification için id eklendi")
-
             }else {
                 // timer kurulacak...
-                System.out.println("$TAG oneSignalConfiguration: HATA player id alınamadı...")
+                println("$TAG oneSignalConfiguration: HATA player id alınamadı...")
                 webViewOnLoad(null)
             }
         }
@@ -146,18 +181,13 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
 
             nativePage.getPhotoAlbum -> {
                 println(TAG + "fotoğraf albümü aç")
-
                 if (photoController != null) {
                     photoController?.showPictureDialog()
                 }
-
             }
 
             nativePage.photoCollage -> {
-
                 val intent = Intent(this, galeryActivity::class.java)
-                //intent.putExtra("keyIdentifier", value)
-
                 startActivityForResult(intent, Activity_Result.PHOTO_COLLAGE.value)
             }
 
@@ -165,11 +195,43 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
                 println(TAG + "videoPlayer aç")
             }
 
+            nativePage.uploadTanitim -> {
+                println(TAG + "upload Tanitim")
+            }
+
+            nativePage.uploadShowReel -> {
+                videoUploadController?.check_writeRead_permission { status->
+                    if (status == true) {
+                        println(TAG + "upload Show Real")
+                        val videoIntent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+                        videoIntent.type = "video/*"
+                        startActivityForResult(Intent.createChooser(videoIntent, "Video Seç"), Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value)
+                    }
+                }
+
+            }
+
         }
 
     }
 
+    fun getPath(uri: Uri): String? {
+        val projection = arrayOf(MediaStore.Video.Media.DATA)
+        val cursor = contentResolver.query(uri, projection, null, null, null)
+        if (cursor != null) {
+
+            val column_index = cursor
+                .getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+            cursor.moveToFirst()
+            return cursor.getString(column_index)
+        } else
+            return null
+    }
+
+
+
     private fun webViewOnLoad(userId:String?) {
+        println("$TAG $userId sayfanın yüklenmesi gerekiyor")
         if (userId != null) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=$userId")
             webView?.reload()
@@ -194,6 +256,22 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
     //-------------------------------------------------------------------
 
 
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (Permission_Result.UPLOAD_VIDEO_GALLERY.value == requestCode) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                println(TAG + "upload Show Real")
+                val videoIntent = Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI)
+                videoIntent.type = "video/*"
+                startActivityForResult(Intent.createChooser(videoIntent, "Video Seç"), Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value)
+
+            }else {
+                setResult(RESULT_OK)
+                println("$TAG izin verilmedi okuma yazma")
+            }
+
+        }
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -220,17 +298,39 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         else if (requestCode == UCrop.REQUEST_CROP) {
             handleCropResult(data!!)
         }
+        /*
         // Bildirim
         if (resultCode == Activity.RESULT_OK) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             webView?.reload()
         }
-
+        */
 
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
             println("$TAG resultGalleryActivity: RELOADED")
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             webView?.reload()
+        }
+
+        if (resultCode == Activity.RESULT_OK &&
+            requestCode == Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value) {
+            println("$TAG onActivityResult: showReel")
+
+            val selectedImageUri:Uri = data!!.data
+
+            val filemanagerstring = selectedImageUri.getPath();
+
+
+            val selectedImagePath = getPath(selectedImageUri)
+            if (selectedImagePath != null) {
+                println("$TAG video path: $selectedImagePath") // play etmek için
+
+            }
+
+            //getImageUrlWithAuthority(this,selectedImageUri)
+            if (videoUploadController != null) {
+                videoUploadController?.getImageUrlWithAuthority(this, selectedImageUri)
+            }
         }
     }
 
@@ -354,6 +454,7 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
         message.sendToTarget()
     }
 
+
     private fun showUploadProfilePhotoAlert() {
         try {
             val builder = android.app.AlertDialog.Builder(this)
@@ -372,24 +473,13 @@ class MainActivity : AppCompatActivity(), OnWebViewClicked, odiInterface {
             return
         }
     }
-    /*
 
-    private fun uploadVideoTask(){
-        LoadMediaTask(object : odiInterface {
-            override fun onStarted() {
-                // show progress bar
-            }
 
-            override fun onCompleted() {
-                // işlemler bitti uidesing
-            }
 
-            override fun onError(errorMessage: String?) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            }
 
-        }).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR)
-    }*/
+
+
+
 
 
 

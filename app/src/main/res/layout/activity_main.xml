@@ -6,25 +6,25 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.ahmadnemati.clickablewebview.ClickableWebView
-            android:id="@+id/webView"
+
+    <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_alignParentStart="true"
-            android:layout_alignParentTop="true"
-            android:background="#ff8400"
-    >
+            android:layout_height="match_parent">
+        <com.ahmadnemati.clickablewebview.ClickableWebView
+                android:backgroundTint="@color/browser_actions_divider_color"
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:background="#ff8400"
+        >
 
-    </com.ahmadnemati.clickablewebview.ClickableWebView>
+        </com.ahmadnemati.clickablewebview.ClickableWebView>
+    </LinearLayout>
 
-    <!--
-    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
-        <ImageView
-                android:id="@+id/imageView"
-                android:layout_width="100dp"
-                android:layout_height="100dp"/>
 
-    </RelativeLayout>
-    -->
+
 
 </android.support.constraint.ConstraintLayout>
