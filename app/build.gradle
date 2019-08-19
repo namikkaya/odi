@@ -73,4 +73,7 @@ dependencies {
 
     // Reachability
     implementation 'ua.eshcherbinock:reachability:0.0.7'
+
+    // circular progress bar
+    implementation 'com.mikhaellopez:circularprogressbar:3.0.2'
 }

@@ -28,6 +28,7 @@ import com.odi.beranet.beraodi.MainActivity
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.Model_images
 import com.odi.beranet.beraodi.odiLib.*
+import com.onesignal.OneSignal
 import com.yalantis.ucrop.UCrop
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -35,7 +36,29 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 
-class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odiInterface {
+/**
+ * Fotoğraf kolajı yaptırılan activity.
+ */
+class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInterface {
+
+    var warningIntent:Intent? = null
+    /**
+     * override method baseActivity
+     * internet bağlantısını kontrol eder ve durum değiştiiğinde tetiklenir.
+     * */
+    override fun internetConnectionStatus(status: Boolean) {
+        warningIntent = Intent(this, warningActivity::class.java)
+        warningIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        warningIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        warningIntent?.putExtra("warningTitle", "Bağlantı Sorunu")
+        warningIntent?.putExtra("warningDescription", "İnternet bağlantınızda problem var. Lütfen bağlantınızı kontrol edip tekrar deneyin.")
+        if (!status) {
+            startActivity(warningIntent)
+        }else {
+            // internet geldiğinde tekrar ettir.
+            oneSignalConfiguration()
+        }
+    }
 
 
     private var TAG: String = "galeryActivity: "
@@ -117,6 +140,21 @@ class galeryActivity : AppCompatActivity(), AdapterView.OnItemClickListener, odi
         leftImage?.isDrawingCacheEnabled = true
         rightTopImage?.isDrawingCacheEnabled = true
         rightBottomImage?.isDrawingCacheEnabled = true
+    }
+
+    // onesignal configuration--
+    private fun oneSignalConfiguration() {
+        println("$TAG oneSignalConfiguration: start")
+        OneSignal.idsAvailable { userId, registrationId ->
+            if (registrationId != null) {
+                singleton.onesignal_playerId = userId
+                singleton.onesignal_registrationId = registrationId
+                println("$TAG oneSignalConfiguration: Notification için id eklendi")
+            }else {
+                // timer kurulacak...
+                println("$TAG oneSignalConfiguration: HATA player id alınamadı...")
+            }
+        }
     }
 
     fun fn_imagespath(): ArrayList<Model_images> {

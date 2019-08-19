@@ -6,4 +6,6 @@
     <color name="White">#ffffff</color>
     <color name="Grey">#D6D6D6</color>
     <color name="DarkGrey">#3F3F3F</color>
+    <color name="black">#000000</color>
+    <color name="myOrangeLight">#23FFBF80</color>
 </resources>

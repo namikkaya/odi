@@ -53,11 +53,13 @@ class textFinder {
 
         println("odi parameter 6")
 
+        println("Showreel: string veri: $str")
         val uploadString = str.split("=")
         // showreel veya tanitim ise UPLOAD
         if (uploadString[0] == "ek") {
             val ds = uploadString[1].split("_")
-            println("odi parameter ek: " + ds[1])
+            println("Showreel: odi parameter ek: " + ds[1])
+            singleton.userId = ds[1]
             if (ds[0] == "showreel") { // showreel upload
                 completion(nativePage.uploadShowReel, str, ds[1])
             }else{ // tanitim upload

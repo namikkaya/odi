@@ -26,17 +26,18 @@ import java.util.*
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
+import com.odi.beranet.beraodi.Activities.upload_from_gallery
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 
 
 class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
 
-    val TAG:String = "-MainActivity: "
+    private val TAG:String = "-MainActivity: "
 
 
     companion object {
-        private val IMAGE_DIRECTORY = "/odi"
+        private const val IMAGE_DIRECTORY = "/odi"
     }
 
 
@@ -54,6 +55,9 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
     // -- Handler
     var uploadProfilePhotoMessageHandler:Handler? = null
+
+    // bu değişkene yapılacak işlem tutulur
+    var processType:nativePage? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,6 +101,8 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         // internetConnectionStatus --> config devamı
 
         //asyncUploadFile().execute("naber")
+        val myUserId = singleton.userId
+        println("userId: $myUserId ")
     }
 
     /////////////////////////////////////////////////////////////////////
@@ -105,7 +111,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     private fun managersConfiguration() {
         finder = textFinder()
         photoController = photoViewModel(this)
-        videoUploadController = videoUploadViewModel(this)
+        videoUploadController = videoUploadViewModel(this,this)
         myFileManager = odiFileManager()
     }
 
@@ -203,6 +209,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 // izin kontrollleri
                 videoUploadController?.check_writeRead_permission { status->
                     if (status == true) {
+                        processType = nativePage.uploadShowReel
                         openSelectVideo()
                     }
                 }
@@ -261,6 +268,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }else {
                 setResult(RESULT_OK)
                 println("$TAG izin verilmedi okuma yazma")
+                // alert buraya yazılacak
             }
 
         }
@@ -291,13 +299,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         else if (requestCode == UCrop.REQUEST_CROP) {
             handleCropResult(data!!)
         }
-        /*
-        // Bildirim
-        if (resultCode == Activity.RESULT_OK) {
-            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
-            webView?.reload()
-        }
-        */
+
 
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
             println("$TAG resultGalleryActivity: RELOADED")
@@ -310,7 +312,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             val selectedImageUri:Uri = data!!.data
 
-            val filemanagerstring = selectedImageUri.getPath();
+            val filemanagerstring = selectedImageUri.path
 
 
             val selectedImagePath = getPath(selectedImageUri)
@@ -319,10 +321,23 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             }
 
+            /*
             //getImageUrlWithAuthority(this,selectedImageUri)
             if (videoUploadController != null) {
-                videoUploadController?.getImageUrlWithAuthority(this, selectedImageUri)
+                videoUploadController?.getImageUrlWithAuthority(this, selectedImageUri, processType!!)
             }
+            */
+
+            val intent = Intent(this, upload_from_gallery::class.java)
+            intent.putExtra("selectedPath", selectedImageUri.toString())
+            intent.putExtra("processType", processType)
+            startActivityForResult(intent, Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value)
+
+        }
+
+        if (resultCode == Activity.RESULT_OK) {
+            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
+            webView?.reload()
         }
     }
 
@@ -339,6 +354,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             Toast.makeText(this, "Resim düzenlenirken bir hata oluştu.", Toast.LENGTH_SHORT).show()
         }
     }
+
 
     private fun getImageUri(context: Context, inImage: Bitmap): Uri {
         val bytes = ByteArrayOutputStream()
@@ -377,9 +393,9 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         try
         {
-            println(TAG + " image gallery Saving")
+            println("$TAG image gallery Saving")
             val f = File(wallpaperDirectory, ((Calendar.getInstance()
-                .getTimeInMillis()).toString() + ".jpg"))
+                .timeInMillis).toString() + ".jpg"))
             f.createNewFile()
             val fo = FileOutputStream(f)
             fo.write(bytes.toByteArray())

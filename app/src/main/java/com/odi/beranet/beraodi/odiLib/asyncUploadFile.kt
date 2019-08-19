@@ -1,22 +1,53 @@
 package com.odi.beranet.beraodi.odiLib
 
 import android.os.AsyncTask
+import com.odi.beranet.beraodi.models.async_upload_video
+import com.odi.beranet.beraodi.models.async_upload_video_complete
 import org.apache.commons.net.ftp.FTP
 import org.apache.commons.net.ftp.FTPClient
 import org.apache.commons.net.io.CopyStreamAdapter
 import java.io.*
-import java.net.HttpURLConnection
-import java.net.URL
 import org.apache.commons.net.io.CopyStreamListener as CopyStreamListener
 
-class asyncUploadFile: AsyncTask<File, Int, String?>() {
 
-    var streamListener:CopyStreamAdapter? = null
 
-    override fun doInBackground(vararg params: File?): String? {
+class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
+
+    private var streamListener:CopyStreamAdapter? = null
+    private var listener:odiInterface? = null
+    private var uploadID:String? = null
+    private var userID:String? = null
+    private var type:nativePage? = null
+    internal var holderBytes = 0
+    private var returningRequestPath:String? = null
+
+    private var resultDataModel:async_upload_video_complete? = null
+    private var progressDataModel:async_upload_video_complete? = null
+
+    private fun setDelegate(listener: odiInterface?) {
+        this.listener = listener
+    }
+
+    override fun doInBackground(vararg params: async_upload_video?): String? { // vararg params: File?
         println("async: doInBackground " + params[0])
-        uploadFile(params[0])
-        return ""
+
+        params[0]?._listener?.let { setDelegate(it) }
+        uploadID = params[0]?._id
+        userID = params[0]?.userId
+        type = params[0]?.type
+
+        var fileStringName:String = ""
+        if (type == nativePage.uploadShowReel) {
+            returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=showreel&id="+userID+"&uzanti=mp4"
+            fileStringName = "showreel_" + userID + ".mp4"
+        }else {
+
+        }
+        resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null)
+
+        uploadFile(params[0]?._uploadFile, fileStringName)
+
+        return "upload"
     }
 
     override fun onProgressUpdate(vararg values: Int?) {
@@ -32,6 +63,7 @@ class asyncUploadFile: AsyncTask<File, Int, String?>() {
     override fun onPostExecute(result: String?) {
         super.onPostExecute(result)
         println("async: onPostExecute")
+        listener?.uploadVideoAsyncTaskComplete(resultDataModel)
     }
 
     override fun onCancelled(result: String?) {
@@ -39,9 +71,8 @@ class asyncUploadFile: AsyncTask<File, Int, String?>() {
         println("async: onCancelled")
     }
 
-    internal var holderBytes = 0
 
-    private fun uploadFile(file: File?) {
+    private fun uploadFile(file: File?, fileName:String) {
         val ftpClient = FTPClient()
         ftpClient.connect("ftp.odiapp.com.tr", 21)
         val checkConnection = ftpClient.login("odiFtp@odiapp.com.tr", "Root123*")
@@ -59,24 +90,21 @@ class asyncUploadFile: AsyncTask<File, Int, String?>() {
 
             override fun bytesTransferred(totalBytesTransferred: Long, bytesTransferred: Int, streamSize: Long) {
                 super.bytesTransferred(totalBytesTransferred, bytesTransferred, streamSize)
-                println("async: transfer : $totalBytesTransferred")
+                //println("async: transfer : $totalBytesTransferred")
 
 
                 val myPercent = (totalBytesTransferred * 100 / (file!!.length()).toInt())
 
                 //String percentString = Integer.toString(myPercent);
-                println("Yükleme:holder: $holderBytes percent: $myPercent")
+                //println("Yükleme:holder: $holderBytes percent: $myPercent")
 
                 if (holderBytes <= myPercent) {
-                    println("async: Video yükleniyor... $holderBytes")
+                    //println("async: Video yükleniyor... $holderBytes")
                     holderBytes = myPercent.toInt()
+                    progressDataModel = async_upload_video_complete(null,null,null,false, holderBytes)
+                    listener?.uploadVideoAsyncTaskComplete(progressDataModel)
                 } else {
                     println("async: Video yükleniyor... Yükleme sonuçlandı")
-
-                    val url = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=161&uzanti=mp4"
-
-                    request(url)
-
                     removeCopyStreamListener(streamListener)
                 }
 
@@ -87,40 +115,12 @@ class asyncUploadFile: AsyncTask<File, Int, String?>() {
 
         ftpClient.copyStreamListener = streamListener
 
-        ftpClient.storeFile(file!!.getName().replace(file!!.getName(), "tanitim_161.mp4"), buffIn)
+        ftpClient.storeFile(file!!.getName().replace(file!!.getName(), fileName!!), buffIn)
 
         buffIn.close()
         ftpClient.logout()
         ftpClient.disconnect()
 
-    }
-
-
-    @Throws(IOException::class)
-    fun request(uri: String): String {
-        val ab = StringBuilder()
-        val url = URL(uri)
-        val conn = url.openConnection() as HttpURLConnection
-        try {
-
-            while (true){
-
-                val inStr = BufferedInputStream(conn.inputStream)
-                val bf = BufferedReader(InputStreamReader(inStr))
-
-                val inputLine: String? = bf.readLine()
-                if (inputLine!! != "")
-                    break
-                ab.append(inputLine)
-                println("async: request complete ")
-            }
-
-        } finally {
-            conn.disconnect()
-        }
-
-
-        return ab.toString()
     }
 
 }
