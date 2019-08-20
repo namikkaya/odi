@@ -19,10 +19,6 @@ import com.onesignal.OneSignal
 
 class upload_from_gallery : baseActivity(), odiInterface {
 
-    enum class UI_preloaderBar{
-        endless,
-        progress
-    }
 
     private val TAG:String = "upload_from_gallery"
     var videoUploadController: videoUploadViewModel? = null
@@ -40,11 +36,16 @@ class upload_from_gallery : baseActivity(), odiInterface {
     private lateinit var progressBarTitle: TextView
     private lateinit var  kayaProgressBar: CircularProgressBar
     private lateinit var endlessProgress: ProgressBar
+    private lateinit var testImage:ImageView
     // -- values
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_upload_from_gallery)
+
+
+        testImage = findViewById(R.id.testImage)
+
         navigationBarConfiguration()
         onGetIntentData()
         onGalleryConfiguration()
@@ -150,23 +151,30 @@ class upload_from_gallery : baseActivity(), odiInterface {
 
 
     private fun onSendButtonEvent() {
-        videoUploadController?.getImageUrlWithAuthority(this,selectedUri!!,processType!!)
+        videoUploadController?.getImageUrlWithAuthority("videoUpload", this,selectedUri!!, processType!!)
     }
 
+    /**
+     * Yükleme bilgisini döndüdür
+     * */
     override fun onUploadVideoStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
         super.onUploadVideoStatus(_id, _progress, _complete)
         if(!_complete!!) {
-            println("$TAG YÜKLEME DEVAM EDİYOR $_progress")
+            println("$TAG VİDEO YÜKLEME DEVAM EDİYOR $_progress")
         }else {
-            println("$TAG YÜKLEME TAMAMLANDI")
-
+            println("$TAG VİDEO YÜKLEME TAMAMLANDI")
+            println("$TAG İşlem bitti yahoooo")
         }
     }
 
-    private fun preloaderStatus(status:UI_preloaderBar) {
-        if (status == UI_preloaderBar.endless) {
-
+    override fun onUploadBitmapStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
+        super.onUploadBitmapStatus(_id, _progress, _complete)
+        if(!_complete!!) {
+            println("$TAG BİTMAP YÜKLEME DEVAM EDİYOR $_progress")
+        }else {
+            println("$TAG BİTMAP YÜKLEME TAMAMLANDI")
         }
     }
+
 
 }

@@ -18,6 +18,7 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
     private var uploadID:String? = null
     private var userID:String? = null
     private var type:nativePage? = null
+    private var uploadFileType:UPLOAD_FILE_TYPE? = null
     internal var holderBytes = 0
     private var returningRequestPath:String? = null
 
@@ -28,23 +29,30 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
         this.listener = listener
     }
 
-    override fun doInBackground(vararg params: async_upload_video?): String? { // vararg params: File?
-        println("async: doInBackground " + params[0])
-
+    override fun doInBackground(vararg params: async_upload_video?): String? {
         params[0]?._listener?.let { setDelegate(it) }
+
         uploadID = params[0]?._id
         userID = params[0]?.userId
         type = params[0]?.type
+        uploadFileType = params[0]?.uploadFileType
+
+        println("TİP: background $uploadFileType")
 
         var fileStringName:String = ""
         if (type == nativePage.uploadShowReel) {
-            returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=showreel&id="+userID+"&uzanti=mp4"
-            fileStringName = "showreel_" + userID + ".mp4"
+            if (uploadFileType == UPLOAD_FILE_TYPE.video) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4"
+                fileStringName = "showreel_$userID.mp4"
+            }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
+                returningRequestPath =
+                    "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4" // null da olabilir
+                fileStringName = "showreel_$userID.jpg"
+            }
         }else {
 
         }
-        resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null)
-
+        resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null, uploadFileType)
         uploadFile(params[0]?._uploadFile, fileStringName)
 
         return "upload"
@@ -71,7 +79,6 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
         println("async: onCancelled")
     }
 
-
     private fun uploadFile(file: File?, fileName:String) {
         val ftpClient = FTPClient()
         ftpClient.connect("ftp.odiapp.com.tr", 21)
@@ -80,28 +87,20 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
         ftpClient.setFileType(FTP.BINARY_FILE_TYPE)
 
         var buffIn: BufferedInputStream? = null
-        var buffIn1: BufferedInputStream? = null
 
         buffIn = BufferedInputStream(FileInputStream(file), 8192)
 
-        print("async: uploadFile: $file")
 
         streamListener = object : CopyStreamAdapter() {
 
             override fun bytesTransferred(totalBytesTransferred: Long, bytesTransferred: Int, streamSize: Long) {
                 super.bytesTransferred(totalBytesTransferred, bytesTransferred, streamSize)
-                //println("async: transfer : $totalBytesTransferred")
-
-
                 val myPercent = (totalBytesTransferred * 100 / (file!!.length()).toInt())
 
-                //String percentString = Integer.toString(myPercent);
-                //println("Yükleme:holder: $holderBytes percent: $myPercent")
-
                 if (holderBytes <= myPercent) {
-                    //println("async: Video yükleniyor... $holderBytes")
                     holderBytes = myPercent.toInt()
-                    progressDataModel = async_upload_video_complete(null,null,null,false, holderBytes)
+                    progressDataModel = async_upload_video_complete(null,null,null,false, holderBytes, uploadFileType)
+
                     listener?.uploadVideoAsyncTaskComplete(progressDataModel)
                 } else {
                     println("async: Video yükleniyor... Yükleme sonuçlandı")

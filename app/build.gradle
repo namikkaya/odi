@@ -76,4 +76,5 @@ dependencies {
 
     // circular progress bar
     implementation 'com.mikhaellopez:circularprogressbar:3.0.2'
+    implementation project(path: ':videocompressor')
 }

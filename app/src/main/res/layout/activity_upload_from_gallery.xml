@@ -82,6 +82,17 @@
     </LinearLayout>
 
     <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <ImageView
+                android:id="@+id/testImage"
+                android:layout_width="300dp"
+                android:layout_height="300dp"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
             android:id="@+id/progressBarContainer"
             android:clickable="true"
             android:gravity="center"

@@ -1,5 +1,6 @@
 package com.odi.beranet.beraodi.models
 
+import com.odi.beranet.beraodi.odiLib.UPLOAD_FILE_TYPE
 import com.odi.beranet.beraodi.odiLib.asyncUploadFile
 import com.odi.beranet.beraodi.odiLib.nativePage
 import com.odi.beranet.beraodi.odiLib.odiInterface
@@ -17,11 +18,20 @@ class Model_images {
     }
 }
 
-data class async_upload_video (val _id:String?, val _uploadFile: File?, val _listener: odiInterface, val type:nativePage, val userId:String) {
-}
+data class async_upload_video (val _id:String?,
+                               val _uploadFile: File?,
+                               val _listener: odiInterface,
+                               val type:nativePage,
+                               val userId:String,
+                               val uploadFileType:UPLOAD_FILE_TYPE) {}
 
 /**
  * _uploadStatus = true ise yükleme tamamlandı, false ise devam ediyor
  * _uploadProgress =  _uploadStatus true ise yükleme durumunu haber verir.
  * */
-data class async_upload_video_complete(val _id:String?, val _userId:String?, val requestPath:String?, val _uploadStatus:Boolean?, val _uploadProgress:Int?) {}
+data class async_upload_video_complete(val _id:String?,
+                                       val _userId:String?,
+                                       val requestPath:String?,
+                                       val _uploadStatus:Boolean?,
+                                       val _uploadProgress:Int?,
+                                       val _uploadFileType:UPLOAD_FILE_TYPE?) {}

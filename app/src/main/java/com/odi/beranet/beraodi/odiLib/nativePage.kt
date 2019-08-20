@@ -41,3 +41,17 @@ enum class SELECTED_CONTAINER {
     RIGHT_TOP,
     RIGHT_BOTTOM
 }
+
+enum class UI_preloaderBar{
+    endless,
+    progress
+}
+
+
+/***
+ * Yükleme yapılan durumun image mı yoksa video mu olduğu
+ */
+enum class UPLOAD_FILE_TYPE {
+    bitmap,
+    video
+}
