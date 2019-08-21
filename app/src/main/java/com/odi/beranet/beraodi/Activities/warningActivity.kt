@@ -1,4 +1,5 @@
 package com.odi.beranet.beraodi.Activities
+import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.widget.TextView
@@ -15,6 +16,7 @@ class warningActivity : baseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_warning)
+
 
         titleText = findViewById(R.id.warningTitleText)
         descriptionText = findViewById(R.id.warningDescriptionText)

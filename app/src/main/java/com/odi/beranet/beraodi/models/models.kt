@@ -35,3 +35,10 @@ data class async_upload_video_complete(val _id:String?,
                                        val _uploadStatus:Boolean?,
                                        val _uploadProgress:Int?,
                                        val _uploadFileType:UPLOAD_FILE_TYPE?) {}
+
+/**
+ * @param complete : eğer true giderse finish olacak
+ */
+data class progressData(val progress:Int?,
+                        val title:String?,
+                        val complete: Boolean?) {}

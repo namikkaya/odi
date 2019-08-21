@@ -6,6 +6,7 @@ import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
+import android.media.MediaScannerConnection
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Environment
@@ -121,7 +122,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         this.context = context
 
         val thumb = getThumbnail(uri)
-        _this.testImage.setImageBitmap(thumb)
 
         val thumbFile = bitmapToFile(thumb)
 
@@ -136,6 +136,8 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         return null
     }
 
+    // işlem bittiğinde en son bu dosya silinecek
+    var fileDeletedEnd_holder:File? = null
     fun videoUploadStart(context: Context, uri:Uri, type:nativePage) {
         val newListener = object: VideoCompress.CompressListener {
             override fun onStart() {
@@ -144,7 +146,35 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
             override fun onSuccess() {
                 println("Dinleyici : onSuccess")
-                videoProcess(context, uri, type)
+
+
+
+                //videoProcess(context, uri, type)
+
+                val extStore = Environment.getExternalStorageDirectory().absolutePath
+                val file = File ("$outputDir3.mp4")
+                val filePath = file.absolutePath
+                val fileUri = Uri.parse(extStore+file.toString())
+
+
+                if (file.exists()) {
+                    println("$TAG path: dosya var")
+                }else {
+                    println("$TAG path: dosya yok")
+                }
+
+                val getPath = file.path
+                println("$TAG path outputPath orj: $uri")
+                println("$TAG path outputPath dir3: $outputDir3")
+                println("$TAG path outputPath filepath: $filePath")
+                println("$TAG path outputPath file uri: $fileUri")
+                println("$TAG path outputPath file getPath: $getPath")
+                val path = Uri.parse(getPath)
+
+                fileDeletedEnd_holder = file
+
+                //videoProcess(context, path, type)
+                uploadFile(file,type,UPLOAD_FILE_TYPE.video)
             }
 
             override fun onFail() {
@@ -158,7 +188,9 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         }
 
 
-        VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri),outputDir3, newListener)
+        //VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
+        VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
+
     }
 
 
@@ -174,6 +206,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
             cursor?.close()
         }
     }
+
 
     private fun bitmapToFile(bitmap:Bitmap): File {
         val wrapper = ContextWrapper(_this.applicationContext)
@@ -199,8 +232,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
     // video işlemi yapılıyor
     private fun videoProcess(context: Context, uri:Uri, type:nativePage) {
-
-
         var inputStream:InputStream? = null
 
         if (uri.authority != null) {
@@ -301,6 +332,15 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                 ab.append(inputLine)
                 println("$TAG async: request complete ")
                 //listener?.onUploadVideoStatus(uploadId, null, true)
+
+                if (fileDeletedEnd_holder != null) {
+                    if (fileDeletedEnd_holder!!.exists()) {
+                        if (fileDeletedEnd_holder!!.delete()) {
+                            println("$TAG delete file: dosya başarı ile silindi")
+                        }
+                    }
+                }
+
                 listener?.onUploadVideoStatus(uploadId,null,true)
             }
 

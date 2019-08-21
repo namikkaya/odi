@@ -42,11 +42,6 @@ enum class SELECTED_CONTAINER {
     RIGHT_BOTTOM
 }
 
-enum class UI_preloaderBar{
-    endless,
-    progress
-}
-
 
 /***
  * Yükleme yapılan durumun image mı yoksa video mu olduğu
@@ -54,4 +49,15 @@ enum class UI_preloaderBar{
 enum class UPLOAD_FILE_TYPE {
     bitmap,
     video
+}
+
+/***
+ * Yükleme sayfasında karşıya yapılan yüklemenin preloaderının durumlarını haber verir
+ *
+ */
+enum class UI_PRELOADER {
+    bitmap,
+    video,
+    compress,
+    complete
 }

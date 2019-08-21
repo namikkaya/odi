@@ -312,21 +312,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             val selectedImageUri:Uri = data!!.data
 
-            val filemanagerstring = selectedImageUri.path
-
-
+            /*
             val selectedImagePath = getPath(selectedImageUri)
             if (selectedImagePath != null) {
                 println("$TAG video path: $selectedImagePath") // play etmek için
 
-            }
-
-            /*
-            //getImageUrlWithAuthority(this,selectedImageUri)
-            if (videoUploadController != null) {
-                videoUploadController?.getImageUrlWithAuthority(this, selectedImageUri, processType!!)
-            }
-            */
+            }*/
 
             val intent = Intent(this, upload_from_gallery::class.java)
             intent.putExtra("selectedPath", selectedImageUri.toString())

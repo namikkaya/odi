@@ -12,9 +12,7 @@ import android.widget.*
 import com.mikhaellopez.circularprogressbar.CircularProgressBar
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import com.odi.beranet.beraodi.R
-import com.odi.beranet.beraodi.odiLib.nativePage
-import com.odi.beranet.beraodi.odiLib.odiInterface
-import com.odi.beranet.beraodi.odiLib.singleton
+import com.odi.beranet.beraodi.odiLib.*
 import com.onesignal.OneSignal
 
 class upload_from_gallery : baseActivity(), odiInterface {
@@ -27,15 +25,12 @@ class upload_from_gallery : baseActivity(), odiInterface {
     private var processType: nativePage? = null
 
     //-- object
-    private var videoView:VideoView? = null
+    public var videoView:VideoView? = null
     private var mediaController: MediaController? = null
     private var progressBarContainer:RelativeLayout? = null
     private var myActionBar: ActionBar? = null
     private lateinit var cancelButton:Button
     private lateinit var sendButton:Button
-    private lateinit var progressBarTitle: TextView
-    private lateinit var  kayaProgressBar: CircularProgressBar
-    private lateinit var endlessProgress: ProgressBar
     private lateinit var testImage:ImageView
     // -- values
 
@@ -44,7 +39,7 @@ class upload_from_gallery : baseActivity(), odiInterface {
         setContentView(R.layout.activity_upload_from_gallery)
 
 
-        testImage = findViewById(R.id.testImage)
+        //testImage = findViewById(R.id.testImage)
 
         navigationBarConfiguration()
         onGetIntentData()
@@ -98,9 +93,6 @@ class upload_from_gallery : baseActivity(), odiInterface {
         progressBarContainer = findViewById(R.id.progressBarContainer)
         cancelButton = findViewById(R.id.uploadCancelButton) as Button
         sendButton = findViewById(R.id.uploadSendButton)
-        endlessProgress = findViewById(R.id.compressImage)
-
-        kayaProgressBar = findViewById(R.id.kayaProgressBar)
 
         cancelButton.setOnClickListener(clickListener)
         sendButton.setOnClickListener(clickListener)
@@ -151,30 +143,87 @@ class upload_from_gallery : baseActivity(), odiInterface {
 
 
     private fun onSendButtonEvent() {
-        videoUploadController?.getImageUrlWithAuthority("videoUpload", this,selectedUri!!, processType!!)
+
+        //videoUploadController?.getImageUrlWithAuthority("videoUpload", this,selectedUri!!, processType!!)
+        preloader(null,null)
     }
 
+
+    var preloaderIntent: Intent? = null
+    private fun preloader(_progress: Int?, title:String?) {
+        preloaderIntent = Intent(this, preloaderActivity::class.java)
+        preloaderIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        preloaderIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        //warningIntent?.putExtra("warningTitle", "Bağlantı Sorunu")
+        //warningIntent?.putExtra("warningDescription", "İnternet bağlantınızda problem var. Lütfen bağlantınızı kontrol edip tekrar deneyin.")
+        startActivity(preloaderIntent)
+
+    }
+
+    fun bro() {
+        println("$TAG bro tetiklendi")
+    }
     /**
      * Yükleme bilgisini döndüdür
      * */
     override fun onUploadVideoStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
         super.onUploadVideoStatus(_id, _progress, _complete)
-        if(!_complete!!) {
-            println("$TAG VİDEO YÜKLEME DEVAM EDİYOR $_progress")
+        preloaderManage(UI_PRELOADER.video,_progress,_complete)
+    }
+
+    override fun onUploadBitmapStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
+        super.onUploadBitmapStatus(_id, _progress, _complete)
+        preloaderManage(UI_PRELOADER.bitmap,_progress,_complete)
+    }
+
+    override fun onCompressVideoStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
+        super.onCompressVideoStatus(_id, _progress, _complete)
+        preloaderManage(UI_PRELOADER.compress,_progress,_complete)
+    }
+
+    private fun preloaderManage(status:UI_PRELOADER, progress:Int?, complete: Boolean?) {
+        when(status) {
+            UI_PRELOADER.video -> preloaderVideoUpload(progress, complete)
+            UI_PRELOADER.bitmap -> preloaderBitmapUpload(progress,complete)
+            UI_PRELOADER.compress -> preloaderVideoCompress(progress,complete)
+            else -> println("Problem oldu...")
+        }
+    }
+
+
+    private fun preloaderBitmapUpload(progress:Int?, complete:Boolean?) {
+        if(!complete!!) {
+            println("$TAG BİTMAP YÜKLEME DEVAM EDİYOR $progress")
+
+        }else {
+            println("$TAG BİTMAP YÜKLEME TAMAMLANDI")
+        }
+    }
+
+    private fun preloaderVideoCompress(progress: Int?, complete: Boolean?){
+        if(!complete!!) {
+            println("$TAG VİDEO COMPRESS EDİLİYOR $progress")
+        }else {
+            println("$TAG VİDEO COMPRESS BİTTİ")
+        }
+    }
+
+    // video upload bittiğinde complete geldiğinde işlemin tamamı bitmiş olur
+    private fun preloaderVideoUpload(progress: Int?, complete: Boolean?){
+        if(!complete!!) {
+            println("$TAG VİDEO YÜKLEME DEVAM EDİYOR $progress")
+
         }else {
             println("$TAG VİDEO YÜKLEME TAMAMLANDI")
             println("$TAG İşlem bitti yahoooo")
         }
     }
 
-    override fun onUploadBitmapStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
-        super.onUploadBitmapStatus(_id, _progress, _complete)
-        if(!_complete!!) {
-            println("$TAG BİTMAP YÜKLEME DEVAM EDİYOR $_progress")
-        }else {
-            println("$TAG BİTMAP YÜKLEME TAMAMLANDI")
+    private fun getContext() {
+
+        val act = singleton.preloaderContext as preloaderActivity
+        if (act != null) {
+            act.progressChangeData(null,null,null)
         }
     }
-
-
 }

@@ -1,5 +1,8 @@
 package com.odi.beranet.beraodi.odiLib
 
+import android.content.Context
+import android.support.v4.app.ActivityCompat
+
 class singleton {
     companion object {
         val FILE_UPLOAD_URL = "http://odi.odiapp.com.tr/profilupload.php"
@@ -13,5 +16,7 @@ class singleton {
          * kullanıcının odi id si
          */
         var userId:String? = null
+
+        var preloaderContext:Any? = null
     }
 }
