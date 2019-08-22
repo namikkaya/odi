@@ -22,6 +22,7 @@ import android.util.Log
 import android.util.Size
 import android.view.MotionEvent
 import android.view.View
+import android.view.WindowManager
 import android.widget.*
 import com.github.chrisbanes.photoview.PhotoView
 import com.odi.beranet.beraodi.MainActivity
@@ -92,6 +93,7 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_galery)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         userId = singleton.userId
         println("$TAG onCreate userId: $userId")
         uiActionBar()
@@ -202,24 +204,6 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
 
         val path = al_images[p2].getAl_imagepath()?.get(0)
 
-
-        /*
-        when (selectedImage) {
-            SELECTED_CONTAINER.LEFT -> {
-                val myBitmap = getBitmap(path!!, leftImage!!)
-                leftImage!!.setImageBitmap(myBitmap)
-            }
-            SELECTED_CONTAINER.RIGHT_TOP -> {
-                val myBitmap = getBitmap(path!!, rightTopImage!!)
-                rightTopImage!!.setImageBitmap(myBitmap)
-
-            }
-            SELECTED_CONTAINER.RIGHT_BOTTOM -> {
-                val myBitmap = getBitmap(path!!, rightBottomImage!!)
-                rightBottomImage!!.setImageBitmap(myBitmap)
-            }
-        }*/
-
         var ratio:Float? = null
 
         when (selectedImage) {
@@ -232,7 +216,6 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
                         if (height != null) {
                             ratio = height.toFloat() / width!!.toFloat()
                         }
-
 
                         val contentURI = Uri.fromFile(File(path))
                         val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
@@ -277,8 +260,6 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
                         if (height != null) {
                             ratio = height.toFloat() / width!!.toFloat()
                         }
-
-
                         val contentURI = Uri.fromFile(File(path))
                         val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
                         val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
@@ -488,7 +469,8 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
 
         //   bitmapFinal=addWaterMark(bitmapFinal);
 
-        val filename = "profil_+$userId+.jpg"
+        val filename = "profil_$userId.jpg"
+        println("$TAG filename : $filename")
         val sd = Environment.getExternalStorageDirectory()
         val dest = File(sd, filename)
 
@@ -498,7 +480,7 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
         try {
 
             val out = FileOutputStream(dest)
-            bitmapFinal.setPixel(bitmapFinal.getWidth() - 1, bitmapFinal.getHeight() - 1, PixelFormat.RGBA_8888)
+            bitmapFinal.setPixel(bitmapFinal.width - 1, bitmapFinal.height - 1, PixelFormat.RGBA_8888)
             bitmapFinal.compress(Bitmap.CompressFormat.JPEG, 100, out)
             out.flush()
             out.close()
@@ -506,14 +488,6 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
             MediaStore.Images.Media.insertImage(contentResolver, dest.absolutePath, dest.name, dest.name)
 
             filepath = dest.path
-
-
-            Thread(Runnable {
-                val multipart = MultipartUtility(singleton.FILE_UPLOAD_URL, "UTF-8")
-                multipart.delegate = this
-                multipart.addFilePart("image", File(filepath))
-                multipart.finish()
-            }).start()
 
 
             uploadProfilePhotoMessageHandler = object : Handler(Looper.getMainLooper()) {
@@ -529,6 +503,17 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
                     }
                 }
             }
+
+            Thread(Runnable {
+                val multipart = MultipartUtility(singleton.FILE_UPLOAD_URL, "UTF-8")
+                multipart.delegate = this
+                multipart.addFormField("website", "www.asd.com.tr")
+                multipart.addFormField("email", "abc@gmail.com")
+                multipart.addFilePart("image", File(filepath))
+                val responseserver = multipart.finish()
+                println("$TAG multipart response: $responseserver ")
+            }).start()
+
 
 
         } catch (e: Exception) {

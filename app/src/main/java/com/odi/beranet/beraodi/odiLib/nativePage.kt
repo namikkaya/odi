@@ -20,7 +20,9 @@ enum class Activity_Result (val value:Int) {
     PICK_PHOTO_FOR_AVATAR_RIGT_TOP(6), // gallery sayfası kolaj fotoları
     PICK_PHOTO_FOR_AVATAR_RIGT_BOT(7), // gallery sayfası kolaj fotoları
     PICK_VIDEO_FOR_UPLOAD_TANITIM(8), // video upload tanitim
-    PICK_VIDEO_FOR_UPLOAD_SHOWREEL(9) // Video upload showreal
+    PICK_VIDEO_FOR_UPLOAD_SHOWREEL(9), // Video upload showreal
+    PRELOADER_FINISH(10),
+    UPLOAD_VIDEO_PAGE_RESULT(11)
 }
 
 enum class Permission_Result(val value:Int) {

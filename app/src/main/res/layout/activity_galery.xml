@@ -42,7 +42,8 @@
                         android:layout_height="match_parent">
 
                     <com.github.chrisbanes.photoview.PhotoView
-
+                            android:soundEffectsEnabled="true"
+                            android:padding="1dp"
                             android:overScrollMode="ifContentScrolls"
                             android:id="@+id/LeftImage"
                             android:layout_weight="1"
@@ -74,6 +75,8 @@
                             android:orientation="vertical">
 
                         <com.github.chrisbanes.photoview.PhotoView
+                                android:soundEffectsEnabled="true"
+                                android:padding="1dp"
                                 android:overScrollMode="ifContentScrolls"
                                 android:id="@+id/RightTopImage"
                                 android:layout_weight="1"
@@ -96,6 +99,8 @@
                             android:orientation="vertical">
 
                         <com.github.chrisbanes.photoview.PhotoView
+                                android:soundEffectsEnabled="true"
+                                android:padding="1dp"
                                 android:overScrollMode="ifContentScrolls"
                                 android:id="@+id/RightBottomImage"
                                 android:layout_weight="1"

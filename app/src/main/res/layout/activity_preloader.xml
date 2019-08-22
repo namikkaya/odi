@@ -28,7 +28,7 @@
                     android:layout_height="80dp">
 
                 <com.mikhaellopez.circularprogressbar.CircularProgressBar
-                        android:id="@+id/kayaProgressBar"
+                        android:id="@+id/CircularProgressBarOBJ"
                         android:layout_width="80dp"
                         android:layout_height="80dp"
                         app:cpb_background_progressbar_color="#FFFFFF"
@@ -50,7 +50,7 @@
                         android:textAlignment="center"
                         android:layout_gravity="center"
                         android:textColor="@color/White"
-                        android:text="yükleniyor..ieau iea"
+                        android:text="İşlem başlıyor"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content" />
 

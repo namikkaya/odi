@@ -42,7 +42,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
     internal var outputDir2 =
         Environment.getExternalStorageDirectory().toString() + File.separator + "Odi_output" + File.separator + System.currentTimeMillis()
     internal var outputDir3 =
-        Environment.getExternalStorageDirectory().toString() + File.separator + "Odi_output_test" + File.separator + System.currentTimeMillis()
+        Environment.getExternalStorageDirectory().toString() + File.separator + System.currentTimeMillis()
     var videoUri:Uri? = null
     var pageType:nativePage? = null
     var context:Context? = null
@@ -127,12 +127,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
         uploadFile(thumbFile, pageType!!, UPLOAD_FILE_TYPE.bitmap)
 
-        /*
-        webView?.webViewClient = object : WebViewClient(){
-
-        }*/
-
-
         return null
     }
 
@@ -141,13 +135,9 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
     fun videoUploadStart(context: Context, uri:Uri, type:nativePage) {
         val newListener = object: VideoCompress.CompressListener {
             override fun onStart() {
-                println("Dinleyici : onStart")
             }
 
             override fun onSuccess() {
-                println("Dinleyici : onSuccess")
-
-
 
                 //videoProcess(context, uri, type)
 
@@ -173,21 +163,21 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
                 fileDeletedEnd_holder = file
 
+                listener?.onCompressVideoStatus(uploadId,null,true)
+
                 //videoProcess(context, path, type)
                 uploadFile(file,type,UPLOAD_FILE_TYPE.video)
             }
 
             override fun onFail() {
-                println("Dinleyici : onFail")
+                println("$TAG onFail---")
             }
 
             override fun onProgress(percent: Float) {
-                println("Dinleyici : onProgress: $percent")
+                listener?.onCompressVideoStatus(uploadId,percent.toInt(),false)
             }
 
         }
-
-
         //VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
         VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
 

@@ -1,6 +1,8 @@
 package com.odi.beranet.beraodi.odiLib
 
+import android.content.Intent
 import android.os.AsyncTask
+import android.os.Handler
 import com.odi.beranet.beraodi.models.async_upload_video
 import com.odi.beranet.beraodi.models.async_upload_video_complete
 import org.apache.commons.net.ftp.FTP
@@ -50,9 +52,23 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
                 fileStringName = "showreel_$userID.jpg"
             }
         }else {
-
+            if (uploadFileType == UPLOAD_FILE_TYPE.video) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
+                fileStringName = "tanitim_$userID.mp4"
+            }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
+                returningRequestPath =
+                    "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4" // null da olabilir
+                fileStringName = "tanitim_$userID.jpg"
+            }
         }
         resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null, uploadFileType)
+
+
+        /*
+        Thread(Runnable {
+
+        }).start()*/
+
         uploadFile(params[0]?._uploadFile, fileStringName)
 
         return "upload"
@@ -114,12 +130,11 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
 
         ftpClient.copyStreamListener = streamListener
 
-        ftpClient.storeFile(file!!.getName().replace(file!!.getName(), fileName!!), buffIn)
+        ftpClient.storeFile(file!!.name.replace(file!!.name, fileName!!), buffIn)
 
         buffIn.close()
         ftpClient.logout()
         ftpClient.disconnect()
-
     }
 
 }

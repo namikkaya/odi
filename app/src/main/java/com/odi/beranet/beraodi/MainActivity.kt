@@ -28,6 +28,10 @@ import android.content.pm.PackageManager
 import android.util.Log
 import com.odi.beranet.beraodi.Activities.upload_from_gallery
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
+import android.R.attr.data
+import android.support.v4.app.NotificationCompat.getExtras
+import android.os.Bundle
+import android.view.WindowManager
 
 
 class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
@@ -40,6 +44,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         private const val IMAGE_DIRECTORY = "/odi"
     }
 
+    // selected
 
     // -- object
     var webView:ClickableWebView? = null
@@ -56,15 +61,28 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     // -- Handler
     var uploadProfilePhotoMessageHandler:Handler? = null
 
-    // bu değişkene yapılacak işlem tutulur
+    // bu değişkene yapılacak işlem tutulur tanitim veya showreel
     var processType:nativePage? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         configuration()
+        onCheckFreeSpace()
     }
+
+    private fun onCheckFreeSpace() {
+        val stat = StatFs(Environment.getExternalStorageDirectory().path)
+        val bytesAvailable:Long = stat.blockSizeLong*stat.blockCountLong
+        val mbAvaible = bytesAvailable / (1024*1024)
+        println("$TAG boş alan: $mbAvaible")
+        if (mbAvaible <= 600) {
+            infoDialog("Yetersiz Disk Alanı", "Cihazınızın hafızası dolmak üzere. Yetersiz hafıza uygulamanın çalışmasını engelleyebilir ve çökmelere sebep olabilir. Lütfen cihazınızda bulunan gereksiz görsel ve dosyaları silerek yer açın. Eğer sorun devam ederse cihazınızı kapatıp açtıktan sonra tekrar deneyin.")
+        }
+    }
+
+
 
     var warningIntent:Intent? = null
     override fun internetConnectionStatus(status: Boolean) {
@@ -199,10 +217,20 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             nativePage.videoPlayer -> {
                 println(TAG + "videoPlayer aç")
+                val PathUri = Uri.parse(sendId)
+                val intent = Intent(Intent.ACTION_VIEW, PathUri)
+                intent.setDataAndType(PathUri, "video/*")
+                startActivity(intent)
             }
 
             nativePage.uploadTanitim -> {
                 println(TAG + "upload Tanitim")
+                videoUploadController?.check_writeRead_permission { status->
+                    if (status == true) {
+                        processType = nativePage.uploadTanitim
+                        openSelectVideo()
+                    }
+                }
             }
 
             nativePage.uploadShowReel -> { // SHOWREEL
@@ -263,7 +291,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (Permission_Result.UPLOAD_VIDEO_GALLERY.value == requestCode) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-
                 openSelectVideo()
             }else {
                 setResult(RESULT_OK)
@@ -302,7 +329,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
 
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
-            println("$TAG resultGalleryActivity: RELOADED")
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             webView?.reload()
         }
@@ -312,18 +338,22 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             val selectedImageUri:Uri = data!!.data
 
-            /*
-            val selectedImagePath = getPath(selectedImageUri)
-            if (selectedImagePath != null) {
-                println("$TAG video path: $selectedImagePath") // play etmek için
-
-            }*/
-
             val intent = Intent(this, upload_from_gallery::class.java)
             intent.putExtra("selectedPath", selectedImageUri.toString())
             intent.putExtra("processType", processType)
-            startActivityForResult(intent, Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value)
+            startActivityForResult(intent, Activity_Result.UPLOAD_VIDEO_PAGE_RESULT.value)
 
+        }
+
+        if(requestCode == Activity_Result.UPLOAD_VIDEO_PAGE_RESULT.value && resultCode == Activity.RESULT_OK){
+            if (data?.extras != null) {
+                val status = data?.extras.getString("STATUS")
+                if (status == "OKEY") {
+                    Toast.makeText(applicationContext, "İşlem Başarılı.", Toast.LENGTH_SHORT).show()
+                    webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
+                    webView?.reload()
+                }
+            }
         }
 
         if (resultCode == Activity.RESULT_OK) {
@@ -340,7 +370,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             val path = saveImage(bitmap)
             var myFile = File(path)
             sendProfilePhoto(myFile)
-
         } else {
             Toast.makeText(this, "Resim düzenlenirken bir hata oluştu.", Toast.LENGTH_SHORT).show()
         }
@@ -479,8 +508,9 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
     }
 
-
-
+    override fun onBackPressed() {
+        return
+    }
 
 
 
