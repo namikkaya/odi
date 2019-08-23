@@ -1,7 +1,6 @@
 package com.odi.beranet.beraodi.Activities
 
-import android.content.DialogInterface
-import android.content.Intent
+import android.content.*
 import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.ActionBar
@@ -14,14 +13,26 @@ import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.odiLib.*
 import com.onesignal.OneSignal
-import java.io.File
 import android.provider.MediaStore
 import android.provider.DocumentsContract
-import android.content.ContentUris
-import android.content.Context
 import android.database.Cursor
 import android.os.*
 import android.os.Environment.getExternalStorageDirectory
+import android.os.Environment.getExternalStorageDirectory
+import android.util.Log
+import java.io.*
+import java.util.*
+import java.nio.file.Files.exists
+import com.facebook.common.file.FileUtils.mkdirs
+import android.os.Environment.getExternalStorageDirectory
+import android.content.ContentValues
+import android.content.Intent
+
+
+
+
+
+
 
 
 class upload_from_gallery : baseActivity(), odiInterface {
@@ -39,16 +50,18 @@ class upload_from_gallery : baseActivity(), odiInterface {
     private var myActionBar: ActionBar? = null
     private lateinit var cancelButton:Button
     private lateinit var sendButton:Button
+
     // -- values
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_upload_from_gallery)
+        setContentView(com.odi.beranet.beraodi.R.layout.activity_upload_from_gallery)
 
         navigationBarConfiguration()
         onGetIntentData()
         onGalleryConfiguration()
         onUIDesignConfiguration()
+
     }
 
     var warningIntent: Intent? = null
@@ -127,6 +140,8 @@ class upload_from_gallery : baseActivity(), odiInterface {
             myFile.let {
                 if (myFile!!.exists()) {
                     println("$TAG fileSize: video dosyası bulundu")
+
+
                     val file_size = (myFile.length() / (1024 * 1024)).toString().toInt()
                     if (file_size > 50) {
                         sendButton.isClickable = false
@@ -146,6 +161,7 @@ class upload_from_gallery : baseActivity(), odiInterface {
         return myFile
 
     }
+
 
     val clickListener = View.OnClickListener { view ->
         when (view.id) {
@@ -172,6 +188,10 @@ class upload_from_gallery : baseActivity(), odiInterface {
         videoView?.pause()
         preloader()
         videoUploadController?.getImageUrlWithAuthority("videoUpload", this,selectedUri!!, processType!!)
+
+        val myFile = getUriToFile(selectedUri!!)
+        //saveVideo(myFile)
+        saveVideoGallery(myFile)
     }
 
 
@@ -276,6 +296,149 @@ class upload_from_gallery : baseActivity(), odiInterface {
             finish()
         }
     }
+
+    companion object {
+        private val ALLOWED_CHARACTERS = "0123456789qwertyuiopasdfghjklzxcvbnm"
+    }
+
+    private fun getRandomString(sizeOfRandomString: Int): String {
+        val random = Random()
+        val sb = StringBuilder(sizeOfRandomString)
+        for (i in 0 until sizeOfRandomString)
+            sb.append(ALLOWED_CHARACTERS[random.nextInt(ALLOWED_CHARACTERS.length)])
+        return sb.toString()
+    }
+
+    private val VIDEO_DIRECTORY = "/odiVideo"
+
+
+    private fun saveVideoGallery(filePath: File?) {
+
+        var randomName:String = getRandomString(8)
+        val values = ContentValues(3)
+        values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+        //values.put(MediaStore.Video.Media.TITLE, "odi_$randomName");
+        //values.put(MediaStore.Video.Media.DATA, filePath?.getAbsolutePath());
+        // values.put(MediaStore.Video.Media.DATA, f.getAbsolutePath());
+
+        // Add a new record (identified by uri) without the video, but with the values just set.
+        val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+
+        try {
+            val currentFile = filePath
+            var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + VIDEO_DIRECTORY)
+            var newfile = File(wallpaperDirectory, Calendar.getInstance().timeInMillis.toString() + ".mp4")
+
+
+            var inputStream: InputStream = FileInputStream(currentFile)
+            var output: OutputStream? = contentResolver.openOutputStream(uri)
+
+
+            val dir = newfile
+            if (!dir.exists()) {
+                dir.mkdirs()
+            }
+
+            var buffer = ByteArray(1024)
+            if (inputStream != null) {
+
+                while (true) {
+                    val read: Int? = inputStream?.read(buffer!!)
+                    if (read!! <= 0)
+                        break
+
+                    output?.write(buffer, 0, read)
+                }
+            }
+
+            inputStream?.close()
+
+
+            output?.flush()
+            output?.close()
+            output = null
+
+            //val newFile = File("$outputPath.mp4")
+            sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri))
+
+            if (newfile.exists()) {
+                println("Gallery: SAVE VIDEO video dosyası var bulundu")
+            } else {
+                println("Gallery: SAVE VIDEO video dosyası yok bulunamadı")
+            }
+
+        } catch (e: FileNotFoundException) {
+            Log.e("VideoComp", e.message)
+        } catch (e: java.lang.Exception) {
+            Log.e("VideoComp", e.message)
+        }
+    }
+
+    private fun saveVideo(filePath: File?) {
+        try {
+            val currentFile = filePath
+            var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + VIDEO_DIRECTORY)
+            var newfile = File(wallpaperDirectory, Calendar.getInstance().timeInMillis.toString() + ".mp4")
+
+
+            var inputStream: InputStream = FileInputStream(currentFile)
+            var output: OutputStream? = null
+
+
+            val dir = newfile
+            if (!dir.exists()) {
+                dir.mkdirs()
+            }
+
+            output = FileOutputStream(newfile)
+
+            var buffer = ByteArray(1024)
+            if (inputStream != null) {
+
+                while (true) {
+                    val read: Int? = inputStream?.read(buffer!!)
+                    if (read!! <= 0)
+                        break
+
+                    output?.write(buffer, 0, read)
+                }
+            }
+
+            inputStream?.close()
+
+
+            output?.flush()
+            output?.close()
+            output = null
+
+            //val newFile = File("$outputPath.mp4")
+
+            if (newfile.exists()) {
+                println("Gallery: SAVE VIDEO video dosyası var bulundu")
+            } else {
+                println("Gallery: SAVE VIDEO video dosyası yok bulunamadı")
+            }
+
+        } catch (e: FileNotFoundException) {
+            Log.e("VideoComp", e.message)
+        } catch (e: java.lang.Exception) {
+            Log.e("VideoComp", e.message)
+        }
+    }
+
+    fun getPath(uri: Uri): String? {
+        val projection = arrayOf(MediaStore.Video.Media.DATA)
+        val cursor = contentResolver.query(uri, projection, null, null, null)
+        if (cursor != null) {
+
+            val column_index = cursor
+                .getColumnIndexOrThrow(MediaStore.Video.Media.DATA)
+            cursor.moveToFirst()
+            return cursor.getString(column_index)
+        } else
+            return null
+    }
+
 }
 
 
@@ -431,4 +594,7 @@ object FilePath {
         return "com.google.android.apps.photos.content" == uri
             .authority
     }
+
+
+
 }

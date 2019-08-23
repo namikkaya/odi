@@ -23,12 +23,21 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
-        <activity android:name=".Activities.introActivity">
+        <activity android:name=".Activities.cameraActivity">
+        </activity>
+        <activity
+                android:name=".Activities.placeHolderPage"
+                android:screenOrientation="portrait"
+                android:theme="@style/AppTheme.Placeholder">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+        </activity>
+        <activity
+                android:name=".Activities.introActivity"
+                android:screenOrientation="portrait">
         </activity>
         <activity
                 android:name=".Activities.preloaderActivity"
@@ -53,7 +62,6 @@
         <activity
                 android:name=".MainActivity"
                 android:screenOrientation="portrait">
-
         </activity>
         <activity
                 android:name="com.yalantis.ucrop.UCropActivity"

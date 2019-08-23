@@ -27,4 +27,5 @@ class ApplicationClass: Application() {
             return instance!!.applicationContext
         }
     }
+
 }

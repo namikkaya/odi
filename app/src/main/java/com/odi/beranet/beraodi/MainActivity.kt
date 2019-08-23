@@ -31,13 +31,18 @@ import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import android.R.attr.data
 import android.support.v4.app.NotificationCompat.getExtras
 import android.os.Bundle
+import android.view.View
 import android.view.WindowManager
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
+import android.widget.RelativeLayout
+import android.webkit.WebViewClient as WebViewClient1
 
 
 class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
 
-    private val TAG:String = "-MainActivity: "
+    private val TAG: String? = MainActivity::class.qualifiedName
 
 
     companion object {
@@ -50,6 +55,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     var webView:ClickableWebView? = null
     var myActionBar:ActionBar? = null
     //var imageView: ImageView? = null
+    lateinit var myAnimationLayout:RelativeLayout
 
     // -- class
     var finder:textFinder? = null
@@ -70,6 +76,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         configuration()
         onCheckFreeSpace()
+
     }
 
     private fun onCheckFreeSpace() {
@@ -95,7 +102,8 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             startActivity(warningIntent)
         }else {
             // internet geldiğinde tekrar ettir.
-            oneSignalConfiguration()
+            println("$TAG oneSignalConfiguration internet")
+            //oneSignalConfiguration()
         }
     }
 
@@ -141,9 +149,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         }
     }
 
+    var animationStatus:Boolean = false
+
     // ui desing (web sayfası yükleniyor)
     private fun webViewConfiguration() {
         webView = findViewById(R.id.webView)
+        myAnimationLayout = findViewById(R.id.myAnimationLayout)
 
         webView?.let {
 
@@ -154,8 +165,32 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             webView?.settings?.allowFileAccess = true
             webView?.settings?.domStorageEnabled = true
 
-            webView?.webViewClient = object : WebViewClient(){
+            webView?.webViewClient = object : WebViewClient1(){
+                override fun onPageFinished(view: WebView?, url: String?) {
+                    super.onPageFinished(view, url)
+                    println("$TAG animation: onPageFinished")
+                    if (animationStatus) {
+                        animationStatus = false
+                        println("$TAG animation: start")
+                        val anim = AnimationUtils.loadAnimation(this@MainActivity, R.anim.animation_load_page)
+                        anim.setAnimationListener(object : Animation.AnimationListener {
+                            override fun onAnimationStart(animation: Animation) {
 
+                            }
+
+                            override fun onAnimationEnd(animation: Animation) {
+                                myAnimationLayout.setVisibility(View.GONE)
+                            }
+
+                            override fun onAnimationRepeat(animation: Animation) {
+
+                            }
+                        })
+
+                        myAnimationLayout.startAnimation(anim)
+                    }
+
+                }
             }
 
             // her click ten sonra finder a sorulur nereye gidileceği finder dan gelen dönüşe göre karar verilir.
@@ -176,6 +211,8 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }
         }
 
+
+
     }
 
 
@@ -185,6 +222,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         OneSignal.idsAvailable { userId, registrationId ->
             if (registrationId != null) {
                 System.out.println("$TAG onesignal userId: $userId")
+                animationStatus = true
                 webViewOnLoad(userId)
                 singleton.onesignal_playerId = userId
                 singleton.onesignal_registrationId = registrationId
@@ -192,6 +230,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }else {
                 // timer kurulacak...
                 println("$TAG oneSignalConfiguration: HATA player id alınamadı...")
+                animationStatus = true
                 webViewOnLoad(null)
             }
         }

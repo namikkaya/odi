@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:opacity="opaque"
+>
+    <item>
+        <shape>
+            <solid android:color="@color/colorAccent"/>
+        </shape>
+    </item>
+
+    <item
+            android:height="0dp"
+            android:gravity="top">
+        <shape android:shape="rectangle">
+            <solid android:color="?colorPrimary"/>
+        </shape>
+    </item>
+
+    <item android:top="20dp">
+        <bitmap android:src="@drawable/odi_logo" android:gravity="center_vertical|center_horizontal" />
+    </item>
+
+</layer-list>

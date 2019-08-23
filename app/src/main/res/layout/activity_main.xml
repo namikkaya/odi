@@ -23,6 +23,21 @@
 
         </com.ahmadnemati.clickablewebview.ClickableWebView>
     </LinearLayout>
+    <RelativeLayout
+            android:gravity="center"
+            android:id="@+id/myAnimationLayout"
+            android:background="@color/colorAccent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <ImageView
+                android:layout_marginTop="43dp"
+                android:foregroundGravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/splash"
+                android:scaleType="center"
+                android:background="@drawable/odi_logo" />
+    </RelativeLayout>
 
 
 
