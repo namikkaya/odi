@@ -15,9 +15,6 @@ import android.media.MediaScannerConnection
 import android.os.*
 import android.provider.MediaStore
 import android.support.annotation.NonNull
-import com.odi.beranet.beraodi.Activities.baseActivity
-import com.odi.beranet.beraodi.Activities.galeryActivity
-import com.odi.beranet.beraodi.Activities.warningActivity
 import com.odi.beranet.beraodi.odiLib.*
 import com.yalantis.ucrop.UCrop
 import java.io.*
@@ -26,7 +23,6 @@ import java.util.*
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
-import com.odi.beranet.beraodi.Activities.upload_from_gallery
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import android.R.attr.data
 import android.support.v4.app.NotificationCompat.getExtras
@@ -36,6 +32,7 @@ import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.RelativeLayout
+import com.odi.beranet.beraodi.Activities.*
 import android.webkit.WebViewClient as WebViewClient1
 
 
@@ -272,7 +269,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 }
             }
 
-            nativePage.uploadShowReel -> { // SHOWREEL
+            nativePage.uploadShowReel -> { // SHOWREEL upload için
                 // izin kontrollleri
                 videoUploadController?.check_writeRead_permission { status->
                     if (status == true) {
@@ -281,6 +278,16 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                     }
                 }
 
+            }
+
+            nativePage.cameraShowReel -> {
+                val intent = Intent(this, cameraActivity::class.java)
+                startActivityForResult(intent, Activity_Result.CAMERA_SHOW_REEL_RESULT.value)
+            }
+
+            nativePage.cameraIdentification -> {
+                val intent = Intent(this, cameraActivity::class.java)
+                startActivityForResult(intent, Activity_Result.CAMERA_TANITIM_RESULT.value)
             }
 
         }
@@ -365,6 +372,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         else if (requestCode == UCrop.REQUEST_CROP) {
             handleCropResult(data!!)
         }
+
 
 
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {

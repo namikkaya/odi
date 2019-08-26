@@ -81,4 +81,6 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828'
 
     implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
+
+    implementation 'pub.devrel:easypermissions:2.0.1'
 }

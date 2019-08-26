@@ -22,13 +22,16 @@ enum class Activity_Result (val value:Int) {
     PICK_VIDEO_FOR_UPLOAD_TANITIM(8), // video upload tanitim
     PICK_VIDEO_FOR_UPLOAD_SHOWREEL(9), // Video upload showreal
     PRELOADER_FINISH(10),
-    UPLOAD_VIDEO_PAGE_RESULT(11)
+    UPLOAD_VIDEO_PAGE_RESULT(11),
+    CAMERA_SHOW_REEL_RESULT(12),
+    CAMERA_TANITIM_RESULT(13)
 }
 
 enum class Permission_Result(val value:Int) {
     GALLERY(2),
     CAMERA_CAPTURE(1),
-    UPLOAD_VIDEO_GALLERY(3)
+    UPLOAD_VIDEO_GALLERY(3),
+    CAMERA_PERMISSION(4)
 
 }
 

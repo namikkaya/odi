@@ -23,7 +23,10 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
-        <activity android:name=".Activities.cameraActivity">
+        <activity
+                android:windowSoftInputMode="adjustResize"
+                android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
+                android:name=".Activities.cameraActivity">
         </activity>
         <activity
                 android:name=".Activities.placeHolderPage"
