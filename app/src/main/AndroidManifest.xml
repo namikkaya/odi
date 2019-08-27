@@ -9,10 +9,10 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
-    <uses-feature
-            android:name="android.hardware.camera"
-            android:required="true"/>
+    <uses-feature android:name="android.hardware.camera" android:required="true"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" />
 
     <application
             android:name=".ApplicationClass"
@@ -24,6 +24,7 @@
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
         <activity
+                android:configChanges="orientation"
                 android:windowSoftInputMode="adjustResize"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
                 android:name=".Activities.cameraActivity">

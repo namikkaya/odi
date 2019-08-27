@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.DialogInterface
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
@@ -12,6 +13,7 @@ import android.support.v4.content.ContextCompat
 import android.support.v4.view.ViewPager
 import android.view.View
 import android.view.WindowManager
+import android.widget.Toast
 import com.odi.beranet.beraodi.Activities.cameraActivityFragments.previewFragment
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.odiLib.Activity_Result
@@ -32,13 +34,13 @@ class cameraActivity() : AppCompatActivity(), ViewPager.OnPageChangeListener, pr
 
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
         window.decorView.apply {
-            systemUiVisibility = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
+            systemUiVisibility = /*View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or*/
                     View.SYSTEM_UI_FLAG_FULLSCREEN or
                     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         }
 
-        val cameraFragment = previewFragment()
+        val cameraFragment = previewFragment.newInstance()
         list.add(cameraFragment)
 
         viewPager = findViewById(R.id.viewPager)

@@ -5,13 +5,40 @@
              android:layout_height="match_parent"
              tools:context=".Activities.cameraActivityFragments.previewFragment">
 
-    <LinearLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
-        <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:text="TEST"/>
+    <FrameLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
         <TextureView
                 android:id="@+id/textureView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
-    </LinearLayout>
+    </FrameLayout>
+    <RelativeLayout
+            android:gravity="bottom"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
+        <LinearLayout
+                android:background="@color/blackTransparent"
+                android:layout_width="match_parent"
+                android:layout_height="90dp">
+
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+    <RelativeLayout
+            android:gravity="center|right"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <ImageButton
+                android:id="@+id/recordButton"
+                android:layout_marginRight="6dp"
+                android:background="@null"
+                android:src="@drawable/rec"
+                android:layout_width="60dp"
+                android:layout_height="60dp"/>
+
+    </RelativeLayout>
 
 </FrameLayout>
