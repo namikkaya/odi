@@ -25,6 +25,7 @@
             android:usesCleartextTraffic="true">
         <activity
                 android:configChanges="orientation"
+                android:screenOrientation="landscape"
                 android:windowSoftInputMode="adjustResize"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
                 android:name=".Activities.cameraActivity">

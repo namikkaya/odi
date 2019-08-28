@@ -7,23 +7,30 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Matrix
+import android.graphics.Point
+import android.graphics.RectF
 import android.graphics.SurfaceTexture
 import android.hardware.SensorManager
 import android.hardware.camera2.*
 import android.media.ImageReader
 import android.media.MediaRecorder
+import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
+import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory
 import android.support.v7.app.AppCompatActivity
 import android.util.*
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.ImageButton
+import com.facebook.drawee.drawable.RoundedBitmapDrawable
 import com.odi.beranet.beraodi.Activities.cameraActivity
 
 import com.odi.beranet.beraodi.R
@@ -46,6 +53,7 @@ class previewFragment : Fragment() {
     private var listener: previewFragmentInterface? = null
     private lateinit var textureView: TextureView
     private lateinit var recordButton: ImageButton
+    private lateinit var changeCameraButton: ImageButton
 
     private var isRecording = false
     private val MAX_PREVIEW_WIDTH:Int = 1280
@@ -53,13 +61,22 @@ class previewFragment : Fragment() {
     private lateinit var  captureSession: CameraCaptureSession
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
 
+    private var previewSize:Point? = null
+
     private lateinit var cameraDevice: CameraDevice
+
+    private var cameraPositionHolder: Camera_Position = Camera_Position.FRONT
+    enum class Camera_Position (val value:Int){
+        FRONT(CameraCharacteristics.LENS_FACING_FRONT),
+        BACK(CameraCharacteristics.LENS_FACING_BACK)
+    }
 
     private val deviceStateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(camera: CameraDevice) {
-            Log.d(TAG , "camera açıldı")
+            Log.d(TAG , "managerProblem ")
             if(camera != null) {
                 cameraDevice = camera
+
                 previewSession()
 
             }
@@ -69,6 +86,7 @@ class previewFragment : Fragment() {
         override fun onDisconnected(camera: CameraDevice) {
             Log.d(TAG, "camera device disconnected")
             camera.close()
+            cameraDevice.close()
         }
 
         override fun onError(camera: CameraDevice, error: Int) {
@@ -86,22 +104,34 @@ class previewFragment : Fragment() {
         activity?.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
 
-    private val mediaRecorder by lazy {
+
+    /*private val mediaRecorder by lazy {
         MediaRecorder()
-    }
+    }*/
+    private var mediaRecorder:MediaRecorder? = null
 
     private lateinit var currentVideoFilePath: String
 
     private fun previewSession() {
+        setupMediaRecorder()
         val surfaceTexture = textureView.surfaceTexture
 
         surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
         val surface = Surface(surfaceTexture)
 
-        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
-        captureRequestBuilder.addTarget(surface)
+        val recordSurface = mediaRecorder!!.surface
 
-        cameraDevice.createCaptureSession(Arrays.asList(surface),
+
+        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD) // TEMPLATE_PREVIEW
+        captureRequestBuilder.addTarget(surface)
+        captureRequestBuilder.addTarget(recordSurface)
+
+        val surfaces = ArrayList<Surface>().apply {
+            add(surface)
+            add(recordSurface)
+        }
+
+        cameraDevice.createCaptureSession(surfaces,
             object: CameraCaptureSession.StateCallback() {
                 override fun onConfigureFailed(session: CameraCaptureSession) {
                     Log.e(TAG, "creating capture session failed!")
@@ -110,56 +140,18 @@ class previewFragment : Fragment() {
                 override fun onConfigured(session: CameraCaptureSession) {
                     if (session != null) {
                         captureSession = session
-                        captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                        captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
+
+                        captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                        captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
                     }
                 }
             }, backgroundHandler)
     }
 
+
     private fun recordSession() {
-
-        setupMediaRecorder()
-
-
-        val surfaceTexture = textureView.surfaceTexture
-
-        surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
-        val textureSurface = Surface(surfaceTexture)
-        val recordSurface = mediaRecorder.surface
-
-        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD)
-        captureRequestBuilder.addTarget(textureSurface)
-        captureRequestBuilder.addTarget(recordSurface)
-
-        val surfaces = ArrayList<Surface>().apply {
-            add(textureSurface)
-            add(recordSurface)
-        }
-
-        cameraDevice.createCaptureSession(surfaces,
-            object: CameraCaptureSession.StateCallback() {
-                override fun onConfigureFailed(session: CameraCaptureSession) {
-                    Log.e(TAG, "creating record session failed!")
-                }
-
-                override fun onConfigured(session: CameraCaptureSession) {
-                    if (session != null) {
-                        captureSession = session
-                        captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-
-                        try{
-                            captureSession.setRepeatingRequest(captureRequestBuilder.build(), null, null)
-                        }catch (e:CameraAccessException){
-                            println("$TAG camera problem:  ${e.toString()}")
-                        }
-
-                        isRecording = true
-                        mediaRecorder.start()
-
-                    }
-                }
-            }, backgroundHandler)
+        isRecording = true
+        mediaRecorder!!.start()
     }
 
     private fun closeCamera() {
@@ -200,40 +192,75 @@ class previewFragment : Fragment() {
     }
 
     private fun setupMediaRecorder() {
+        if (mediaRecorder != null) {
+            mediaRecorder = null
+        }
+
+        mediaRecorder = MediaRecorder()
+        println("$TAG orientation: ${activity?.windowManager?.defaultDisplay?.rotation}")
+
         val rotation = activity?.windowManager?.defaultDisplay?.rotation
         val sensorOrientation = cameraCharacteristics(
-            cameraId(CameraCharacteristics.LENS_FACING_FRONT),
+            cameraId(cameraPositionHolder.value), //LENS_FACING_FRONT
             CameraCharacteristics.SENSOR_ORIENTATION
         )
 
         when(sensorOrientation) {
-            SENSOR_DEFAULT_ORIENTATION_DEGRESS ->
-                mediaRecorder.setOrientationHint(DEFAULT_ORIENTATION.get(rotation!!))
-            SENSOR_INVERSE_ORIENTATION_DEGRESS ->
-                mediaRecorder.setOrientationHint(INVERSE_ORIENTATION.get(rotation!!))
+            SENSOR_DEFAULT_ORIENTATION_DEGRESS -> {
+                if (Camera_Position.BACK == cameraPositionHolder) {
+                    mediaRecorder!!.setOrientationHint(INVERSE_ORIENTATION.get(rotation!!))
+                }else {
+                    mediaRecorder!!.setOrientationHint(DEFAULT_ORIENTATION.get(rotation!!))
+                }
+            }
+
+            SENSOR_INVERSE_ORIENTATION_DEGRESS -> {
+                mediaRecorder!!.setOrientationHint(INVERSE_ORIENTATION.get(rotation!!))
+            }
         }
 
-        mediaRecorder.apply {
+        mediaRecorder?.apply {
             setVideoSource(MediaRecorder.VideoSource.SURFACE)
+            setAudioSource(MediaRecorder.AudioSource.MIC)
+            setAudioEncodingBitRate(22050)
             setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+            setAudioChannels(2)
             setOutputFile(createVideoFile())
             setVideoEncodingBitRate(10000000)
             setVideoFrameRate(30)
-            setVideoSize(1920,1080)
+            setVideoSize(1280,720)
             setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
             prepare()
         }
     }
 
     private fun stopMediaRecorder() {
-        mediaRecorder.apply {
+        mediaRecorder?.apply {
             try {
                 stop()
                 reset()
+
+                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setAudioEncodingBitRate(22050)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioChannels(2)
+                setOutputFile(createVideoFile())
+                setVideoEncodingBitRate(10000000)
+                setVideoFrameRate(30)
+                setVideoSize(1280,720)
+                setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
+
+                prepare()
             }catch (e:IllegalStateException){
                 Log.e(TAG, e.toString())
             }
         }
+
     }
 
     private fun <T> cameraCharacteristics(cameraId:String, key:CameraCharacteristics.Key<T>) :T {
@@ -259,7 +286,9 @@ class previewFragment : Fragment() {
     }
 
     private fun connectCamera() {
-        val deviceId = cameraId(CameraCharacteristics.LENS_FACING_FRONT)
+
+
+        val deviceId = cameraId(cameraPositionHolder.value) // Front
         println("$TAG connectCamera: $deviceId")
         try {
             cameraManager.openCamera(deviceId, deviceStateCallback, backgroundHandler)
@@ -274,6 +303,7 @@ class previewFragment : Fragment() {
     val clickListener = View.OnClickListener { view ->
         when (view.id) {
             R.id.recordButton -> onRecordButtonEvent()
+            R.id.changeCamera -> onChangeCamera()
         }
     }
 
@@ -285,12 +315,47 @@ class previewFragment : Fragment() {
         }
     }
 
+    private fun transformImage(width:Int, height:Int) {
+
+        val displayMetrics = DisplayMetrics()
+        activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
+
+        var _width = displayMetrics.widthPixels
+        var _height = displayMetrics.heightPixels
+
+        previewSize = Point(_width,_height)
+        println("$TAG orientation: previewSize: width: ${previewSize!!.x} height: ${previewSize!!.y}")
+
+        if (previewSize == null || textureView == null) {
+            println("$TAG orientation: transformImage return ")
+            return
+        }
+        val matrix = Matrix()
+        val rotation = activity?.windowManager?.defaultDisplay?.rotation
+        val textureRectF = RectF(0F,0F,width.toFloat(),height.toFloat())
+        val previewRectF:RectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat()) // yan olduğu için x ve y yer değiştirir.
+
+        val centerX = textureRectF.centerX()
+        val centerY = textureRectF.centerY()
+        if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+            println("$TAG orientation: in if ")
+            previewRectF.offset(centerX-previewRectF.centerX(), centerY - previewRectF.centerY())
+            matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL)
+            val scale = Math.max(width.toFloat() / previewSize!!.x.toFloat(), height.toFloat() / previewSize!!.y.toFloat() )
+            matrix.postScale(scale,scale, centerX,centerY)
+            matrix.postRotate(90F*(rotation-2),centerX,centerY)
+        }
+
+        textureView.setTransform(matrix)
+
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         var view = inflater.inflate(R.layout.fragment_preview, container, false)
         println("$TAG onCreateView")
         textureView = view.findViewById(R.id.textureView)
         recordButton = view.findViewById(R.id.recordButton)
-
+        changeCameraButton = view.findViewById(R.id.changeCamera)
 
 
         val displayMetrics = DisplayMetrics()
@@ -314,6 +379,7 @@ class previewFragment : Fragment() {
         super.onActivityCreated(savedInstanceState)
 
         recordButton.setOnClickListener(clickListener)
+        changeCameraButton.setOnClickListener(clickListener)
     }
 
     override fun onAttach(context: Context) {
@@ -346,42 +412,90 @@ class previewFragment : Fragment() {
         private val SENSOR_DEFAULT_ORIENTATION_DEGRESS = 90
         private val SENSOR_INVERSE_ORIENTATION_DEGRESS = 270
         private val DEFAULT_ORIENTATION = SparseIntArray().apply {
-            append(Surface.ROTATION_0, 90)
-            append(Surface.ROTATION_90, 0)
-            append(Surface.ROTATION_180, 270)
-            append(Surface.ROTATION_270, 180)
-        }
-
-        private val INVERSE_ORIENTATION = SparseIntArray().apply {
             append(Surface.ROTATION_0, 270)
             append(Surface.ROTATION_90, 180)
             append(Surface.ROTATION_180, 90)
             append(Surface.ROTATION_270, 0)
         }
+
+        private val INVERSE_ORIENTATION = SparseIntArray().apply {
+            append(Surface.ROTATION_0, 90)
+            append(Surface.ROTATION_90, 0)
+            append(Surface.ROTATION_180, 270)
+            append(Surface.ROTATION_270, 180)
+        }
     }
 
     fun openCamera() {
         println("$TAG openCamera run")
-        checkGalleryPermission()
+        val displayMetrics = DisplayMetrics()
+        activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
 
+        var width = displayMetrics.widthPixels
+        var height = displayMetrics.heightPixels
+
+        previewSize = Point(width,height)
+
+        checkCameraPermission()
     }
 
     private fun startRecordSession() {
+
         recordSession()
     }
 
     private fun stopRecordSession() {
         stopMediaRecorder()
-        previewSession()
 
+        previewSession()
+        // thumbnail
+        //createRoundThumb() // bitmap olarak dönecek
     }
+
+    private fun createVideoThumb() = ThumbnailUtils.createVideoThumbnail(currentVideoFilePath, MediaStore.Video.Thumbnails.MICRO_KIND)
+    private fun createRoundThumb(): android.support.v4.graphics.drawable.RoundedBitmapDrawable {
+        val drawable = RoundedBitmapDrawableFactory.create(resources, createVideoThumb())
+        drawable.isCircular = true
+        return drawable
+    }
+
+    private fun onChangeCamera() {
+        println("$TAG onChangeCamera: click")
+        if (cameraPositionHolder == Camera_Position.FRONT) {
+            cameraPositionHolder = Camera_Position.BACK
+            removeCamera()
+            setupCamera()
+        }else {
+            cameraPositionHolder = Camera_Position.FRONT
+            removeCamera()
+            setupCamera()
+        }
+    }
+
+
 
     override fun onResume() {
         super.onResume()
+        setupCamera()
+    }
+
+    override fun onPause() {
+        removeCamera()
+        super.onPause()
+    }
+
+    private fun removeCamera() {
+        stopRecordSession()
+        stopBackgroundThread()
+        closeCamera()
+        mOrientationListener.disable()
+    }
+
+    private fun setupCamera() {
         startBackgroundThread()
-        println("$TAG onResume")
         if (textureView.isAvailable) {
             println("$TAG onResume textureView.isAvailable true openCamera")
+            transformImage(textureView.width, textureView.height)
             openCamera()
         } else {
             println("$TAG onResume textureView.isAvailable false textureview surface listener add")
@@ -389,33 +503,27 @@ class previewFragment : Fragment() {
         }
     }
 
-    override fun onPause() {
-        closeCamera()
-        stopBackgroundThread()
-        super.onPause()
-    }
-
     private val surfaceListener = object: TextureView.SurfaceTextureListener {
 
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
             Log.d(TAG, "textureSurface width: $width height: $height")
             println("$TAG textureSurface width: $width height: $height")
+            transformImage(width, height)
             openCamera()
         }
 
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?) = true
 
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
             println("$TAG textureSurface width: $width height: $height")
-
         }
 
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) = Unit
     }
 
-    private fun checkGalleryPermission() {
-        if (ContextCompat.checkSelfPermission(activity!!, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED ) {
+    private fun checkCameraPermission() {
+        if (ContextCompat.checkSelfPermission(activity!!, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(activity!!, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
             println("$TAG checkGalleryPermission: OKEY")
             connectCamera()
         } else {
@@ -428,7 +536,7 @@ class previewFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (Permission_Result.CAMERA_PERMISSION.value == requestCode) {
 
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 // izinler verilmiş devam
                 connectCamera()
 
@@ -461,14 +569,15 @@ class previewFragment : Fragment() {
     }
 
     private lateinit var mOrientationListener: OrientationEventListener
+
     private fun orientationListenerConfig() {
         mOrientationListener = object: OrientationEventListener(this@previewFragment.activity, SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
                 println("$TAG onOrientationChanged: $orientation")
                 if(resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE) {
-                    println("$TAG onOrientationChanged: Ekran kilidi")
+                    //println("$TAG onOrientationChanged: Ekran kilidi")
                 }else {
-                    println("$TAG onOrientationChanged: Ekran Açık")
+                    //println("$TAG onOrientationChanged: Ekran Açık")
                     var degrees = 0
                     when (orientation) {
                         Surface.ROTATION_0 -> degrees = 180
@@ -476,7 +585,6 @@ class previewFragment : Fragment() {
                         Surface.ROTATION_180 -> degrees = 0
                         Surface.ROTATION_270 -> degrees = 180
                     }
-
                 }
             }
         }
@@ -499,6 +607,26 @@ class previewFragment : Fragment() {
             startRecordSession()
             println("$TAG onRecordButtonEvent startRecording")
         }
+    }
+
+    private fun areDimensionsSwapped(displayRotation: Int, cameraCharacteristics: CameraCharacteristics): Boolean {
+        var swappedDimensions = false
+        when (displayRotation) {
+            Surface.ROTATION_0, Surface.ROTATION_180 -> {
+                if (cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 90 || cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 270) {
+                    swappedDimensions = true
+                }
+            }
+            Surface.ROTATION_90, Surface.ROTATION_270 -> {
+                if (cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 0 || cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 180) {
+                    swappedDimensions = true
+                }
+            }
+            else -> {
+                // invalid display rotation
+            }
+        }
+        return swappedDimensions
     }
 
 }

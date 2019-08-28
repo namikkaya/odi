@@ -17,9 +17,96 @@
             android:layout_height="match_parent">
 
         <LinearLayout
+                android:weightSum="100"
+                android:orientation="horizontal"
                 android:background="@color/blackTransparent"
                 android:layout_width="match_parent"
                 android:layout_height="90dp">
+
+            <LinearLayout
+                    android:layout_weight="10"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent">
+
+                <ImageButton
+                        android:background="@null"
+                        android:src="@drawable/textoff"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                    android:orientation="horizontal"
+                    android:layout_weight="80"
+                    android:weightSum="80"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent">
+
+                <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                    <!-- ic button container -->
+                    <LinearLayout
+                            android:weightSum="100"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                        <!-- kamera cevirme button -->
+                        <FrameLayout
+                                android:layout_weight="12"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+
+                            <ImageButton
+                                    android:id="@+id/changeCamera"
+                                    android:background="@null"
+                                    android:src="@drawable/changecamera"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"/>
+
+                        </FrameLayout>
+
+                        <!-- ses button -->
+                        <FrameLayout
+                                android:layout_weight="12"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+
+                        </FrameLayout>
+
+                    </LinearLayout>
+
+                    <!-- alt yazı Text-->
+                    <RelativeLayout
+                            android:visibility="invisible"
+                            android:clickable="false"
+                            android:background="@color/blackTransparent"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                    </RelativeLayout>
+
+
+                </FrameLayout>
+
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                    android:layout_weight="10"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent">
+
+                <ImageButton
+                        android:background="@null"
+                        android:src="@drawable/close"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"/>
+
+            </LinearLayout>
 
         </LinearLayout>
 
