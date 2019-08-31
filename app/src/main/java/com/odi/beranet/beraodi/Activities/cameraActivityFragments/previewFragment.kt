@@ -1,22 +1,18 @@
 package com.odi.beranet.beraodi.Activities.cameraActivityFragments
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Matrix
 import android.graphics.Point
 import android.graphics.RectF
 import android.graphics.SurfaceTexture
 import android.hardware.SensorManager
 import android.hardware.camera2.*
-import android.media.ImageReader
 import android.media.MediaRecorder
 import android.media.ThumbnailUtils
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -25,37 +21,63 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory
-import android.support.v7.app.AppCompatActivity
+import android.text.SpannableString
 import android.util.*
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.ImageButton
-import com.facebook.drawee.drawable.RoundedBitmapDrawable
-import com.odi.beranet.beraodi.Activities.cameraActivity
-
+import android.widget.RelativeLayout
+import android.widget.TextView
 import com.odi.beranet.beraodi.R
+import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.Permission_Result
-import com.odi.beranet.beraodi.odiLib.nativePage
-import pub.devrel.easypermissions.AfterPermissionGranted
-import pub.devrel.easypermissions.EasyPermissions
+import com.odi.beranet.beraodi.odiLib.odiMediaManager
+import com.odi.beranet.beraodi.odiLib.vibratePhone
 import java.io.File
 import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Semaphore
 import kotlin.collections.ArrayList
 
 private const val _this = "param1"
 
-class previewFragment : Fragment() {
+class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
+
+    interface previewFragmentInterface {
+        /**
+         * @param status => true ise uyarıyı aç false ise uyarıyı kapa
+         */
+        fun onPreviewFragment_orientationInfo(status: Boolean) {}
+
+        /**
+         * Camera close event
+         */
+        fun onPreviewFragment_closeEvent() {}
+    }
+
+    private var myMediaManager:odiMediaManager? = null
+
+    // desing
+    private var uiDesingHolder = UIDESIGN.NORMAL
+    enum class UIDESIGN {
+        NORMAL,
+        LOCK,
+        RECORDING,
+        ENDING
+    }
+
+    private var textContainerVisible:Boolean = false
     private val TAG: String? = "previewFragment"
     private var listener: previewFragmentInterface? = null
     private lateinit var textureView: TextureView
     private lateinit var recordButton: ImageButton
     private lateinit var changeCameraButton: ImageButton
-
-    private var isRecording = false
+    private lateinit var cameraCloseButton: ImageButton
+    private lateinit var textControlButton: ImageButton
+    private lateinit var textContainer: RelativeLayout
+    private lateinit var subtitleText: TextView
+    private var isRecording:Boolean = false
     private val MAX_PREVIEW_WIDTH:Int = 1280
     private val MAX_PREVIEW_HEIGT:Int = 720
     private lateinit var  captureSession: CameraCaptureSession
@@ -65,11 +87,23 @@ class previewFragment : Fragment() {
 
     private lateinit var cameraDevice: CameraDevice
 
+    private lateinit var mOrientationListener: OrientationEventListener
+
     private var cameraPositionHolder: Camera_Position = Camera_Position.FRONT
     enum class Camera_Position (val value:Int){
         FRONT(CameraCharacteristics.LENS_FACING_FRONT),
         BACK(CameraCharacteristics.LENS_FACING_BACK)
     }
+
+    /**
+     * ekran duruşunu simgeler
+     */
+    enum class Orientation_Status {
+        LAND_SCAPE,
+        OTHER
+    }
+
+    private var mOrientationStatus:Orientation_Status? = null
 
     private val deviceStateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(camera: CameraDevice) {
@@ -95,8 +129,6 @@ class previewFragment : Fragment() {
         }
     }
 
-
-
     private lateinit var backgroundThread: HandlerThread
     private lateinit var backgroundHandler: Handler
 
@@ -104,50 +136,56 @@ class previewFragment : Fragment() {
         activity?.getSystemService(Context.CAMERA_SERVICE) as CameraManager
     }
 
-
-    /*private val mediaRecorder by lazy {
-        MediaRecorder()
-    }*/
     private var mediaRecorder:MediaRecorder? = null
 
     private lateinit var currentVideoFilePath: String
 
     private fun previewSession() {
         setupMediaRecorder()
-        val surfaceTexture = textureView.surfaceTexture
 
-        surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
-        val surface = Surface(surfaceTexture)
+        try {
+            val surfaceTexture = textureView.surfaceTexture
 
-        val recordSurface = mediaRecorder!!.surface
+            surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
+            val surface = Surface(surfaceTexture)
 
+            val recordSurface = mediaRecorder!!.surface
 
-        captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD) // TEMPLATE_PREVIEW
-        captureRequestBuilder.addTarget(surface)
-        captureRequestBuilder.addTarget(recordSurface)
+            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD) // TEMPLATE_PREVIEW
+            captureRequestBuilder.addTarget(surface)
+            captureRequestBuilder.addTarget(recordSurface)
 
-        val surfaces = ArrayList<Surface>().apply {
-            add(surface)
-            add(recordSurface)
+            val surfaces = ArrayList<Surface>().apply {
+                add(surface)
+                add(recordSurface)
+            }
+
+            cameraDevice.createCaptureSession(surfaces,
+                object: CameraCaptureSession.StateCallback() {
+                    override fun onConfigureFailed(session: CameraCaptureSession) {
+                        Log.e(TAG, "creating capture session failed!")
+                    }
+
+                    override fun onConfigured(session: CameraCaptureSession) {
+                        if (session != null) {
+                            captureSession = session
+
+                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                            try{
+                                captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
+                            }catch (e:IllegalStateException){
+                                Log.e(TAG, e.toString()+ " - previewSession captureSession")
+                            }
+                        }
+                    }
+                }, backgroundHandler)
+        }catch (e:IllegalStateException){
+            Log.e(TAG, e.toString() + " - previewSession 2")
+        }catch (e:NullPointerException){
+            Log.e(TAG, e.toString() + " - previewSession 3")
         }
 
-        cameraDevice.createCaptureSession(surfaces,
-            object: CameraCaptureSession.StateCallback() {
-                override fun onConfigureFailed(session: CameraCaptureSession) {
-                    Log.e(TAG, "creating capture session failed!")
-                }
-
-                override fun onConfigured(session: CameraCaptureSession) {
-                    if (session != null) {
-                        captureSession = session
-
-                        captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
-                        captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
-                    }
-                }
-            }, backgroundHandler)
     }
-
 
     private fun recordSession() {
         isRecording = true
@@ -197,7 +235,6 @@ class previewFragment : Fragment() {
         }
 
         mediaRecorder = MediaRecorder()
-        println("$TAG orientation: ${activity?.windowManager?.defaultDisplay?.rotation}")
 
         val rotation = activity?.windowManager?.defaultDisplay?.rotation
         val sensorOrientation = cameraCharacteristics(
@@ -220,20 +257,32 @@ class previewFragment : Fragment() {
         }
 
         mediaRecorder?.apply {
-            setVideoSource(MediaRecorder.VideoSource.SURFACE)
-            setAudioSource(MediaRecorder.AudioSource.MIC)
-            setAudioEncodingBitRate(22050)
-            setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-            setAudioChannels(2)
-            setOutputFile(createVideoFile())
-            setVideoEncodingBitRate(10000000)
-            setVideoFrameRate(30)
-            setVideoSize(1280,720)
-            setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-            setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
 
-            prepare()
+            try {
+                setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setAudioEncodingBitRate(22050)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioChannels(2)
+                setOutputFile(createVideoFile())
+                setVideoEncodingBitRate(10000000)
+                setVideoFrameRate(30)
+                setVideoSize(1280,720)
+                setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
+                prepare()
+
+            }catch (e:IllegalStateException){
+                Log.e(TAG, e.toString() + " mediaRecorder 1")
+            }catch (e:java.lang.RuntimeException) {
+                Log.e(TAG, e.toString() + " mediaRecorder 2")
+            }
+
         }
+
+        /// orientation setup
+        orientationListenerConfig()
     }
 
     private fun stopMediaRecorder() {
@@ -257,7 +306,7 @@ class previewFragment : Fragment() {
 
                 prepare()
             }catch (e:IllegalStateException){
-                Log.e(TAG, e.toString())
+                Log.e(TAG, e.toString() + " stopMediaRecorder")
             }
         }
 
@@ -280,22 +329,24 @@ class previewFragment : Fragment() {
             val cameraIdList = cameraManager.cameraIdList
             deviceId = cameraIdList.filter { lens == cameraCharacteristics(it,CameraCharacteristics.LENS_FACING) }
         }catch (e:CameraAccessException){
-            Log.e(TAG, e.toString())
+            Log.e(TAG, e.toString() + " cameraId")
         }
         return deviceId[0]
     }
 
     private fun connectCamera() {
 
+        uiCameraDesing(UIDESIGN.NORMAL)
+        transformImage(textureView.width, textureView.height)
 
         val deviceId = cameraId(cameraPositionHolder.value) // Front
         println("$TAG connectCamera: $deviceId")
         try {
             cameraManager.openCamera(deviceId, deviceStateCallback, backgroundHandler)
         }catch (e:CameraAccessException) {
-            Log.e(TAG, e.toString())
+            Log.e(TAG, e.toString() + " - connectCamera")
         }catch (e: InterruptedException) {
-            Log.e(TAG, "open camera device interputed while error")
+            Log.e(TAG, e.toString() + " - connectCamera2")
         }
 
     }
@@ -304,6 +355,8 @@ class previewFragment : Fragment() {
         when (view.id) {
             R.id.recordButton -> onRecordButtonEvent()
             R.id.changeCamera -> onChangeCamera()
+            R.id.cameraCloseButton -> onCloseCameraButtonEvent()
+            R.id.textControlButton -> onTextControlButtonEvent()
         }
     }
 
@@ -333,7 +386,8 @@ class previewFragment : Fragment() {
         val matrix = Matrix()
         val rotation = activity?.windowManager?.defaultDisplay?.rotation
         val textureRectF = RectF(0F,0F,width.toFloat(),height.toFloat())
-        val previewRectF:RectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat()) // yan olduğu için x ve y yer değiştirir.
+
+        var previewRectF:RectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat()) // yan olduğu için x ve y yer değiştirir.
 
         val centerX = textureRectF.centerX()
         val centerY = textureRectF.centerY()
@@ -356,7 +410,10 @@ class previewFragment : Fragment() {
         textureView = view.findViewById(R.id.textureView)
         recordButton = view.findViewById(R.id.recordButton)
         changeCameraButton = view.findViewById(R.id.changeCamera)
-
+        cameraCloseButton = view.findViewById(R.id.cameraCloseButton)
+        textControlButton = view.findViewById(R.id.textControlButton)
+        textContainer = view.findViewById(R.id.textViewContainer)
+        subtitleText = view.findViewById(R.id.subtitleTextView)
 
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -371,15 +428,18 @@ class previewFragment : Fragment() {
 
         textureView.layoutParams = params
 
-        orientationListenerConfig()
+
+        uiCameraDesing(UIDESIGN.LOCK)
+
         return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-
         recordButton.setOnClickListener(clickListener)
         changeCameraButton.setOnClickListener(clickListener)
+        cameraCloseButton.setOnClickListener(clickListener)
+        textControlButton.setOnClickListener(clickListener)
     }
 
     override fun onAttach(context: Context) {
@@ -394,10 +454,6 @@ class previewFragment : Fragment() {
     override fun onDetach() {
         super.onDetach()
         listener = null
-    }
-
-    interface previewFragmentInterface {
-        fun onFragmentInteraction(uri: Uri) {}
     }
 
     companion object {
@@ -427,20 +483,17 @@ class previewFragment : Fragment() {
     }
 
     fun openCamera() {
-        println("$TAG openCamera run")
+
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
-
         var width = displayMetrics.widthPixels
         var height = displayMetrics.heightPixels
-
         previewSize = Point(width,height)
 
         checkCameraPermission()
     }
 
     private fun startRecordSession() {
-
         recordSession()
     }
 
@@ -460,7 +513,7 @@ class previewFragment : Fragment() {
     }
 
     private fun onChangeCamera() {
-        println("$TAG onChangeCamera: click")
+        vibratePhone()
         if (cameraPositionHolder == Camera_Position.FRONT) {
             cameraPositionHolder = Camera_Position.BACK
             removeCamera()
@@ -472,8 +525,6 @@ class previewFragment : Fragment() {
         }
     }
 
-
-
     override fun onResume() {
         super.onResume()
         setupCamera()
@@ -482,6 +533,16 @@ class previewFragment : Fragment() {
     override fun onPause() {
         removeCamera()
         super.onPause()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        removeCamera()
+        if (myMediaManager != null) {
+            myMediaManager?.stopAnimation()
+            myMediaManager = null
+        }
+
     }
 
     private fun removeCamera() {
@@ -495,7 +556,6 @@ class previewFragment : Fragment() {
         startBackgroundThread()
         if (textureView.isAvailable) {
             println("$TAG onResume textureView.isAvailable true openCamera")
-            transformImage(textureView.width, textureView.height)
             openCamera()
         } else {
             println("$TAG onResume textureView.isAvailable false textureview surface listener add")
@@ -528,7 +588,8 @@ class previewFragment : Fragment() {
             connectCamera()
         } else {
             println("$TAG checkGalleryPermission: FAIL")
-            ActivityCompat.requestPermissions(activity!!, arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO), Permission_Result.CAMERA_PERMISSION.value)
+            ActivityCompat.requestPermissions(activity!!, arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO),
+                Permission_Result.CAMERA_PERMISSION.value)
         }
     }
 
@@ -536,14 +597,12 @@ class previewFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (Permission_Result.CAMERA_PERMISSION.value == requestCode) {
 
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 // izinler verilmiş devam
                 connectCamera()
-
             }else {
                 val alert = AlertDialog.Builder(activity)
-
-                // Başlık
                 alert.setTitle("İzinler")
                 alert.setMessage("Kamera ve Ses kayıt için izin vermezseniz odi için bu özelliği kullanamazsınız.")
                 alert.setCancelable(false)
@@ -552,39 +611,17 @@ class previewFragment : Fragment() {
                 }
                 alert.show()
             }
-
         }
     }
-
-    override fun onConfigurationChanged(newConfig: Configuration?) {
-        super.onConfigurationChanged(newConfig)
-        val currentOrientation = resources.configuration.orientation
-
-        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE){
-           Log.v("TAG","Landscape !!!");
-        }
-        else {
-           Log.v("TAG","Portrait !!!");
-       }
-    }
-
-    private lateinit var mOrientationListener: OrientationEventListener
 
     private fun orientationListenerConfig() {
         mOrientationListener = object: OrientationEventListener(this@previewFragment.activity, SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
-                println("$TAG onOrientationChanged: $orientation")
-                if(resources.configuration.orientation != Configuration.ORIENTATION_LANDSCAPE) {
-                    //println("$TAG onOrientationChanged: Ekran kilidi")
+                var degrees = 0
+                if (orientation in 235..305) { // arasında
+                    rotationStatus(Orientation_Status.LAND_SCAPE)
                 }else {
-                    //println("$TAG onOrientationChanged: Ekran Açık")
-                    var degrees = 0
-                    when (orientation) {
-                        Surface.ROTATION_0 -> degrees = 180
-                        Surface.ROTATION_90 -> degrees = 0
-                        Surface.ROTATION_180 -> degrees = 0
-                        Surface.ROTATION_270 -> degrees = 180
-                    }
+                    rotationStatus(Orientation_Status.OTHER)
                 }
             }
         }
@@ -598,35 +635,116 @@ class previewFragment : Fragment() {
     }
 
     private fun onRecordButtonEvent() {
+        vibratePhone()
         if (isRecording) {
             isRecording = false
             stopRecordSession()
-            println("$TAG onRecordButtonEvent stopRecording")
+            Log.d(TAG, "stopRecording")
         }else {
             isRecording = true
             startRecordSession()
-            println("$TAG onRecordButtonEvent startRecording")
+            Log.d(TAG, "startRecording")
         }
     }
 
-    private fun areDimensionsSwapped(displayRotation: Int, cameraCharacteristics: CameraCharacteristics): Boolean {
-        var swappedDimensions = false
-        when (displayRotation) {
-            Surface.ROTATION_0, Surface.ROTATION_180 -> {
-                if (cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 90 || cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 270) {
-                    swappedDimensions = true
-                }
-            }
-            Surface.ROTATION_90, Surface.ROTATION_270 -> {
-                if (cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 0 || cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION) == 180) {
-                    swappedDimensions = true
-                }
-            }
-            else -> {
-                // invalid display rotation
-            }
-        }
-        return swappedDimensions
+    private fun onCloseCameraButtonEvent() {
+        listener?.onPreviewFragment_closeEvent()
     }
 
+    private fun onTextControlButtonEvent() {
+        vibratePhone()
+        if (textContainer.visibility == View.VISIBLE) {
+            //textContainer.visibility = View.INVISIBLE
+            textControlButton.setImageResource(R.drawable.textoff)
+            textContainerVisible = false
+        }else {
+            //textContainer.visibility = View.VISIBLE
+            textControlButton.setImageResource(R.drawable.texton)
+            textContainerVisible = true
+        }
+    }
+
+    private fun rotationStatus(status:Orientation_Status) {
+        if (mOrientationStatus != null) {
+            if (status != mOrientationStatus) {
+                // yeni bir hareket
+                mOrientationStatus = status
+                activityOrientationDesing(mOrientationStatus)
+            }
+        }else {
+            // yeni bir hareket
+            mOrientationStatus = status
+            activityOrientationDesing(mOrientationStatus)
+        }
+
+    }
+
+    private fun activityOrientationDesing(desingStatus: Orientation_Status?) {
+        if (isRecording) {
+            return
+        }
+        when(desingStatus) {
+            Orientation_Status.LAND_SCAPE -> {
+                println("$TAG rotation: EKRAN AÇIK")
+                listener?.onPreviewFragment_orientationInfo(false)
+            }
+            Orientation_Status.OTHER -> {
+                println("$TAG rotation: EKRAN KAPALI")
+                listener?.onPreviewFragment_orientationInfo(true)
+            }
+        }
+    }
+
+    private fun buttonEnabled(status:Boolean) {
+        recordButton.isEnabled = status
+        changeCameraButton.isEnabled = status
+        if (status) {
+            recordButton.alpha = 1F
+            changeCameraButton.alpha = 1F
+        }else {
+            recordButton.alpha = 0.5F
+            changeCameraButton.alpha = 0.5F
+        }
+    }
+
+    private fun uiCameraDesing(status:UIDESIGN) {
+        when(status){
+            UIDESIGN.NORMAL -> {
+                uiDesingHolder = UIDESIGN.NORMAL
+                buttonEnabled(true)
+            }
+            UIDESIGN.RECORDING -> {
+                uiDesingHolder = UIDESIGN.RECORDING
+                buttonEnabled(true)
+
+            }
+            UIDESIGN.ENDING -> {
+                uiDesingHolder = UIDESIGN.ENDING
+
+            }
+            UIDESIGN.LOCK -> {
+                uiDesingHolder = UIDESIGN.LOCK
+                buttonEnabled(false)
+            }
+        }
+    }
+
+    // datalar indiriliyor ...
+    fun getData(dataList:playlistDataModel){
+        println("$TAG getData: ${dataList.type}")
+        myMediaManager = odiMediaManager(dataList)
+        myMediaManager!!.listener = this
+        myMediaManager!!.start()
+    }
+
+    override fun odiMediaManagerListener_monologText(subtitle: SpannableString?) {
+        super.odiMediaManagerListener_monologText(subtitle)
+        subtitleText.setText(subtitle,TextView.BufferType.SPANNABLE)
+        println("$TAG odiMediaManagerListener_monologText : $subtitle")
+    }
+
+    override fun odiMediaManagerListener_monologTextComplete() {
+        super.odiMediaManagerListener_monologTextComplete()
+        println("$TAG ÇEKİM BİTTİ")
+    }
 }

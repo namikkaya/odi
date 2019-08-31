@@ -287,6 +287,8 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             nativePage.cameraIdentification -> {
                 val intent = Intent(this, cameraActivity::class.java)
+                intent.putExtra("userId", buttonId)
+                intent.putExtra("projectId", sendId)
                 startActivityForResult(intent, Activity_Result.CAMERA_TANITIM_RESULT.value)
             }
 

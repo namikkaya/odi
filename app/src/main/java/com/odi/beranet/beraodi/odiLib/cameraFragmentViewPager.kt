@@ -11,6 +11,7 @@ class cameraFragmentViewPager(fragmentManager: FragmentManager, val list:ArrayLi
     private var mCurrentFragment: Fragment? = null
 
     override fun getItem(p0: Int): Fragment {
+        mCurrentFragment = list[p0]
         return list[p0]
     }
 

@@ -20,5 +20,41 @@
         </android.support.v4.view.ViewPager>
 
     </LinearLayout>
+    <RelativeLayout
+            android:id="@+id/orientationInfo"
+            android:visibility="invisible"
+            android:background="@color/blackTransparentDark"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+        <LinearLayout
+                android:rotation="-90"
+                android:layout_marginRight="@dimen/standartMargin1"
+                android:layout_marginLeft="@dimen/standartMargin1"
+                android:orientation="vertical"
+                android:layout_width="240dp"
+                android:layout_height="wrap_content">
+
+            <TextView
+                    android:textSize="@dimen/orientationTextSize"
+                    android:textColor="@color/White"
+                    android:textAlignment="center"
+                    android:text="@string/cameraOrientationDesc1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+            <TextView
+                    android:layout_marginTop="@dimen/standartMargin1"
+                    android:textSize="@dimen/orientationTextSize"
+                    android:textColor="@color/White"
+                    android:textAlignment="center"
+                    android:text="@string/cameraOrientationDesc2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>

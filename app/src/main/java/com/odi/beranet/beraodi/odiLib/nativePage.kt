@@ -47,6 +47,12 @@ enum class SELECTED_CONTAINER {
     RIGHT_BOTTOM
 }
 
+enum class RECORD_TYPE {
+    MONOLOG,
+    DIALOG,
+    PLAYMODE
+}
+
 
 /***
  * Yükleme yapılan durumun image mı yoksa video mu olduğu

@@ -29,8 +29,9 @@
                     android:layout_height="match_parent">
 
                 <ImageButton
+                        android:id="@+id/textControlButton"
                         android:background="@null"
-                        android:src="@drawable/textoff"
+                        android:src="@drawable/texton"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
 
@@ -80,11 +81,25 @@
 
                     <!-- alt yazı Text-->
                     <RelativeLayout
-                            android:visibility="invisible"
+                            android:id="@+id/textViewContainer"
+
                             android:clickable="false"
                             android:background="@color/blackTransparent"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent">
+
+                        <TextView
+                                android:text="TEST"
+                                android:scrollbars = "vertical"
+                                android:id="@+id/subtitleTextView"
+                                android:layout_width="match_parent"
+                                android:layout_height="90dp"
+                                android:fontFamily="sans-serif"
+                                android:gravity="top|center"
+                                android:textColor="@android:color/white"
+                                android:textSize="19sp"
+                                android:textStyle="normal"
+                        />
 
                     </RelativeLayout>
 
@@ -101,6 +116,7 @@
                     android:layout_height="match_parent">
 
                 <ImageButton
+                        android:id="@+id/cameraCloseButton"
                         android:background="@null"
                         android:src="@drawable/close"
                         android:layout_width="match_parent"

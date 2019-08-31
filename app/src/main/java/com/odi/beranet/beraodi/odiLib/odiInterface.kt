@@ -32,4 +32,5 @@ interface odiInterface {
 
     fun onProgressCallBack(progress:Int?, complete:Boolean?) {}
 
+    fun onCameraActivity_playlistSoundComplete(index:Int?) {}
 }

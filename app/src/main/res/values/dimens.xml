@@ -6,4 +6,6 @@
     <dimen name="warningTextTitleTextSize">20sp</dimen>
     <dimen name="warningTextDescriptionSize">18sp</dimen>
     <dimen name="warningContentMargin">16dp</dimen>
+    <dimen name="standartMargin1">8dp</dimen>
+    <dimen name="orientationTextSize">16sp</dimen>
 </resources>

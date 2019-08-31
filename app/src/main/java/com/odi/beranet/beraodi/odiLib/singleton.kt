@@ -18,5 +18,6 @@ class singleton {
         var userId:String? = null
 
         var preloaderContext:Any? = null
+
     }
 }
