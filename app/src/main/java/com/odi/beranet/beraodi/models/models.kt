@@ -62,11 +62,18 @@ data class progressData(val progress:Int?,
  */
 data class playlistItemDataModel(val index:Int?,
                                  val text:String?,
-                                 val duration:Int?,
+                                 var duration:Long?,
                                  val soundFile:String?,
                                  val type:String?,
                                  val context: Activity,
-                                 val listener:odiInterface?) {
+                                 val listener:odiInterface?): MediaPlayer.OnPreparedListener {
+
+
+    override fun onPrepared(mp: MediaPlayer?) {
+        println("playlistItemDataModel: onPrepared ${mp?.duration}")
+        duration = mp?.duration?.toLong()
+
+    }
 
     private var mediaPlayer:MediaPlayer? = null
     internal var handler = Handler()
@@ -80,10 +87,16 @@ data class playlistItemDataModel(val index:Int?,
         }
     }
 
+    public fun mediaPlayerSetVolume(volume:Float) {
+        if (mediaPlayer != null || soundFile != "") {
+            mediaPlayer?.setVolume(volume,volume)
+        }
+    }
+
     init {
         println("playlistItemDataModel: init")
 
-        if (soundFile != null) {
+        if (soundFile != null && duration == null) {
             mediaPlayer = MediaPlayer()
 
             if (Build.VERSION.SDK_INT >= 21) {
@@ -98,25 +111,41 @@ data class playlistItemDataModel(val index:Int?,
             }
 
             try {
+
+                println("playlistItemDataModel: init soundFile: ->: $soundFile")
                 mediaPlayer?.reset()
-                mediaPlayer?.setDataSource(context, Uri.parse(soundFile))
-                mediaPlayer?.prepare()
+                mediaPlayer?.setDataSource(context, Uri.parse("http://odi.odiapp.com.tr/img/$soundFile"))
+                //mediaPlayer?.prepare()
+                mediaPlayer?.setVolume(1f,1f)
                 mediaPlayer?.prepareAsync()
 
                 mediaPlayer?.setOnPreparedListener {
                     handler.post(Runnable {
                         // çalmaya hazır olduğunu beyan eder.
-                        listener?.onCameraActivity_playlistSoundComplete(index)
+
+
+                        val dur = mediaPlayer?.duration!!
+                        this.duration = dur.toLong()
+
+                        println("playlistItemDataModel: init duration ->: duration: $dur")
+                        listener?.onCameraActivity_playlistSoundComplete(index,duration)
                     })
                 }
 
             }catch (e:IllegalArgumentException) {
                 e.printStackTrace()
+                println("playlistItemDataModel: IllegalArgumentException")
             } catch (e:IllegalStateException) {
                 e.printStackTrace()
+                println("playlistItemDataModel: IllegalStateException")
             } catch (e: IOException) {
                 e.printStackTrace()
+                println("playlistItemDataModel: IOException")
             }
+
+
+        }else {
+            this.duration = (this.duration!!*1000).toLong()
         }
     }
 }
@@ -128,6 +157,6 @@ data class playlistItemDataModel(val index:Int?,
  */
 data class playlistDataModel(val type:RECORD_TYPE?, val dataList:ArrayList<playlistItemDataModel>?) {}
 
-data class playlistReplik(val text:String, val duration: Int?, val type: String)
+data class playlistReplik(val text:String?, val duration: Long?, val type: String?, val item:playlistItemDataModel?) // type dialoglarda 0 dış 1 ben
 
 data class karaokeModel(val startIndex:Int?, val endIndex:Int?, val subtitle:String?, val lineNo:Int?, val bound:Rect?) {}

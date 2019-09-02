@@ -39,6 +39,7 @@ import android.webkit.WebViewClient as WebViewClient1
 class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
 
+
     private val TAG: String? = MainActivity::class.qualifiedName
 
 
@@ -81,7 +82,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         val bytesAvailable:Long = stat.blockSizeLong*stat.blockCountLong
         val mbAvaible = bytesAvailable / (1024*1024)
         println("$TAG boş alan: $mbAvaible")
-        if (mbAvaible <= 600) {
+        if (mbAvaible <= 1000) {
             infoDialog("Yetersiz Disk Alanı", "Cihazınızın hafızası dolmak üzere. Yetersiz hafıza uygulamanın çalışmasını engelleyebilir ve çökmelere sebep olabilir. Lütfen cihazınızda bulunan gereksiz görsel ve dosyaları silerek yer açın. Eğer sorun devam ederse cihazınızı kapatıp açtıktan sonra tekrar deneyin.")
         }
     }
@@ -188,6 +189,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                     }
 
                 }
+
             }
 
             // her click ten sonra finder a sorulur nereye gidileceği finder dan gelen dönüşe göre karar verilir.
@@ -196,6 +198,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
                     consoleMessage.let {
                         val message: String? = consoleMessage?.message()
+                        println("$TAG clickParameter: ** $message")
                         if (message != null) {
                             finder?.inspector(message) { nativePage, sendId, buttonId ->
                                 println("odi parameters: sendId: $sendId buttonId $buttonId")
@@ -207,11 +210,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 }
             }
         }
-
-
-
     }
-
 
     // onesignal configuration--
     private fun oneSignalConfiguration() {
@@ -238,7 +237,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     // HAREKET
     fun nativePageDecider(page:nativePage, sendId:String?, buttonId:String?){
         when(page){
-
             nativePage.getPhotoAlbum -> {
                 println(TAG + "fotoğraf albümü aç")
                 if (photoController != null) {
@@ -281,15 +279,27 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }
 
             nativePage.cameraShowReel -> {
+                println("$TAG cameraStatus: showReel")
                 val intent = Intent(this, cameraActivity::class.java)
+                intent.putExtra("userId", buttonId)
+                intent.putExtra("projectId", sendId)
                 startActivityForResult(intent, Activity_Result.CAMERA_SHOW_REEL_RESULT.value)
             }
 
             nativePage.cameraIdentification -> {
+                println("$TAG cameraStatus: Tanitim")
                 val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
                 intent.putExtra("projectId", sendId)
                 startActivityForResult(intent, Activity_Result.CAMERA_TANITIM_RESULT.value)
+            }
+
+            nativePage.cameraOdile -> {
+                println("$TAG cameraStatus: Camera Status")
+                val intent = Intent(this, cameraActivity::class.java)
+                intent.putExtra("userId", sendId)
+                intent.putExtra("projectId", buttonId)
+                startActivityForResult(intent, Activity_Result.CAMERA_ODILE_RESULT.value)
             }
 
         }
@@ -330,7 +340,14 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     /////////////////////////////////////////////////////////////////////
     // webView Click Listener
     override fun onClick(url: String?) {
-        System.out.println("$TAG onClick: url: $url")
+        if (finder != null && url != null) {
+            finder?.inspectorOnClick(url!!) { nativePage, sendId, buttonId ->
+                println("$TAG inspectorOnClick: np: $nativePage")
+                println("$TAG inspectorOnClick: userId: $sendId")
+                println("$TAG inspectorOnClick: projectId: $buttonId")
+                nativePageDecider(nativePage,sendId,buttonId)
+            }
+        }
     }
     //-------------------------------------------------------------------
 
@@ -405,10 +422,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }
         }
 
+        /*
         if (resultCode == Activity.RESULT_OK) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             webView?.reload()
         }
+        */
     }
 
     // ucrop event dönüşü

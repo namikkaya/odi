@@ -7,6 +7,7 @@ enum class nativePage {
     uploadShowReel,
     uploadTanitim,
     cameraShowReel,
+    cameraOdile,
     uploadIdentification, // tanitim kartı yükleme
     cameraIdentification // tanitim kartı çekme
 }
@@ -24,7 +25,8 @@ enum class Activity_Result (val value:Int) {
     PRELOADER_FINISH(10),
     UPLOAD_VIDEO_PAGE_RESULT(11),
     CAMERA_SHOW_REEL_RESULT(12),
-    CAMERA_TANITIM_RESULT(13)
+    CAMERA_TANITIM_RESULT(13),
+    CAMERA_ODILE_RESULT(14)
 }
 
 enum class Permission_Result(val value:Int) {

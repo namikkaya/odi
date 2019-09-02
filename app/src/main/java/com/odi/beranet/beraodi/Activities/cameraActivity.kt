@@ -1,11 +1,14 @@
 package com.odi.beranet.beraodi.Activities
 
+import android.content.Intent
+import android.opengl.Visibility
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
+import android.os.StatFs
 import android.support.v4.app.Fragment
 import android.support.v4.text.HtmlCompat
 import android.support.v4.view.ViewPager
-import android.text.Html
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
@@ -21,30 +24,49 @@ import com.odi.beranet.beraodi.models.playlistItemDataModel
 import com.odi.beranet.beraodi.odiLib.RECORD_TYPE
 import com.odi.beranet.beraodi.odiLib.cameraFragmentViewPager
 import com.odi.beranet.beraodi.odiLib.odiInterface
+import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
 import org.json.XML
 import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
+import java.time.Duration
 
 
-class cameraActivity() : AppCompatActivity(),
+class cameraActivity() : baseActivity(),
     ViewPager.OnPageChangeListener,
     previewFragment.previewFragmentInterface,
     odiInterface{
-    
+
+
+    override fun internetConnectionStatus(status: Boolean) {
+
+    }
+
     private val TAG:String = "cameraActivity: "
     private var currentPageNo:Int = 0
     private lateinit var viewPager: ViewPager
     private lateinit var pagerAdapter: cameraFragmentViewPager
     private lateinit var orientationInfo: RelativeLayout
+    private lateinit var contentPreloader: RelativeLayout
 
     private var list:ArrayList<Fragment> = ArrayList<Fragment>()
+
+    private var projectId:String? = null
+    private var userId:String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
 
+        val bundle=intent.extras
+        if(bundle!=null)
+        {
+            projectId = bundle.getString("projectId")
+            userId = bundle.getString("userId")
+        }
+
+        contentPreloader = findViewById(R.id.contentPreloader)
         orientationInfo = findViewById(R.id.orientationInfo)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
@@ -87,6 +109,20 @@ class cameraActivity() : AppCompatActivity(),
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        onCheckFreeSpace()
+    }
+
+    private fun onCheckFreeSpace() {
+        val stat = StatFs(Environment.getExternalStorageDirectory().path)
+        val bytesAvailable:Long = stat.blockSizeLong*stat.blockCountLong
+        val mbAvaible = bytesAvailable / (1024*1024)
+        println("$TAG boş alan: $mbAvaible")
+        if (mbAvaible <= 1000) {
+            infoDialog("Yetersiz Disk Alanı", "Cihazınızın hafızası dolmak üzere. Yetersiz hafıza uygulamanın çalışmasını engelleyebilir ve çökmelere sebep olabilir. Lütfen cihazınızda bulunan gereksiz görsel ve dosyaları silerek yer açın. Eğer sorun devam ederse cihazınızı kapatıp açtıktan sonra tekrar deneyin.")
+        }
+    }
 
     override fun onPreviewFragment_orientationInfo(status: Boolean) {
         super.onPreviewFragment_orientationInfo(status)
@@ -124,24 +160,13 @@ class cameraActivity() : AppCompatActivity(),
     fun getProjectData() {
         // Instantiate the RequestQueue.
         val queue = Volley.newRequestQueue(this)
-        val url: String = "http://odi.odiapp.com.tr/core/odi.php?id=15"
 
-        // Request a string response from the provided URL.
+        val url = "http://odi.odiapp.com.tr/core/odi.php?id=$projectId"
+        println("$TAG jsonData: strResp url: $url")
         val stringReq = StringRequest(Request.Method.GET, url,
             Response.Listener<String> { response ->
 
                 var strResp = response.toString()
-                /*var strResp = String(response.deco,"UTF-8")
-                try {
-                    strResp = fixEncodingUnicode(response)
-                } catch (e: UnsupportedEncodingException) {
-
-                    e.printStackTrace()
-                }*/
-
-
-                //String utf8String = new String(response.data, "UTF-8");
-
                 println("$TAG jsonData: strResp str: $strResp")
 
                 var data:JSONObject? = null
@@ -157,8 +182,7 @@ class cameraActivity() : AppCompatActivity(),
                 println("$TAG jsonData: strRespAll : $in_data")
                 val in_projectType: Int? = in_data?.getInt("TIP") // 1
 
-                val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
-                println("$TAG jsonData: strResp : $in_Attr")
+
 
                 when (in_projectType) {
                     1 -> dataTypeHolder = RECORD_TYPE.MONOLOG
@@ -166,7 +190,24 @@ class cameraActivity() : AppCompatActivity(),
                     3 -> dataTypeHolder = RECORD_TYPE.PLAYMODE
                 }
 
-                jsonParser(dataTypeHolder, in_Attr)
+                if (dataTypeHolder != null) {
+                    if (dataTypeHolder == RECORD_TYPE.MONOLOG) {
+                        val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
+                        //println("$TAG jsonData: strResp : $in_Attr")
+                        jsonParser(dataTypeHolder, in_Attr, null)
+                    }
+                    if (dataTypeHolder == RECORD_TYPE.DIALOG) {
+                        val intAttrArray:JSONArray? = in_data?.getJSONArray("ATTR")
+                        //println("$TAG jsonData: strResp dialog : $intAttrArray")
+                        jsonParser(dataTypeHolder, null, intAttrArray)
+                    }
+                    if(dataTypeHolder == RECORD_TYPE.PLAYMODE) {
+                        val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
+                        jsonParser(dataTypeHolder, in_Attr, null)
+                    }
+                }
+
+
 
             }, Response.ErrorListener {
                 println("$TAG errorVolley error Listener")
@@ -176,36 +217,135 @@ class cameraActivity() : AppCompatActivity(),
     }
 
 
-    fun jsonParser(type:RECORD_TYPE?, attr:JSONObject?){
-        if (type != null && attr != null) {
+    val playlistArray = ArrayList<playlistItemDataModel>()
+
+    fun jsonParser(type:RECORD_TYPE?, attr:JSONObject?, attr2:JSONArray?){
+        if (type != null) {
             when(type!!) {
                 RECORD_TYPE.PLAYMODE -> {
+                    if (attr != null) {
+                        contentPreloader.visibility = View.VISIBLE
+                        soundFileCountHolder = 1
 
+                        val in_index:Int? = attr?.getInt("index")
+                        val in_text:String? = fixEncodingUnicode(attr?.getString("text"))
+                        val in_soundFilePath:String? = attr?.getString("soundfile")
+                        val in_duration:String? = attr?.getString("duration")
+                        val in_type:String? = attr?.getString("type")
+
+                        var _playlistItemDataModel = playlistItemDataModel(in_index,
+                            in_text,
+                            null,
+                            in_soundFilePath,
+                            in_type,
+                            this,
+                            this)
+
+                        val playlistArray = ArrayList<playlistItemDataModel>()
+                        playlistArray.add(_playlistItemDataModel)
+
+                        var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
+                        var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
+                        myFragment.getData(playlistDataModel)
+
+
+                    }
                 }
                 RECORD_TYPE.DIALOG -> {
+                    //println("$TAG jsonData: strResp dialog : $attr2")
+                    if (attr2 != null) {
+
+                        contentPreloader.visibility = View.VISIBLE
+
+                        println("$TAG jsonData: attr2 dialog array : ${attr2.length()} ")
+                        for (i in 0 until attr2.length()) {
+                            //println("$TAG jsonData: strResp item : ${attr2[i]} i: $i ")
+                            val itemData = attr2[i] as JSONObject
+                            //println("$TAG jsonData: final : ${itemData.getString("text")} i: $i ")
+                            val in_index:Int? = itemData?.getInt("index")
+                            val in_text:String? = fixEncodingUnicode(itemData?.getString("text"))
+                            val in_soundFilePath:String? = itemData?.getString("soundfile")
+                            var in_duration_:String? = itemData?.getString("duration")
+
+                            var duration:Long? = null
+                            if(in_duration_ == "") {
+                                duration = null
+                                soundFileCountHolder++
+                            }else {
+                                duration = in_duration_?.toLong()
+                            }
+
+                            val in_type:String? = itemData?.getString("type")
+
+                            println("$TAG jsonData: sound: soundfile:$in_soundFilePath - type: $in_type duration: $duration")
+
+
+                            val _playlistItemDataModel = playlistItemDataModel(in_index,
+                                in_text,
+                                duration,
+                                in_soundFilePath,
+                                in_type,
+                                this,
+                                this)
+
+                            playlistArray.add(_playlistItemDataModel)
+
+
+                        }
+                    }
 
                 }
                 RECORD_TYPE.MONOLOG -> {
+                    if (attr != null) {
 
-                    /*Yükleme işi yok. Monolog kendi tanıtımı preloader çıkmasada olur.*/
-                    val in_index:Int? = attr?.getInt("index")
-                    val in_text:String? = fixEncodingUnicode(attr?.getString("text"))
-                    val in_soundFilePath:String? = attr?.getString("soundfile")
-                    val in_duration:Int? = attr?.getInt("duration")
-                    val in_type:String? = attr?.getString("type")
+                        /*Yükleme işi yok. Monolog kendi tanıtımı preloader çıkmasada olur.*/
+                        val in_index:Int? = attr?.getInt("index")
+                        val in_text:String? = fixEncodingUnicode(attr?.getString("text"))
+                        val in_soundFilePath:String? = attr?.getString("soundfile")
+                        val in_duration:Int? = attr?.getInt("duration")
+                        val in_type:String? = attr?.getString("type")
 
-                    var _playlistItemDataModel = playlistItemDataModel(in_index,
-                        in_text,
-                        in_duration,
-                        in_soundFilePath,
-                        in_type,
-                        this,
-                        this)
 
-                    val playlistArray = ArrayList<playlistItemDataModel>()
-                    playlistArray.add(_playlistItemDataModel)
 
-                    var playlistDataModel = playlistDataModel(RECORD_TYPE.MONOLOG, playlistArray)
+                        var _playlistItemDataModel = playlistItemDataModel(in_index,
+                            in_text,
+                            in_duration!!.toLong(),
+                            in_soundFilePath,
+                            in_type,
+                            this,
+                            this)
+
+                        val playlistArray = ArrayList<playlistItemDataModel>()
+                        playlistArray.add(_playlistItemDataModel)
+
+                        var playlistDataModel = playlistDataModel(RECORD_TYPE.MONOLOG, playlistArray)
+                        var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
+                        myFragment.getData(playlistDataModel)
+                    }
+                }
+            }
+        }
+    }
+
+    var soundFileCountHolder:Int = 0
+    var soundCounter:Int = 0
+    override fun onCameraActivity_playlistSoundComplete(index: Int?, duration: Long?) {
+        super.onCameraActivity_playlistSoundComplete(index,duration)
+        println("$TAG onCameraActivity_playlistSoundComplete: $index nolu indexli item yüklendi")
+        soundCounter ++
+        if (soundFileCountHolder <= soundCounter) {
+            println("$TAG onCameraActivity_playlistSoundComplete SUCCESS")
+
+            when(dataTypeHolder) {
+                RECORD_TYPE.DIALOG -> {
+                    contentPreloader.visibility = View.INVISIBLE
+                    var playlistDataModel = playlistDataModel(RECORD_TYPE.DIALOG, playlistArray)
+                    var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
+                    myFragment.getData(playlistDataModel)
+                }
+                RECORD_TYPE.PLAYMODE -> {
+                    contentPreloader.visibility = View.INVISIBLE
+                    var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
                     myFragment.getData(playlistDataModel)
                 }
@@ -213,9 +353,10 @@ class cameraActivity() : AppCompatActivity(),
         }
     }
 
-    override fun onCameraActivity_playlistSoundComplete(index: Int?) {
-        super.onCameraActivity_playlistSoundComplete(index)
-        println("$TAG onCameraActivity_playlistSoundComplete: $index nolu indexli item yüklendi")
+    /// Kamera kaydı bitirildi.
+    override fun onPreviewFragment_Record_Success() {
+        super.onPreviewFragment_Record_Success()
+        println("$TAG record success")
     }
 
 

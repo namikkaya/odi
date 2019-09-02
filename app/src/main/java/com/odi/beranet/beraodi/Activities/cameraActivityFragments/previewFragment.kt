@@ -21,6 +21,7 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory
+import android.support.v7.app.AppCompatActivity
 import android.text.SpannableString
 import android.util.*
 import android.view.*
@@ -31,6 +32,7 @@ import android.widget.TextView
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.Permission_Result
+import com.odi.beranet.beraodi.odiLib.countDownManager
 import com.odi.beranet.beraodi.odiLib.odiMediaManager
 import com.odi.beranet.beraodi.odiLib.vibratePhone
 import java.io.File
@@ -42,7 +44,7 @@ import kotlin.collections.ArrayList
 
 private const val _this = "param1"
 
-class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
+class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, countDownManager.countDownManagerListener {
 
     interface previewFragmentInterface {
         /**
@@ -54,6 +56,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
          * Camera close event
          */
         fun onPreviewFragment_closeEvent() {}
+
+        /**
+         * Record success
+         */
+        fun onPreviewFragment_Record_Success() {}
     }
 
     private var myMediaManager:odiMediaManager? = null
@@ -64,7 +71,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
         NORMAL,
         LOCK,
         RECORDING,
-        ENDING
+        ENDING,
+        COUNTDOWN
     }
 
     private var textContainerVisible:Boolean = false
@@ -77,6 +85,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
     private lateinit var textControlButton: ImageButton
     private lateinit var textContainer: RelativeLayout
     private lateinit var subtitleText: TextView
+    private lateinit var countDownObject: RelativeLayout
+    private var timerManager:countDownManager? = null
     private var isRecording:Boolean = false
     private val MAX_PREVIEW_WIDTH:Int = 1280
     private val MAX_PREVIEW_HEIGT:Int = 720
@@ -154,7 +164,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD) // TEMPLATE_PREVIEW
             captureRequestBuilder.addTarget(surface)
             captureRequestBuilder.addTarget(recordSurface)
-
             val surfaces = ArrayList<Surface>().apply {
                 add(surface)
                 add(recordSurface)
@@ -190,6 +199,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
     private fun recordSession() {
         isRecording = true
         mediaRecorder!!.start()
+        uiCameraDesing(UIDESIGN.RECORDING)
     }
 
     private fun closeCamera() {
@@ -229,6 +239,19 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
         return videoFile
     }
 
+    private fun getDirFile() {
+        val letDirectory = File(context?.filesDir, "")
+        //println("allfiles: ${letDirectory.mkdirs()}")
+        val files = letDirectory.listFiles()
+        //println("allfiles item files: ${files}")
+        for (i in 0 until files.size){
+            if (files[i].name.endsWith(".mp4")){
+                files[i].delete()
+            }
+            //println("allfiles item: ${files[i].absolutePath}")
+        }
+    }
+
     private fun setupMediaRecorder() {
         if (mediaRecorder != null) {
             mediaRecorder = null
@@ -261,7 +284,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
             try {
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setAudioEncodingBitRate(22050)
+                setAudioEncodingBitRate(44100)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
                 setOutputFile(createVideoFile())
@@ -293,7 +316,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
 
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setAudioEncodingBitRate(22050)
+                setAudioEncodingBitRate(44100)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
                 setOutputFile(createVideoFile())
@@ -414,10 +437,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
         textControlButton = view.findViewById(R.id.textControlButton)
         textContainer = view.findViewById(R.id.textViewContainer)
         subtitleText = view.findViewById(R.id.subtitleTextView)
+        countDownObject = view.findViewById(R.id.countDown)
 
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
-
 
         var width = displayMetrics.widthPixels
         var height = displayMetrics.heightPixels
@@ -428,18 +451,24 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
 
         textureView.layoutParams = params
 
-
         uiCameraDesing(UIDESIGN.LOCK)
+
 
         return view
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
+
+        timerManager = countDownManager(countDownObject, this.activity!!)
+        timerManager?.listener = this
+
         recordButton.setOnClickListener(clickListener)
         changeCameraButton.setOnClickListener(clickListener)
         cameraCloseButton.setOnClickListener(clickListener)
         textControlButton.setOnClickListener(clickListener)
+
+        getDirFile()
     }
 
     override fun onAttach(context: Context) {
@@ -501,6 +530,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
         stopMediaRecorder()
 
         previewSession()
+        uiCameraDesing(UIDESIGN.NORMAL)
         // thumbnail
         //createRoundThumb() // bitmap olarak dönecek
     }
@@ -641,10 +671,19 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
             stopRecordSession()
             Log.d(TAG, "stopRecording")
         }else {
-            isRecording = true
-            startRecordSession()
-            Log.d(TAG, "startRecording")
+           startCountDown()
         }
+    }
+
+    private fun startRecording() {
+        isRecording = true
+        startRecordSession()
+
+        // alt yazı başlatılıyor...
+        if (myMediaManager != null) {
+            myMediaManager?.startDialog()
+        }
+        Log.d(TAG, "startRecording")
     }
 
     private fun onCloseCameraButtonEvent() {
@@ -712,17 +751,29 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
             UIDESIGN.NORMAL -> {
                 uiDesingHolder = UIDESIGN.NORMAL
                 buttonEnabled(true)
+                recordButton.setImageResource(R.drawable.rec)
+                textContainer.visibility = View.INVISIBLE
             }
             UIDESIGN.RECORDING -> {
                 uiDesingHolder = UIDESIGN.RECORDING
                 buttonEnabled(true)
+                recordButton.setImageResource(R.drawable.stop)
+                textContainer.visibility = View.VISIBLE
 
             }
             UIDESIGN.ENDING -> {
                 uiDesingHolder = UIDESIGN.ENDING
+                textContainer.visibility = View.INVISIBLE
+                if (myMediaManager != null) {
+                    myMediaManager!!.stopAnimation()
+                }
 
             }
             UIDESIGN.LOCK -> {
+                uiDesingHolder = UIDESIGN.LOCK
+                buttonEnabled(false)
+            }
+            UIDESIGN.COUNTDOWN -> {
                 uiDesingHolder = UIDESIGN.LOCK
                 buttonEnabled(false)
             }
@@ -734,9 +785,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
         println("$TAG getData: ${dataList.type}")
         myMediaManager = odiMediaManager(dataList)
         myMediaManager!!.listener = this
-        myMediaManager!!.start()
+        myMediaManager!!.prepare()
     }
 
+    // -- Monolog başladı
     override fun odiMediaManagerListener_monologText(subtitle: SpannableString?) {
         super.odiMediaManagerListener_monologText(subtitle)
         subtitleText.setText(subtitle,TextView.BufferType.SPANNABLE)
@@ -745,6 +797,51 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener {
 
     override fun odiMediaManagerListener_monologTextComplete() {
         super.odiMediaManagerListener_monologTextComplete()
-        println("$TAG ÇEKİM BİTTİ")
+        println("$TAG ÇEKİM BİTTİ MONOLOG")
+        isRecording = false
+        stopRecordSession()
+        uiCameraDesing(UIDESIGN.ENDING)
+        listener?.onPreviewFragment_Record_Success()
     }
+
+    // -- Monolog bitti
+
+    // -- Dialog başladı
+    override fun odiMediaManagerListener_dialogText(subtitle: SpannableString?) {
+        super.odiMediaManagerListener_dialogText(subtitle)
+        subtitleText.setText(subtitle,TextView.BufferType.SPANNABLE)
+    }
+
+    override fun odiMediaManagerListener_dialogTextComplete() {
+        super.odiMediaManagerListener_dialogTextComplete()
+        println("$TAG ÇEKİM BİTTİ DİALOG")
+        isRecording = false
+        stopRecordSession()
+        uiCameraDesing(UIDESIGN.ENDING)
+        listener?.onPreviewFragment_Record_Success()
+    }
+
+    // -- Dialog bitti
+
+    private fun startCountDown() {
+        countDownObject.visibility = View.VISIBLE
+        uiCameraDesing(UIDESIGN.COUNTDOWN)
+        timerManager?.startCountDown()
+    }
+
+    // Gerisayım -- Countdown delegate
+    override fun onCountDownManagerListener_progress(count: String) {
+        super.onCountDownManagerListener_progress(count)
+    }
+
+    override fun onCountDownManagerListener_complete() {
+        super.onCountDownManagerListener_complete()
+        countDownObject.visibility = View.INVISIBLE
+        println("$TAG onCountDownManagerListenerComplete: ")
+        startRecording()
+        uiCameraDesing(UIDESIGN.RECORDING)
+    }
+
+
+
 }

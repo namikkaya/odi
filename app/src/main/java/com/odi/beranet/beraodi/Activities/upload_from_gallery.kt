@@ -159,7 +159,6 @@ class upload_from_gallery : baseActivity(), odiInterface {
         val path = FilePath.getPath(this,myUri)
         val myFile = File(path)
         return myFile
-
     }
 
 

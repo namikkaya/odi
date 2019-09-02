@@ -3,7 +3,7 @@ package com.odi.beranet.beraodi.odiLib
 class textFinder {
     val TAG:String = "textFinder: "
     public fun inspector(str:String, completion: (nativePage,String?,String?) -> Unit) {
-        //println(TAG + "odi parameter path: $str")
+        println(TAG + "clickParameter: $str")
 
         val strArray = str.split("/")
         val first = strArray[0]
@@ -27,7 +27,9 @@ class textFinder {
                     completion(nativePage.photoCollage,null,null)
                     return
                 }else if (second == "odile.png") { // odileme video çekme kamera açılacak
+
                     val checkTanitimORShowReel = secondArray[1].split("-")
+                    println("$TAG checkTanitimORShowReel $checkTanitimORShowReel")
                     if (checkTanitimORShowReel[2] == "87") { // showReel
                         val id = checkTanitimORShowReel[1]
                         singleton.userId = id
@@ -60,10 +62,27 @@ class textFinder {
             println("$TAG video Player OKEY")
             completion(nativePage.videoPlayer, videoPlayer[1],null)
         }
-
-
     }
 
 
+    public fun inspectorOnClick(str:String, completion: (nativePage,String?,String?) -> Unit) {
+        println(TAG + "clickParameter: $str")
+
+        val strArray = str.split("/")
+        if (strArray[4] != null) {
+            val checkArray = strArray[4].split("-")
+            if (checkArray[0] != null) {
+                if ("odile.png?" == checkArray[0]) {
+                    val userId:String = checkArray[1]
+                    val projectId:String = checkArray[2]
+                    completion(nativePage.cameraOdile,userId,projectId)
+                }
+            }
+        }
+
+        println("$TAG inspectorOnClick => $strArray")
+
+
+    }
 
 }

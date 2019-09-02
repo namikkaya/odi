@@ -144,4 +144,8 @@
 
     </RelativeLayout>
 
+    <include
+            android:id="@+id/countDownLayout"
+            layout="@layout/countdown_layout"/>
+
 </FrameLayout>

@@ -1,6 +1,7 @@
 package com.odi.beranet.beraodi.odiLib
 
 import android.graphics.Color
+import android.media.MediaPlayer
 import android.os.Handler
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
@@ -8,15 +9,15 @@ import com.odi.beranet.beraodi.models.playlistReplik
 import java.util.*
 import kotlin.collections.ArrayList
 
-class monologManager {
-    interface monologManagerListener {
-        fun monologManagerListener_monologText(subtitle:SpannableString?){}
-        fun monologManagerListener_monologTextComplete(){}
+class dialogManager {
+    interface dialogManagerListener {
+        fun dialogManagerListener_dialogText(subtitle: SpannableString?){}
+        fun dialogManagerListener_dialogTextComplete(){}
     }
 
-    private val TAG:String = "monologManager:"
+    private val TAG:String = "dialogManager:"
 
-    var listener:monologManagerListener? = null
+    var listener: dialogManagerListener? = null
     var replikList:ArrayList<playlistReplik> = ArrayList()
     private var replikCounter:Int = 0
 
@@ -25,7 +26,6 @@ class monologManager {
     var timerTask: TimerTask? = null
     var characterCounter:Int = 0
 
-
     internal fun startProject() {
         replikCounter = 0
         characterCounter = 0
@@ -33,27 +33,40 @@ class monologManager {
     }
 
     private fun startDialog() {
+        println("$TAG startDialog: replik sayısı: ${replikList.size} replikCounter: $replikCounter")
         stopAnimation()
-        println("$TAG startDialog replikcounter: $replikCounter == replikList ${replikList.size}")
+
         if(replikCounter >= replikList.size) {
-            listener?.monologManagerListener_monologTextComplete()
+            listener?.dialogManagerListener_dialogTextComplete()
             replikCounter = 0
             characterCounter = 0
             return
         }
 
-        subtitle(replikList[replikCounter].duration, replikList[replikCounter].text)
-        replikCounter++
+        subtitle(replikList[replikCounter].duration,
+            replikList[replikCounter].text,
+            replikList[replikCounter].type,
+            replikList[replikCounter])
     }
 
-    private fun subtitle(duration: Long?, subtitle:String?) {
+    private fun subtitle(duration: Long?,
+                         subtitle:String?,
+                         type:String?,
+                         replikItem:playlistReplik?) {
         if (duration != null && subtitle != null) {
             val textLength:Int = subtitle.length
             println("$TAG character duration1: $duration length: $textLength")
-
             var characterDuration:Double = ( duration.toDouble() / textLength.toDouble() ) // bir karakter için harcanacak zaman
             println("$TAG character duration2: $characterDuration long ${characterDuration.toLong()}")
-            startAnimation(subtitle, characterDuration.toLong())
+
+            if (type == "0") { // dış ses
+                replikItem?.item?.playSound()
+                startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#0083B2"))
+            }else { // ben
+                startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#FF8400"))
+            }
+
+
         }
     }
 
@@ -61,11 +74,13 @@ class monologManager {
      * @param => altyazı textinin tamamını
      * @param => Her bir karakterin kaç saniyede boyanacağı
      */
-    private fun startAnimation(subtitle: String, animationDuration:Long) {
+    private fun startAnimation(subtitle: String, animationDuration:Long, color:Int?) {
         stopAnimation()
+        println("$TAG startAnimation: animationDuration: $animationDuration")
+        println("$TAG startAnimation: subtitle: $subtitle")
 
         // first start call
-        listener?.monologManagerListener_monologText(subtitlePainter(subtitle,0, characterCounter, Color.parseColor("#FF8400")))
+        listener?.dialogManagerListener_dialogText(subtitlePainter(subtitle,0, characterCounter, color!!))
         characterCounter++
 
         timerHandler = Handler()
@@ -73,10 +88,12 @@ class monologManager {
             override fun run() {
                 timerHandler!!.post(object: Runnable {
                     override fun run() {
-                        listener?.monologManagerListener_monologText(subtitlePainter(subtitle,0, characterCounter, Color.parseColor("#FF8400")))
+                        listener?.dialogManagerListener_dialogText(subtitlePainter(subtitle,0, characterCounter, color!!))
                         characterCounter++
                         if (characterCounter >= subtitle.length+1) {
                             stopAnimation()
+                            replikCounter++
+                            characterCounter = 0
                             startDialog()
                         }
                     }
@@ -117,7 +134,4 @@ class monologManager {
         stopAnimation()
         startDialog()
     }
-
-
-
 }

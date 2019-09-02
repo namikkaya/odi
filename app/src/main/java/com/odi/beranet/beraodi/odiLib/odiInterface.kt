@@ -15,7 +15,7 @@ interface odiInterface {
     /** Hata oluştu*/
     fun onError(errorMessage: String?) {}
 
-    /** Yükleme için bir id yollanır. Yollanan id ye ait işlem bittiğinde bu method tetiklenir.
+    /** Yükleme için bir id yollanır. Yollanan id ye ait işonCameraActivity_playlistSoundCompletelem bittiğinde bu method tetiklenir.
      * asyncUploadFile ile videoUploadViewModel arasında iletişimi sağlar
      * */
     fun uploadVideoAsyncTaskComplete(resultData: async_upload_video_complete?) {}
@@ -32,5 +32,6 @@ interface odiInterface {
 
     fun onProgressCallBack(progress:Int?, complete:Boolean?) {}
 
-    fun onCameraActivity_playlistSoundComplete(index:Int?) {}
+    fun onCameraActivity_playlistSoundComplete(index:Int?, duration:Long?) {}
+
 }

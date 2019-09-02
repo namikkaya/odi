@@ -20,6 +20,40 @@
         </android.support.v4.view.ViewPager>
 
     </LinearLayout>
+    <!-- içerik yükleyici -->
+    <RelativeLayout
+            android:visibility="invisible"
+            android:background="@color/blackTransparent"
+            android:clickable="true"
+            android:id="@+id/contentPreloader"
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <LinearLayout
+                android:gravity="center"
+                android:orientation="vertical"
+                android:layout_width="160dp"
+                android:layout_height="wrap_content">
+
+            <ProgressBar
+                    android:theme="@style/progressBarOrange"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+            <TextView
+                    android:textSize="@dimen/orientationTextSize"
+                    android:textColor="@color/White"
+                    android:textAlignment="center"
+                    android:text="@string/loadingContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"/>
+
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+    <!-- orientation warning message -->
     <RelativeLayout
             android:id="@+id/orientationInfo"
             android:visibility="invisible"
@@ -56,5 +90,7 @@
         </LinearLayout>
 
     </RelativeLayout>
+
+
 
 </android.support.constraint.ConstraintLayout>
