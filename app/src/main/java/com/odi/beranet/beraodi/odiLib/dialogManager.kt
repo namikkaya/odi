@@ -5,6 +5,7 @@ import android.media.MediaPlayer
 import android.os.Handler
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
+import com.odi.beranet.beraodi.models.playlistItemDataModel
 import com.odi.beranet.beraodi.models.playlistReplik
 import java.util.*
 import kotlin.collections.ArrayList
@@ -13,6 +14,7 @@ class dialogManager {
     interface dialogManagerListener {
         fun dialogManagerListener_dialogText(subtitle: SpannableString?){}
         fun dialogManagerListener_dialogTextComplete(){}
+        fun dialogManagerListener_dialogNextButtonVisible(status:Boolean?){}
     }
 
     private val TAG:String = "dialogManager:"
@@ -25,6 +27,8 @@ class dialogManager {
     var timerHandler: Handler? = null
     var timerTask: TimerTask? = null
     var characterCounter:Int = 0
+
+    var holder:playlistItemDataModel? = null
 
     internal fun startProject() {
         replikCounter = 0
@@ -61,9 +65,12 @@ class dialogManager {
 
             if (type == "0") { // dış ses
                 replikItem?.item?.playSound()
+                holder = replikItem?.item
                 startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#0083B2"))
+                listener?.dialogManagerListener_dialogNextButtonVisible(false)
             }else { // ben
                 startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#FF8400"))
+                listener?.dialogManagerListener_dialogNextButtonVisible(true)
             }
 
 
@@ -119,6 +126,13 @@ class dialogManager {
         }
     }
 
+    fun stopAllAnimation() {
+        for (item in replikList) {
+            item.item?.stopSound()
+        }
+        stopAnimation()
+    }
+
     private fun subtitlePainter(subtitle: String, startIndex:Int, endIndex:Int, color:Int): SpannableString? {
         val spannable = SpannableString(subtitle)
         spannable.setSpan(ForegroundColorSpan(color), startIndex, endIndex, 0)
@@ -131,6 +145,10 @@ class dialogManager {
     internal fun nextReplik() {
         replikCounter++
         characterCounter = 0
+        if (holder != null) {
+            holder?.stopSound()
+            holder = null
+        }
         stopAnimation()
         startDialog()
     }

@@ -41,7 +41,6 @@ class monologManager {
             characterCounter = 0
             return
         }
-
         subtitle(replikList[replikCounter].duration, replikList[replikCounter].text)
         replikCounter++
     }
@@ -63,7 +62,6 @@ class monologManager {
      */
     private fun startAnimation(subtitle: String, animationDuration:Long) {
         stopAnimation()
-
         // first start call
         listener?.monologManagerListener_monologText(subtitlePainter(subtitle,0, characterCounter, Color.parseColor("#FF8400")))
         characterCounter++

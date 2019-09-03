@@ -12,7 +12,9 @@ import kotlin.collections.ArrayList
 
 class odiMediaManager (val playListData:playlistDataModel?):
     monologManager.monologManagerListener,
-    dialogManager.dialogManagerListener {
+    dialogManager.dialogManagerListener,
+    playModeManager.playModeManagerListener
+{
 
     private val TAG:String = "odiMediaManager"
 
@@ -23,11 +25,12 @@ class odiMediaManager (val playListData:playlistDataModel?):
         fun odiMediaManagerListener_dialogText(subtitle:SpannableString?){}
         fun odiMediaManagerListener_dialogTextComplete(){}
 
-
+        fun odiMediaManagerListener_nextButtonVisible(status:Boolean?){}
     }
 
     private var myMonologManager:monologManager? = null
     private var myDialogManager:dialogManager? = null
+    private var myPlayModeManager:playModeManager? = null
     private var replikList:ArrayList<playlistReplik> = ArrayList()
     var listener:odiMediaManagerListener? = null
     private var recordTypeHolder:RECORD_TYPE? = null
@@ -37,7 +40,8 @@ class odiMediaManager (val playListData:playlistDataModel?):
             when(playListData?.type!!) {
                 RECORD_TYPE.PLAYMODE -> {
                     recordTypeHolder = RECORD_TYPE.PLAYMODE
-
+                    playModeConfiguration(playListData.dataList)
+                    println("$TAG prepare: ")
                 }
                 RECORD_TYPE.DIALOG -> {
                     // burayı hazırlayacağız...
@@ -58,7 +62,7 @@ class odiMediaManager (val playListData:playlistDataModel?):
     fun startDialog() {
         when(recordTypeHolder!!) {
             RECORD_TYPE.PLAYMODE -> {
-
+                myPlayModeManager!!.startProject()
             }
             RECORD_TYPE.DIALOG -> {
                 myDialogManager!!.startProject()
@@ -127,13 +131,43 @@ class odiMediaManager (val playListData:playlistDataModel?):
         listener?.odiMediaManagerListener_dialogTextComplete()
     }
 
+    override fun dialogManagerListener_dialogNextButtonVisible(status: Boolean?) {
+        super.dialogManagerListener_dialogNextButtonVisible(status)
+        listener?.odiMediaManagerListener_nextButtonVisible(status)
+    }
+
     //-------------------------------------------------------------------
 
     /////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////
     // <PlayModeDelegate>
 
+    private fun playModeConfiguration(myData: ArrayList<playlistItemDataModel>?) {
+        if (myPlayModeManager != null) {
+            return
+        }
+        println("$TAG playModeConfiguration playModeManager ++")
+        myPlayModeManager = playModeManager()
+        myPlayModeManager?.listener = this
 
+        if (myData != null) {
+            for (item: playlistItemDataModel in myData!!) {
+                val replikData = playlistReplik(item.text, item.duration, item.type, item)
+                replikList.add(replikData)
+                println("$TAG in playModeManager: ${replikList}")
+            }
+            myPlayModeManager?.replikList = replikList
+        }
+    }
+
+
+    override fun playModeManagerListener_playModeText(subtitle: SpannableString?) {
+        super.playModeManagerListener_playModeText(subtitle)
+    }
+
+    override fun playModeManagerListener_playModeTextComplete() {
+        super.playModeManagerListener_playModeTextComplete()
+    }
 
     //-------------------------------------------------------------------
 
@@ -147,6 +181,16 @@ class odiMediaManager (val playListData:playlistDataModel?):
                     myMonologManager?.nextReplik()
                 }
             }
+            RECORD_TYPE.DIALOG -> {
+                if (myDialogManager != null) {
+                    myDialogManager?.nextReplik()
+                }
+            }
+            RECORD_TYPE.PLAYMODE -> {
+                if (myPlayModeManager != null) {
+                    myPlayModeManager?.nextReplik()
+                }
+            }
         }
     }
 
@@ -157,10 +201,31 @@ class odiMediaManager (val playListData:playlistDataModel?):
                     myMonologManager?.stopAnimation()
                 }
             }
+            RECORD_TYPE.DIALOG -> {
+                if (myDialogManager != null) {
+                    myDialogManager?.stopAllAnimation()
+                }
+            }
+
+            RECORD_TYPE.PLAYMODE -> {
+                if (myPlayModeManager != null) {
+                    myPlayModeManager?.allStopAnimation()
+                }
+            }
         }
     }
 
+    fun onNext() {
+        when(playListData?.type!!) {
 
+            RECORD_TYPE.DIALOG -> {
+                if (myDialogManager != null) {
+                    myDialogManager?.nextReplik()
+                }
+            }
+
+        }
+    }
 
 
 

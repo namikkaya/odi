@@ -66,7 +66,8 @@ data class playlistItemDataModel(val index:Int?,
                                  val soundFile:String?,
                                  val type:String?,
                                  val context: Activity,
-                                 val listener:odiInterface?): MediaPlayer.OnPreparedListener {
+                                 final val listener:odiInterface?,
+                                 val recordType: RECORD_TYPE): MediaPlayer.OnPreparedListener {
 
 
     override fun onPrepared(mp: MediaPlayer?) {
@@ -90,6 +91,13 @@ data class playlistItemDataModel(val index:Int?,
     public fun mediaPlayerSetVolume(volume:Float) {
         if (mediaPlayer != null || soundFile != "") {
             mediaPlayer?.setVolume(volume,volume)
+        }
+    }
+
+    public fun stopSound() {
+        if (mediaPlayer != null) {
+            mediaPlayer?.pause()
+            mediaPlayer?.seekTo(0)
         }
     }
 
@@ -131,6 +139,14 @@ data class playlistItemDataModel(val index:Int?,
                         listener?.onCameraActivity_playlistSoundComplete(index,duration)
                     })
                 }
+
+                mediaPlayer?.setOnCompletionListener(object: MediaPlayer.OnCompletionListener {
+                    override fun onCompletion(mp: MediaPlayer?) {
+                        println("playlistItemDataModel: complete")
+                        listener?.OnPlaylistItemPlayerEnd(index,recordType)
+                    }
+
+                })
 
             }catch (e:IllegalArgumentException) {
                 e.printStackTrace()

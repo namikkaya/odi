@@ -225,7 +225,7 @@ class cameraActivity() : baseActivity(),
                 RECORD_TYPE.PLAYMODE -> {
                     if (attr != null) {
                         contentPreloader.visibility = View.VISIBLE
-                        soundFileCountHolder = 1
+                        soundFileCountHolder = 0
 
                         val in_index:Int? = attr?.getInt("index")
                         val in_text:String? = fixEncodingUnicode(attr?.getString("text"))
@@ -233,21 +233,21 @@ class cameraActivity() : baseActivity(),
                         val in_duration:String? = attr?.getString("duration")
                         val in_type:String? = attr?.getString("type")
 
+                        println("$TAG jsonparser playModeManager: $in_index - $in_text - $in_soundFilePath")
+
                         var _playlistItemDataModel = playlistItemDataModel(in_index,
                             in_text,
                             null,
                             in_soundFilePath,
                             in_type,
                             this,
-                            this)
+                            this,
+                            RECORD_TYPE.PLAYMODE)
 
-                        val playlistArray = ArrayList<playlistItemDataModel>()
                         playlistArray.add(_playlistItemDataModel)
-
-                        var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
+                        /*var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
                         var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
-                        myFragment.getData(playlistDataModel)
-
+                        myFragment.getData(playlistDataModel)*/
 
                     }
                 }
@@ -286,7 +286,8 @@ class cameraActivity() : baseActivity(),
                                 in_soundFilePath,
                                 in_type,
                                 this,
-                                this)
+                                this,
+                                RECORD_TYPE.DIALOG)
 
                             playlistArray.add(_playlistItemDataModel)
 
@@ -313,7 +314,8 @@ class cameraActivity() : baseActivity(),
                             in_soundFilePath,
                             in_type,
                             this,
-                            this)
+                            this,
+                            RECORD_TYPE.MONOLOG)
 
                         val playlistArray = ArrayList<playlistItemDataModel>()
                         playlistArray.add(_playlistItemDataModel)
@@ -342,8 +344,10 @@ class cameraActivity() : baseActivity(),
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.DIALOG, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
                     myFragment.getData(playlistDataModel)
+                    println("Tektik: playMode dialog get data çalıştı")
                 }
                 RECORD_TYPE.PLAYMODE -> {
+                    println("Tektik: playMode playModeget data çalıştı")
                     contentPreloader.visibility = View.INVISIBLE
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
@@ -359,5 +363,14 @@ class cameraActivity() : baseActivity(),
         println("$TAG record success")
     }
 
+
+    override fun OnPlaylistItemPlayerEnd(index: Int?, type: RECORD_TYPE) {
+        super.OnPlaylistItemPlayerEnd(index, type)
+        if (type == RECORD_TYPE.PLAYMODE) {
+            println("$TAG OnPlaylistItemPlayerEnd")
+            var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
+            myFragment.onRecordStopTrigger()
+        }
+    }
 
 }

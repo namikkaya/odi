@@ -34,4 +34,6 @@ interface odiInterface {
 
     fun onCameraActivity_playlistSoundComplete(index:Int?, duration:Long?) {}
 
+    fun OnPlaylistItemPlayerEnd(index: Int?, type:RECORD_TYPE){}
+
 }
