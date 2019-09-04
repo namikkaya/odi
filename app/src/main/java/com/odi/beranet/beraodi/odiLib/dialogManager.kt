@@ -12,9 +12,10 @@ import kotlin.collections.ArrayList
 
 class dialogManager {
     interface dialogManagerListener {
-        fun dialogManagerListener_dialogText(subtitle: SpannableString?){}
+        fun dialogManagerListener_dialogText(subtitle: SpannableString?, charIndex:Int?){}
         fun dialogManagerListener_dialogTextComplete(){}
         fun dialogManagerListener_dialogNextButtonVisible(status:Boolean?){}
+        fun dialogManagerListener_dialogText_clearText(){}
     }
 
     private val TAG:String = "dialogManager:"
@@ -64,6 +65,11 @@ class dialogManager {
             println("$TAG character duration2: $characterDuration long ${characterDuration.toLong()}")
 
             if (type == "0") { // dış ses
+                if (volumeStatus!!) {
+                    replikItem?.item?.mediaPlayerSetVolume(1f)
+                }else {
+                    replikItem?.item?.mediaPlayerSetVolume(0f)
+                }
                 replikItem?.item?.playSound()
                 holder = replikItem?.item
                 startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#0083B2"))
@@ -83,26 +89,30 @@ class dialogManager {
      */
     private fun startAnimation(subtitle: String, animationDuration:Long, color:Int?) {
         stopAnimation()
-        println("$TAG startAnimation: animationDuration: $animationDuration")
-        println("$TAG startAnimation: subtitle: $subtitle")
 
         // first start call
-        listener?.dialogManagerListener_dialogText(subtitlePainter(subtitle,0, characterCounter, color!!))
-        characterCounter++
+        /*listener?.dialogManagerListener_dialogText(subtitlePainter(subtitle,0, characterCounter, color!!), characterCounter)
+        characterCounter++*/
+
 
         timerHandler = Handler()
         timerTask = object: TimerTask() {
             override fun run() {
                 timerHandler!!.post(object: Runnable {
                     override fun run() {
-                        listener?.dialogManagerListener_dialogText(subtitlePainter(subtitle,0, characterCounter, color!!))
-                        characterCounter++
+
                         if (characterCounter >= subtitle.length+1) {
-                            stopAnimation()
-                            replikCounter++
+
+                            println("$TAG characterCounter: text sıfırla")
                             characterCounter = 0
+                            replikCounter++
+                            stopAnimation()
+                            listener?.dialogManagerListener_dialogText_clearText()
                             startDialog()
+                        }else {
+                            listener?.dialogManagerListener_dialogText(subtitlePainter(subtitle,0, characterCounter, color!!),characterCounter)
                         }
+                        characterCounter++
                     }
                 })
             }
@@ -151,5 +161,10 @@ class dialogManager {
         }
         stopAnimation()
         startDialog()
+    }
+
+    private var volumeStatus:Boolean? = true
+    internal fun onSetVolume (status:Boolean?) {
+        volumeStatus = status
     }
 }

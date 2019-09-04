@@ -48,26 +48,23 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
                 fileStringName = "showreel_$userID.mp4"
             }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
                 returningRequestPath =
-                    "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4" // null da olabilir
+                    "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4"
                 fileStringName = "showreel_$userID.jpg"
             }
-        }else {
+        }else if (type == nativePage.uploadTanitim){
+            println("Tip ne: $type")
             if (uploadFileType == UPLOAD_FILE_TYPE.video) {
                 returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
                 fileStringName = "tanitim_$userID.mp4"
             }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
                 returningRequestPath =
-                    "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4" // null da olabilir
+                    "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
                 fileStringName = "tanitim_$userID.jpg"
             }
         }
         resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null, uploadFileType)
 
 
-        /*
-        Thread(Runnable {
-
-        }).start()*/
 
         uploadFile(params[0]?._uploadFile, fileStringName)
 

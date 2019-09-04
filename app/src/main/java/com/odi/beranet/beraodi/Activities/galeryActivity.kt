@@ -73,6 +73,7 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
     private var leftContainer: LinearLayout? = null
     private var rightTopContainer: LinearLayout? = null
     private var rightBottomContainer: LinearLayout? = null
+    private lateinit var contentPreloader:RelativeLayout
     private var gridView: GridView? = null
     var uploadProfilePhotoMessageHandler: Handler? = null
 
@@ -109,6 +110,8 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
     }
 
     private fun uiConfig() {
+
+        contentPreloader = findViewById(R.id.contentPreloader_gallery)
         myBackButton = findViewById(R.id.myBackButton)
         myBackButton?.setOnClickListener(clickListener)
 
@@ -295,6 +298,7 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
     }
 
     private fun onSaveEventAction() {
+        print("Portre onSaveEventAction")
         savePicture()
     }
 
@@ -440,8 +444,13 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
         return bitmap
     }
 
+    override fun onBackPressed() {
+        return
+    }
+
 
     private fun savePicture() {
+        print("Portre savePicture")
         if (leftImage?.drawable == null || rightTopImage?.drawable == null || rightBottomImage?.drawable == null) {
             val builder = AlertDialog.Builder(this)
 
@@ -450,7 +459,11 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
                 .setPositiveButton("Tamam", DialogInterface.OnClickListener { dialog, id -> return@OnClickListener })
             val alert = builder.create()
             alert.show()
+            return
+
         }
+
+
 
         leftImage?.destroyDrawingCache()
         leftImage?.buildDrawingCache()
@@ -468,6 +481,8 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
         val bitmapFinal = combineImageIntoOne(bitmap1, bitmap2, bitmap3)
 
         //   bitmapFinal=addWaterMark(bitmapFinal);
+
+        contentPreloader.visibility = View.VISIBLE
 
         val filename = "profil_$userId.jpg"
         println("$TAG filename : $filename")
@@ -496,6 +511,7 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
                     val msg: String? = message.obj as? String
                     msg.let { value ->
                         if (value.equals("suc")) {
+                            //contentPreloader.visibility = View.INVISIBLE
                             showAlert()
                         }else if (value.equals("start")) {
                             Toast.makeText(this@galeryActivity, "Kolaj fotoğrafı işleme alındı. Yükleniyor...", Toast.LENGTH_SHORT).show()
@@ -556,7 +572,7 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
                     val intent = Intent()
                     intent.putExtra("PLAY_SHOW", "done")
                     setResult(Activity.RESULT_FIRST_USER, intent)
-                    this.onBackPressed()
+                    finish()
 
                 }
             val alert = builder.create()

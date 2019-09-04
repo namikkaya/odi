@@ -24,6 +24,7 @@ import com.odi.beranet.beraodi.models.playlistItemDataModel
 import com.odi.beranet.beraodi.odiLib.RECORD_TYPE
 import com.odi.beranet.beraodi.odiLib.cameraFragmentViewPager
 import com.odi.beranet.beraodi.odiLib.odiInterface
+import com.odi.beranet.beraodi.odiLib.scrollPositionManager
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -55,9 +56,11 @@ class cameraActivity() : baseActivity(),
     private var projectId:String? = null
     private var userId:String? = null
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         val bundle=intent.extras
         if(bundle!=null)
@@ -155,7 +158,6 @@ class cameraActivity() : baseActivity(),
         return HtmlCompat.fromHtml(str, HtmlCompat.FROM_HTML_MODE_LEGACY).toString()
     }
 
-
     var dataTypeHolder:RECORD_TYPE? = null
     fun getProjectData() {
         // Instantiate the RequestQueue.
@@ -215,7 +217,6 @@ class cameraActivity() : baseActivity(),
         )
         queue.add(stringReq)
     }
-
 
     val playlistArray = ArrayList<playlistItemDataModel>()
 

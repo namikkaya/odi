@@ -23,6 +23,8 @@ import android.support.v4.content.ContextCompat
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory
 import android.support.v7.app.AppCompatActivity
 import android.text.SpannableString
+import android.text.method.ScrollingMovementMethod
+import android.text.style.ForegroundColorSpan
 import android.util.*
 import android.view.*
 import android.widget.FrameLayout
@@ -31,10 +33,7 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.playlistDataModel
-import com.odi.beranet.beraodi.odiLib.Permission_Result
-import com.odi.beranet.beraodi.odiLib.countDownManager
-import com.odi.beranet.beraodi.odiLib.odiMediaManager
-import com.odi.beranet.beraodi.odiLib.vibratePhone
+import com.odi.beranet.beraodi.odiLib.*
 import java.io.File
 import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
@@ -75,6 +74,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         COUNTDOWN
     }
 
+    private var myScrollPositionManager: scrollPositionManager? = null
+
     private var textContainerVisible:Boolean = false
     private val TAG: String? = "previewFragment"
     private var listener: previewFragmentInterface? = null
@@ -87,6 +88,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private lateinit var textContainer: RelativeLayout
     private lateinit var subtitleText: TextView
     private lateinit var countDownObject: RelativeLayout
+    private lateinit var volumeButton: ImageButton
     private var timerManager:countDownManager? = null
     private var isRecording:Boolean = false
     private val MAX_PREVIEW_WIDTH:Int = 1280
@@ -395,6 +397,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             R.id.cameraCloseButton -> onCloseCameraButtonEvent()
             R.id.textControlButton -> onTextControlButtonEvent()
             R.id.nextStepButton -> onNextButtonEvent()
+            R.id.volumeButton -> onVolumeButtonEvent()
         }
     }
 
@@ -453,7 +456,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         subtitleText = view.findViewById(R.id.subtitleTextView)
         countDownObject = view.findViewById(R.id.countDown)
         nextButton = view.findViewById(R.id.nextStepButton)
-
+        volumeButton = view.findViewById(R.id.volumeButton)
+        subtitleText.movementMethod = ScrollingMovementMethod()
 
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -479,11 +483,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         timerManager = countDownManager(countDownObject, this.activity!!)
         timerManager?.listener = this
 
+        myScrollPositionManager = scrollPositionManager()
+
         recordButton.setOnClickListener(clickListener)
         changeCameraButton.setOnClickListener(clickListener)
         cameraCloseButton.setOnClickListener(clickListener)
         textControlButton.setOnClickListener(clickListener)
         nextButton.setOnClickListener(clickListener)
+        volumeButton.setOnClickListener(clickListener)
 
         getDirFile()
     }
@@ -663,7 +670,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private fun orientationListenerConfig() {
         mOrientationListener = object: OrientationEventListener(this@previewFragment.activity, SensorManager.SENSOR_DELAY_NORMAL) {
             override fun onOrientationChanged(orientation: Int) {
-                var degrees = 0
                 if (orientation in 235..305) { // arasında
                     rotationStatus(Orientation_Status.LAND_SCAPE)
                 }else {
@@ -703,7 +709,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         if (myMediaManager != null) {
             myMediaManager?.startDialog()
         }
-        Log.d(TAG, "startRecording")
     }
 
     private fun onCloseCameraButtonEvent() {
@@ -713,16 +718,32 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private fun onTextControlButtonEvent() {
         vibratePhone()
         if (textContainer.visibility == View.VISIBLE) {
-            println("$TAG onTextButton textoff")
             textControlButton.setImageResource(R.drawable.textoff)
             textContainerVisible = false
             textContainer.visibility = View.INVISIBLE
         }else {
-            //textContainer.visibility = View.VISIBLE
-            println("$TAG onTextButton textoff")
             textControlButton.setImageResource(R.drawable.texton)
             textContainerVisible = true
             textContainer.visibility = View.VISIBLE
+        }
+    }
+
+    var volumeStatus:Boolean = true
+
+    private fun onVolumeButtonEvent() {
+        vibratePhone()
+        if (volumeStatus) {
+            volumeButton.setImageResource(R.drawable.ses_kapali)
+            volumeStatus = false
+            if (myMediaManager != null) {
+                myMediaManager?.onSetVolume(false)
+            }
+        }else {
+            volumeButton.setImageResource(R.drawable.ses_acik)
+            volumeStatus = true
+            if (myMediaManager != null) {
+                myMediaManager?.onSetVolume(true)
+            }
         }
     }
 
@@ -742,7 +763,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun activityOrientationDesing(desingStatus: Orientation_Status?) {
-        if (isRecording || uiDesingHolder == UIDESIGN.LOCK) {
+        if (isRecording || uiDesingHolder == UIDESIGN.COUNTDOWN || uiDesingHolder == UIDESIGN.LOCK) {
             return
         }
         when(desingStatus) {
@@ -779,15 +800,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 nextButton.visibility = View.INVISIBLE
                 cameraCloseButton.visibility = View.VISIBLE
                 changeCameraButton.visibility = View.VISIBLE
+                volumeButton.visibility = View.VISIBLE
             }
             UIDESIGN.RECORDING -> {
                 uiDesingHolder = UIDESIGN.RECORDING
                 buttonEnabled(true)
                 recordButton.setImageResource(R.drawable.stop)
                 textContainer.visibility = View.VISIBLE
-
                 changeCameraButton.visibility = View.INVISIBLE
-
+                volumeButton.visibility = View.INVISIBLE
             }
             UIDESIGN.ENDING -> {
                 uiDesingHolder = UIDESIGN.ENDING
@@ -796,7 +817,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 if (myMediaManager != null) {
                     myMediaManager!!.stopAnimation()
                 }
-
             }
             UIDESIGN.LOCK -> {
                 uiDesingHolder = UIDESIGN.LOCK
@@ -805,9 +825,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             UIDESIGN.COUNTDOWN -> {
                 uiDesingHolder = UIDESIGN.COUNTDOWN
                 buttonEnabled(false)
-
                 cameraCloseButton.visibility = View.INVISIBLE
                 changeCameraButton.visibility = View.INVISIBLE
+                volumeButton.visibility = View.INVISIBLE
             }
         }
     }
@@ -821,10 +841,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     // -- Monolog başladı
-    override fun odiMediaManagerListener_monologText(subtitle: SpannableString?) {
-        super.odiMediaManagerListener_monologText(subtitle)
+
+    override fun odiMediaManagerListener_monologText(subtitle: SpannableString?, charIndex: Int?) {
+        super.odiMediaManagerListener_monologText(subtitle, charIndex)
         subtitleText.setText(subtitle,TextView.BufferType.SPANNABLE)
-        println("$TAG odiMediaManagerListener_monologText : $subtitle")
+
+        if (myScrollPositionManager != null) {
+            myScrollPositionManager?.positionManage(subtitleText,charIndex)
+        }
     }
 
     override fun odiMediaManagerListener_monologTextComplete() {
@@ -839,9 +863,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     // -- Monolog bitti
 
     // -- Dialog başladı
-    override fun odiMediaManagerListener_dialogText(subtitle: SpannableString?) {
-        super.odiMediaManagerListener_dialogText(subtitle)
-        subtitleText.setText(subtitle,TextView.BufferType.SPANNABLE)
+    override fun odiMediaManagerListener_dialogText(subtitle: SpannableString?, charIndex: Int?) {
+        super.odiMediaManagerListener_dialogText(subtitle, charIndex)
+
+        subtitleText.post(Runnable {
+            subtitleText.setText(subtitle,TextView.BufferType.SPANNABLE)
+        })
+        if (myScrollPositionManager != null) {
+            myScrollPositionManager?.positionManage(subtitleText,charIndex)
+        }
     }
 
     override fun odiMediaManagerListener_dialogTextComplete() {
@@ -862,6 +892,22 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 nextButton.visibility = View.INVISIBLE
             }
         }
+    }
+
+    override fun odiMediaManagerListener_clearText() {
+        super.odiMediaManagerListener_clearText()
+        subtitleText.post(Runnable {
+            println("$TAG characterCounter odiMediaManagerListener_clearText")
+            val spannable = SpannableString("")
+            subtitleText.setText(spannable,TextView.BufferType.SPANNABLE)
+            subtitleText.post {
+                val scrollAmount = subtitleText.layout.getLineTop(subtitleText.lineCount) - subtitleText.height
+                subtitleText.scrollTo(0, scrollAmount)
+            }
+            if (myScrollPositionManager != null) {
+                myScrollPositionManager?.stop()
+            }
+        })
     }
 
     // -- Dialog bitti

@@ -72,6 +72,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        println("Takip mainActivity onCreate")
         configuration()
         onCheckFreeSpace()
 
@@ -108,11 +109,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
     override fun onResume() {
         super.onResume()
-
+        println("Takip mainactivity onResume")
     }
 
     override fun onPause() {
         super.onPause()
+        println("Takip mainactivity onPause")
 
     }
 
@@ -148,6 +150,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     }
 
     var animationStatus:Boolean = false
+    var animationFirstStart:Boolean = true
 
     // ui desing (web sayfası yükleniyor)
     private fun webViewConfiguration() {
@@ -167,26 +170,30 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     println("$TAG animation: onPageFinished")
-                    if (animationStatus) {
-                        animationStatus = false
-                        println("$TAG animation: start")
-                        val anim = AnimationUtils.loadAnimation(this@MainActivity, R.anim.animation_load_page)
-                        anim.setAnimationListener(object : Animation.AnimationListener {
-                            override fun onAnimationStart(animation: Animation) {
+                    if (animationFirstStart) {
+                        animationFirstStart = false
+                        if (animationStatus) {
+                            animationStatus = false
+                            println("$TAG animation: start")
+                            val anim = AnimationUtils.loadAnimation(this@MainActivity, R.anim.animation_load_page)
+                            anim.setAnimationListener(object : Animation.AnimationListener {
+                                override fun onAnimationStart(animation: Animation) {
 
-                            }
+                                }
 
-                            override fun onAnimationEnd(animation: Animation) {
-                                myAnimationLayout.setVisibility(View.GONE)
-                            }
+                                override fun onAnimationEnd(animation: Animation) {
+                                    myAnimationLayout.setVisibility(View.GONE)
+                                }
 
-                            override fun onAnimationRepeat(animation: Animation) {
+                                override fun onAnimationRepeat(animation: Animation) {
 
-                            }
-                        })
+                                }
+                            })
 
-                        myAnimationLayout.startAnimation(anim)
+                            myAnimationLayout.startAnimation(anim)
+                        }
                     }
+
 
                 }
 
@@ -324,14 +331,16 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         if (userId != null) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=$userId")
             webView?.reload()
-            println("$TAG webViewOnLoad : $userId kullanıcının id si server a gönderildi")
+            println("Takip: webViewOnload reload1")
         }else {
             if (singleton.onesignal_playerId != null) {
                 webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
                 webView?.reload()
+                println("Takip: webViewOnload reload2")
             }else {
                 webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=")
                 webView?.reload()
+                println("Takip: webViewOnload reload3")
             }
         }
     }
@@ -397,6 +406,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             webView?.reload()
+            println("Takip: PHOTO_COLLAGE reload4")
         }
 
         if (resultCode == Activity.RESULT_OK &&
@@ -418,16 +428,10 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                     Toast.makeText(applicationContext, "İşlem Başarılı.", Toast.LENGTH_SHORT).show()
                     webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
                     webView?.reload()
+                    println("Takip: UPLOAD_VIDEO_PAGE_RESULT reload5")
                 }
             }
         }
-
-        /*
-        if (resultCode == Activity.RESULT_OK) {
-            webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
-            webView?.reload()
-        }
-        */
     }
 
     // ucrop event dönüşü
@@ -559,6 +563,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                     intent.putExtra("PLAY_SHOW", "done")
                     setResult(Activity.RESULT_FIRST_USER, intent)
                     webView?.reload()
+                    println("Takip: showUploadProfilePhotoAlert reload6")
                 }
             val alert = builder.create()
             alert.show()

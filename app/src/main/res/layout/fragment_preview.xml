@@ -75,6 +75,13 @@
                                 android:layout_width="0dp"
                                 android:layout_height="match_parent">
 
+                            <ImageButton
+                                    android:id="@+id/volumeButton"
+                                    android:background="@null"
+                                    android:src="@drawable/ses_acik"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"/>
+
                         </FrameLayout>
 
                     </LinearLayout>

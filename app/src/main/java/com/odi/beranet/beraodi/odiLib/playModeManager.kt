@@ -24,6 +24,11 @@ class playModeManager: odiInterface {
     private fun startDialog() {
         println("$TAG replikList array: ${replikList}")
         if(replikList.size > 0) {
+            if (volumeStatus!!) {
+                replikList[0].item?.mediaPlayerSetVolume(1f)
+            }else {
+                replikList[0].item?.mediaPlayerSetVolume(0f)
+            }
             replikList[0].item?.playSound()
         }
     }
@@ -42,5 +47,10 @@ class playModeManager: odiInterface {
     internal fun nextReplik() {
         stopAnimation()
         startDialog()
+    }
+
+    private var volumeStatus:Boolean? = true
+    internal fun onSetVolume (status:Boolean?) {
+        volumeStatus = status
     }
 }

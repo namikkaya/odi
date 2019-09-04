@@ -34,8 +34,8 @@
                 android:name=".Activities.orientationActivity">
         </activity>
         <activity
+                android:configChanges="keyboardHidden|orientation|screenSize"
                 android:name=".Activities.cameraActivity"
-                android:configChanges="orientation"
                 android:screenOrientation="landscape"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
                 android:windowSoftInputMode="adjustResize">
@@ -75,6 +75,7 @@
                 android:configChanges="orientation|keyboardHidden"
                 android:screenOrientation="portrait"/>
         <activity
+                android:configChanges="orientation|keyboardHidden|screenSize"
                 android:name=".MainActivity"
                 android:screenOrientation="portrait">
         </activity>

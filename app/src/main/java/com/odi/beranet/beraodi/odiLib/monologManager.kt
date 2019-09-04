@@ -10,7 +10,7 @@ import kotlin.collections.ArrayList
 
 class monologManager {
     interface monologManagerListener {
-        fun monologManagerListener_monologText(subtitle:SpannableString?){}
+        fun monologManagerListener_monologText(subtitle:SpannableString?, charIndex:Int){}
         fun monologManagerListener_monologTextComplete(){}
     }
 
@@ -63,7 +63,7 @@ class monologManager {
     private fun startAnimation(subtitle: String, animationDuration:Long) {
         stopAnimation()
         // first start call
-        listener?.monologManagerListener_monologText(subtitlePainter(subtitle,0, characterCounter, Color.parseColor("#FF8400")))
+        listener?.monologManagerListener_monologText(subtitlePainter(subtitle,0, characterCounter, Color.parseColor("#FF8400")),characterCounter)
         characterCounter++
 
         timerHandler = Handler()
@@ -71,7 +71,7 @@ class monologManager {
             override fun run() {
                 timerHandler!!.post(object: Runnable {
                     override fun run() {
-                        listener?.monologManagerListener_monologText(subtitlePainter(subtitle,0, characterCounter, Color.parseColor("#FF8400")))
+                        listener?.monologManagerListener_monologText(subtitlePainter(subtitle,0, characterCounter, Color.parseColor("#FF8400")),characterCounter)
                         characterCounter++
                         if (characterCounter >= subtitle.length+1) {
                             stopAnimation()

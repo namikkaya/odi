@@ -19,13 +19,15 @@ class odiMediaManager (val playListData:playlistDataModel?):
     private val TAG:String = "odiMediaManager"
 
     interface odiMediaManagerListener {
-        fun odiMediaManagerListener_monologText(subtitle:SpannableString?){}
+        fun odiMediaManagerListener_monologText(subtitle:SpannableString?, charIndex: Int?){}
         fun odiMediaManagerListener_monologTextComplete(){}
 
-        fun odiMediaManagerListener_dialogText(subtitle:SpannableString?){}
+        fun odiMediaManagerListener_dialogText(subtitle:SpannableString?, charIndex: Int?){}
         fun odiMediaManagerListener_dialogTextComplete(){}
 
         fun odiMediaManagerListener_nextButtonVisible(status:Boolean?){}
+
+        fun odiMediaManagerListener_clearText() {}
     }
 
     private var myMonologManager:monologManager? = null
@@ -90,9 +92,9 @@ class odiMediaManager (val playListData:playlistDataModel?):
         }
     }
 
-    override fun monologManagerListener_monologText(subtitle: SpannableString?) {
-        super.monologManagerListener_monologText(subtitle)
-        listener?.odiMediaManagerListener_monologText(subtitle)
+    override fun monologManagerListener_monologText(subtitle: SpannableString?, charIndex: Int) {
+        super.monologManagerListener_monologText(subtitle, charIndex)
+        listener?.odiMediaManagerListener_monologText(subtitle,charIndex)
     }
 
     override fun monologManagerListener_monologTextComplete() {
@@ -121,9 +123,10 @@ class odiMediaManager (val playListData:playlistDataModel?):
         }
     }
 
-    override fun dialogManagerListener_dialogText(subtitle: SpannableString?) {
-        super.dialogManagerListener_dialogText(subtitle)
-        listener?.odiMediaManagerListener_dialogText(subtitle)
+
+    override fun dialogManagerListener_dialogText(subtitle: SpannableString?, charIndex: Int?) {
+        super.dialogManagerListener_dialogText(subtitle, charIndex)
+        listener?.odiMediaManagerListener_dialogText(subtitle, charIndex)
     }
 
     override fun dialogManagerListener_dialogTextComplete() {
@@ -134,6 +137,11 @@ class odiMediaManager (val playListData:playlistDataModel?):
     override fun dialogManagerListener_dialogNextButtonVisible(status: Boolean?) {
         super.dialogManagerListener_dialogNextButtonVisible(status)
         listener?.odiMediaManagerListener_nextButtonVisible(status)
+    }
+
+    override fun dialogManagerListener_dialogText_clearText() {
+        super.dialogManagerListener_dialogText_clearText()
+        listener?.odiMediaManagerListener_clearText()
     }
 
     //-------------------------------------------------------------------
@@ -174,21 +182,16 @@ class odiMediaManager (val playListData:playlistDataModel?):
     /**
      * Bir sonraki repliğe geçer
      */
-    fun nextReplik() {
+    fun onSetVolume(status:Boolean?) {
         when(playListData?.type!!) {
-            RECORD_TYPE.MONOLOG -> {
-                if (myMonologManager != null) {
-                    myMonologManager?.nextReplik()
-                }
-            }
             RECORD_TYPE.DIALOG -> {
                 if (myDialogManager != null) {
-                    myDialogManager?.nextReplik()
+                    myDialogManager?.onSetVolume(status!!)
                 }
             }
             RECORD_TYPE.PLAYMODE -> {
                 if (myPlayModeManager != null) {
-                    myPlayModeManager?.nextReplik()
+                    myPlayModeManager?.onSetVolume(status!!)
                 }
             }
         }
