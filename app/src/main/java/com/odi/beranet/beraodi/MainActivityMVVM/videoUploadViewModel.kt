@@ -82,6 +82,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                                 /*videoProcessthis@videoUploadViewModel.context!!,
                                     this@videoUploadViewModel.videoUri!!,
                                     this@videoUploadViewModel.pageType!!*/
+                                println("$TAG uploadFile: trigger videoUploadStart ->>")
                                 videoUploadStart(this@videoUploadViewModel.context!!,
                                 this@videoUploadViewModel.videoUri!!,
                                 this@videoUploadViewModel.pageType!!)
@@ -94,12 +95,10 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         }
 
 
-
-
-
         if (singleton.userId != null) {
-            println("TİP: $uploadType")
+            println("$TAG type: $type - userId: ${singleton.userId!!} - uploadType!!: ${uploadType}")
             val myModel = async_upload_video("denemeID", file, this, type, singleton.userId!!, uploadType!!)
+
             var upload = asyncUploadFile().execute(myModel)
         }
 
@@ -131,14 +130,19 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
     }
 
     // işlem bittiğinde en son bu dosya silinecek
+    /**
+     * samsung hata uri dosyası boş geliyor...
+     * yeniden test edilmesi gerekiyor...
+     */
     var fileDeletedEnd_holder:File? = null
     fun videoUploadStart(context: Context, uri:Uri, type:nativePage) {
+
         val newListener = object: VideoCompress.CompressListener {
             override fun onStart() {
+
             }
 
             override fun onSuccess() {
-
                 //videoProcess(context, uri, type)
 
                 val extStore = Environment.getExternalStorageDirectory().absolutePath
@@ -166,7 +170,9 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                 listener?.onCompressVideoStatus(uploadId,null,true)
 
                 //videoProcess(context, path, type)
-                uploadFile(file,type,UPLOAD_FILE_TYPE.video)
+                Thread {
+                    uploadFile(file,type,UPLOAD_FILE_TYPE.video)
+                }.run()
             }
 
             override fun onFail() {
@@ -179,8 +185,8 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
         }
         //VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
-        VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
 
+        VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
     }
 
 
@@ -341,7 +347,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
         return ab.toString()
     }
-
 
     private fun getThumbnail(uri:Uri):Bitmap{
         val filePathColumn = arrayOf(MediaStore.Images.Media.DATA)

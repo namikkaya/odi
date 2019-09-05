@@ -2,6 +2,7 @@ package com.odi.beranet.beraodi.Activities
 
 import android.app.Activity
 import android.content.Intent
+import android.net.Uri
 import android.opengl.Visibility
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -22,6 +23,7 @@ import com.odi.beranet.beraodi.Activities.cameraActivityFragments.previewFragmen
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.models.playlistItemDataModel
+import com.odi.beranet.beraodi.models.videoData
 import com.odi.beranet.beraodi.odiLib.*
 import org.json.JSONArray
 import org.json.JSONException
@@ -356,8 +358,8 @@ class cameraActivity() : baseActivity(),
         }
     }
 
-    /// Kamera kaydı bitirildi.
-    override fun onPreviewFragment_Record_Success(path: String?) {
+
+    override fun onPreviewFragment_Record_Success(path: Uri?) {
         super.onPreviewFragment_Record_Success(path)
         goToPreviewVideo(path)
     }
@@ -380,9 +382,12 @@ class cameraActivity() : baseActivity(),
     }
 
 
-    private fun goToPreviewVideo(videoPath:String?) {
+    private fun goToPreviewVideo(videoPath:Uri?) {
         val intent = Intent(this@cameraActivity, previewVideo::class.java)
-        intent.putExtra("videoPath", videoPath)
+        val myUri:String = videoPath!!.toString()
+
+        val sendVideoData = videoData(videoPath)
+        intent.putExtra("videoPath", myUri)
         intent.putExtra("userId", userId)
         intent.putExtra("projectId", projectId)
         startActivityForResult(intent, Activity_Result.PREVIEW_VIDEO_RESULT.value)

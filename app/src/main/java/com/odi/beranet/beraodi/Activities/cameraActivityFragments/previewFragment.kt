@@ -14,6 +14,7 @@ import android.hardware.SensorManager
 import android.hardware.camera2.*
 import android.media.MediaRecorder
 import android.media.ThumbnailUtils
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
@@ -61,7 +62,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         /**
          * Record success
          */
-        fun onPreviewFragment_Record_Success(path:String?) {}
+        fun onPreviewFragment_Record_Success(path:Uri?) {}
     }
 
     private var myMediaManager:odiMediaManager? = null
@@ -157,7 +158,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private var mediaRecorder:MediaRecorder? = null
 
-    private lateinit var currentVideoFilePath: String
+    private var currentVideoFilePath: String = ""
 
     private fun previewSession() {
         setupMediaRecorder()
@@ -243,8 +244,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun createVideoFile():File {
+
         val videoFile = File(context?.filesDir, createVideoFileName())
-        currentVideoFilePath = videoFile.absolutePath
+        if (currentVideoFilePath == "") {
+            currentVideoFilePath = videoFile.absolutePath
+        }
+
         return videoFile
     }
 
@@ -301,7 +306,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             try {
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setAudioEncodingBitRate(44100)
+                setAudioSamplingRate(44100)
+                setAudioEncodingBitRate(96000)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
                 setOutputFile(createVideoFile())
@@ -327,7 +333,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun stopMediaRecorder() {
         if (mediaRecorder != null) {
-            try{
+            // test için kapatıldı
+            /*try{
                 mediaRecorder?.apply {
                     try {
                         stop()
@@ -353,7 +360,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 }
             }catch(stopException:RuntimeException){
                 Log.e(TAG, stopException.toString())
-            }
+            }*/
         }
     }
 
@@ -479,7 +486,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         uiCameraDesing(UIDESIGN.LOCK)
 
-
         return view
     }
 
@@ -498,6 +504,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         nextButton.setOnClickListener(clickListener)
         volumeButton.setOnClickListener(clickListener)
 
+        // video unutma
         getDirFile()
     }
 
@@ -703,7 +710,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             }
             Log.d(TAG, "stopRecording")
             // işlem buraya
-            listener?.onPreviewFragment_Record_Success(currentVideoFilePath)
+            val myUri = Uri.fromFile(File(currentVideoFilePath))
+            listener?.onPreviewFragment_Record_Success(myUri)
 
         }else {
            startCountDown()
@@ -867,7 +875,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         isRecording = false
         stopRecordSession()
         uiCameraDesing(UIDESIGN.ENDING)
-        listener?.onPreviewFragment_Record_Success(currentVideoFilePath)
+        val myUri = Uri.fromFile(File(currentVideoFilePath))
+        listener?.onPreviewFragment_Record_Success(myUri)
     }
 
     // -- Monolog bitti
@@ -890,7 +899,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         isRecording = false
         stopRecordSession()
         uiCameraDesing(UIDESIGN.ENDING)
-        listener?.onPreviewFragment_Record_Success(currentVideoFilePath)
+        val myUri = Uri.fromFile(File(currentVideoFilePath))
+        listener?.onPreviewFragment_Record_Success(myUri)
     }
 
     override fun odiMediaManagerListener_nextButtonVisible(status: Boolean?) {

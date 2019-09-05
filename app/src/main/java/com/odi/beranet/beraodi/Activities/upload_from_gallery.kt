@@ -318,7 +318,7 @@ class upload_from_gallery : baseActivity(), odiInterface {
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
         //values.put(MediaStore.Video.Media.TITLE, "odi_$randomName");
         //values.put(MediaStore.Video.Media.DATA, filePath?.getAbsolutePath());
-        // values.put(MediaStore.Video.Media.DATA, f.getAbsolutePath());
+        //values.put(MediaStore.Video.Media.DATA, f.getAbsolutePath());
 
         // Add a new record (identified by uri) without the video, but with the values just set.
         val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)

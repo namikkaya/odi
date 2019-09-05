@@ -12,6 +12,7 @@ import android.media.AudioManager
 import android.media.AudioAttributes
 import android.os.Build
 import android.os.Handler
+import java.io.Serializable
 
 
 class Model_images {
@@ -176,3 +177,5 @@ data class playlistDataModel(val type:RECORD_TYPE?, val dataList:ArrayList<playl
 data class playlistReplik(val text:String?, val duration: Long?, val type: String?, val item:playlistItemDataModel?) // type dialoglarda 0 dış 1 ben
 
 data class karaokeModel(val startIndex:Int?, val endIndex:Int?, val subtitle:String?, val lineNo:Int?, val bound:Rect?) {}
+
+data class videoData(val uri:Uri?):Serializable {}

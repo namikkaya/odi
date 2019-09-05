@@ -1,8 +1,6 @@
 package com.odi.beranet.beraodi.odiLib
 
-import android.content.Intent
 import android.os.AsyncTask
-import android.os.Handler
 import com.odi.beranet.beraodi.models.async_upload_video
 import com.odi.beranet.beraodi.models.async_upload_video_complete
 import org.apache.commons.net.ftp.FTP
@@ -12,9 +10,8 @@ import java.io.*
 import org.apache.commons.net.io.CopyStreamListener as CopyStreamListener
 
 
-
 class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
-
+    private var myTAG:String = "async"
     private var streamListener:CopyStreamAdapter? = null
     private var listener:odiInterface? = null
     private var uploadID:String? = null
@@ -62,9 +59,9 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
                 fileStringName = "tanitim_$userID.jpg"
             }
         }
+
+
         resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null, uploadFileType)
-
-
 
         uploadFile(params[0]?._uploadFile, fileStringName)
 
