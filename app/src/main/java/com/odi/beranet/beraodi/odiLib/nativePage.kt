@@ -26,7 +26,8 @@ enum class Activity_Result (val value:Int) {
     UPLOAD_VIDEO_PAGE_RESULT(11),
     CAMERA_SHOW_REEL_RESULT(12),
     CAMERA_TANITIM_RESULT(13),
-    CAMERA_ODILE_RESULT(14)
+    CAMERA_ODILE_RESULT(14),
+    PREVIEW_VIDEO_RESULT(15)
 }
 
 enum class Permission_Result(val value:Int) {

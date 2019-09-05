@@ -1,5 +1,6 @@
 package com.odi.beranet.beraodi.Activities
 
+import android.app.Activity
 import android.content.Intent
 import android.opengl.Visibility
 import android.support.v7.app.AppCompatActivity
@@ -21,10 +22,7 @@ import com.odi.beranet.beraodi.Activities.cameraActivityFragments.previewFragmen
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.models.playlistItemDataModel
-import com.odi.beranet.beraodi.odiLib.RECORD_TYPE
-import com.odi.beranet.beraodi.odiLib.cameraFragmentViewPager
-import com.odi.beranet.beraodi.odiLib.odiInterface
-import com.odi.beranet.beraodi.odiLib.scrollPositionManager
+import com.odi.beranet.beraodi.odiLib.*
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -359,9 +357,9 @@ class cameraActivity() : baseActivity(),
     }
 
     /// Kamera kaydı bitirildi.
-    override fun onPreviewFragment_Record_Success() {
-        super.onPreviewFragment_Record_Success()
-        println("$TAG record success")
+    override fun onPreviewFragment_Record_Success(path: String?) {
+        super.onPreviewFragment_Record_Success(path)
+        goToPreviewVideo(path)
     }
 
 
@@ -372,6 +370,23 @@ class cameraActivity() : baseActivity(),
             var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
             myFragment.onRecordStopTrigger()
         }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == Activity_Result.PREVIEW_VIDEO_RESULT.value && resultCode == Activity.RESULT_OK) {
+
+        }
+    }
+
+
+    private fun goToPreviewVideo(videoPath:String?) {
+        val intent = Intent(this@cameraActivity, previewVideo::class.java)
+        intent.putExtra("videoPath", videoPath)
+        intent.putExtra("userId", userId)
+        intent.putExtra("projectId", projectId)
+        startActivityForResult(intent, Activity_Result.PREVIEW_VIDEO_RESULT.value)
+
     }
 
 }

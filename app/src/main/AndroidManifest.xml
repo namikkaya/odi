@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.VIBRATE"/>
 
     <uses-feature
             android:name="android.hardware.camera"
@@ -27,15 +27,22 @@
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
         <activity
-                android:configChanges="orientation"
-                android:screenOrientation="portrait"
-                android:launchMode="singleTop"
-                android:theme="@style/Theme.AppCompat.Translucent"
-                android:name=".Activities.orientationActivity">
+                android:configChanges="keyboardHidden|orientation|screenSize"
+                android:screenOrientation="landscape"
+                android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
+                android:windowSoftInputMode="adjustResize"
+                android:name=".Activities.previewVideo">
         </activity>
         <activity
-                android:configChanges="keyboardHidden|orientation|screenSize"
+                android:name=".Activities.orientationActivity"
+                android:configChanges="orientation"
+                android:launchMode="singleTop"
+                android:screenOrientation="portrait"
+                android:theme="@style/Theme.AppCompat.Translucent">
+        </activity>
+        <activity
                 android:name=".Activities.cameraActivity"
+                android:configChanges="keyboardHidden|orientation|screenSize"
                 android:screenOrientation="landscape"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
                 android:windowSoftInputMode="adjustResize">
@@ -75,8 +82,8 @@
                 android:configChanges="orientation|keyboardHidden"
                 android:screenOrientation="portrait"/>
         <activity
-                android:configChanges="orientation|keyboardHidden|screenSize"
                 android:name=".MainActivity"
+                android:configChanges="orientation|keyboardHidden|screenSize"
                 android:screenOrientation="portrait">
         </activity>
         <activity

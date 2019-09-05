@@ -2,6 +2,7 @@ package com.odi.beranet.beraodi.Activities.cameraActivityFragments
 
 import android.Manifest
 import android.app.AlertDialog
+import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
@@ -32,6 +33,7 @@ import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.TextView
 import com.odi.beranet.beraodi.R
+import com.odi.beranet.beraodi.models.CameraViewModel
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.*
 import java.io.File
@@ -59,7 +61,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         /**
          * Record success
          */
-        fun onPreviewFragment_Record_Success() {}
+        fun onPreviewFragment_Record_Success(path:String?) {}
     }
 
     private var myMediaManager:odiMediaManager? = null
@@ -96,6 +98,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private lateinit var  captureSession: CameraCaptureSession
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
 
+    var recordTypeHolder:RECORD_TYPE? = null // dialog / monolog /play mode hangisinde kayıt yapılıyorsa
+
     private var previewSize:Point? = null
 
     private lateinit var cameraDevice: CameraDevice
@@ -107,6 +111,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         FRONT(CameraCharacteristics.LENS_FACING_FRONT),
         BACK(CameraCharacteristics.LENS_FACING_BACK)
     }
+
+
 
     /**
      * ekran duruşunu simgeler
@@ -696,6 +702,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 myMediaManager!!.stopAnimation()
             }
             Log.d(TAG, "stopRecording")
+            // işlem buraya
+            listener?.onPreviewFragment_Record_Success(currentVideoFilePath)
+
         }else {
            startCountDown()
         }
@@ -835,6 +844,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     // datalar indiriliyor ...
     fun getData(dataList:playlistDataModel){
         println("$TAG getData: ${dataList.type}")
+        recordTypeHolder = dataList.type
         myMediaManager = odiMediaManager(dataList)
         myMediaManager!!.listener = this
         myMediaManager!!.prepare()
@@ -857,7 +867,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         isRecording = false
         stopRecordSession()
         uiCameraDesing(UIDESIGN.ENDING)
-        listener?.onPreviewFragment_Record_Success()
+        listener?.onPreviewFragment_Record_Success(currentVideoFilePath)
     }
 
     // -- Monolog bitti
@@ -880,7 +890,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         isRecording = false
         stopRecordSession()
         uiCameraDesing(UIDESIGN.ENDING)
-        listener?.onPreviewFragment_Record_Success()
+        listener?.onPreviewFragment_Record_Success(currentVideoFilePath)
     }
 
     override fun odiMediaManagerListener_nextButtonVisible(status: Boolean?) {
