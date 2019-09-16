@@ -130,8 +130,6 @@ data class playlistItemDataModel(val index:Int?,
 
                 mediaPlayer?.setOnPreparedListener {
                     handler.post(Runnable {
-                        // çalmaya hazır olduğunu beyan eder.
-
 
                         val dur = mediaPlayer?.duration!!
                         this.duration = dur.toLong()
@@ -146,7 +144,6 @@ data class playlistItemDataModel(val index:Int?,
                         println("playlistItemDataModel: complete")
                         listener?.OnPlaylistItemPlayerEnd(index,recordType)
                     }
-
                 })
 
             }catch (e:IllegalArgumentException) {

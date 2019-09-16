@@ -98,6 +98,10 @@ class preloaderActivity : baseActivity() {
         }
     }
 
+    fun exitPreloader() {
+        finish()
+    }
+
     override fun onBackPressed() {
         return
     }

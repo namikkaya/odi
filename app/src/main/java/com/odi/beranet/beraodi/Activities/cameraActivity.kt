@@ -253,12 +253,10 @@ class cameraActivity() : baseActivity(),
                     }
                 }
                 RECORD_TYPE.DIALOG -> {
-                    //println("$TAG jsonData: strResp dialog : $attr2")
                     if (attr2 != null) {
 
                         contentPreloader.visibility = View.VISIBLE
 
-                        println("$TAG jsonData: attr2 dialog array : ${attr2.length()} ")
                         for (i in 0 until attr2.length()) {
                             //println("$TAG jsonData: strResp item : ${attr2[i]} i: $i ")
                             val itemData = attr2[i] as JSONObject
@@ -358,12 +356,10 @@ class cameraActivity() : baseActivity(),
         }
     }
 
-
     override fun onPreviewFragment_Record_Success(path: Uri?) {
         super.onPreviewFragment_Record_Success(path)
         goToPreviewVideo(path)
     }
-
 
     override fun OnPlaylistItemPlayerEnd(index: Int?, type: RECORD_TYPE) {
         super.OnPlaylistItemPlayerEnd(index, type)
@@ -380,7 +376,6 @@ class cameraActivity() : baseActivity(),
 
         }
     }
-
 
     private fun goToPreviewVideo(videoPath:Uri?) {
         val intent = Intent(this@cameraActivity, previewVideo::class.java)

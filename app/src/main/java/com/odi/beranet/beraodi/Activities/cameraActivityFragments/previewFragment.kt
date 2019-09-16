@@ -113,8 +113,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         BACK(CameraCharacteristics.LENS_FACING_BACK)
     }
 
-
-
     /**
      * ekran duruşunu simgeler
      */
@@ -244,7 +242,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun createVideoFile():File {
-
         val videoFile = File(context?.filesDir, createVideoFileName())
         if (currentVideoFilePath == "") {
             currentVideoFilePath = videoFile.absolutePath
@@ -302,7 +299,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         }
 
         mediaRecorder?.apply {
-
             try {
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 setAudioSource(MediaRecorder.AudioSource.MIC)
@@ -320,9 +316,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 prepare()
 
             }catch (e:IllegalStateException){
-                Log.e(TAG, e.toString() + " mediaRecorder 1")
+                Log.e(TAG, "$e mediaRecorder 1")
             }catch (e:java.lang.RuntimeException) {
-                Log.e(TAG, e.toString() + " mediaRecorder 2")
+                Log.e(TAG, "$e mediaRecorder 2")
             }
 
         }
@@ -334,7 +330,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private fun stopMediaRecorder() {
         if (mediaRecorder != null) {
             // test için kapatıldı
-            /*try{
+            try{
                 mediaRecorder?.apply {
                     try {
                         stop()
@@ -360,7 +356,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 }
             }catch(stopException:RuntimeException){
                 Log.e(TAG, stopException.toString())
-            }*/
+            }
         }
     }
 
@@ -961,7 +957,5 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         println("$TAG onNextButtonEvent")
         myMediaManager?.onNext()
     }
-
-
 
 }

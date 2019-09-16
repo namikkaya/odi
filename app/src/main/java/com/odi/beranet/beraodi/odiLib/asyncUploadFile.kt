@@ -24,6 +24,8 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
     private var resultDataModel:async_upload_video_complete? = null
     private var progressDataModel:async_upload_video_complete? = null
 
+    private var errorDataModel:async_upload_video_complete? = null
+
     private fun setDelegate(listener: odiInterface?) {
         this.listener = listener
     }
@@ -124,7 +126,15 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
 
         ftpClient.copyStreamListener = streamListener
 
-        ftpClient.storeFile(file!!.name.replace(file!!.name, fileName!!), buffIn)
+        try {
+            ftpClient.storeFile(file!!.name.replace(file!!.name, fileName!!), buffIn)
+        }catch (e:IOException) {
+            println("$myTAG ${e.toString()}")
+            errorDataModel = async_upload_video_complete("error",userID,null,false,null,uploadFileType)
+            listener?.uploadVideoAsyncTaskComplete(errorDataModel)
+        }
+
+
 
         buffIn.close()
         ftpClient.logout()

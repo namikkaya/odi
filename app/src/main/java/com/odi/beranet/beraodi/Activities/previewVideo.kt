@@ -1,8 +1,11 @@
 package com.odi.beranet.beraodi.Activities
 
+import android.Manifest
 import android.content.ContentUris
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.PixelFormat
 import android.media.AudioManager
@@ -12,25 +15,74 @@ import android.os.Build
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
 import android.support.v7.app.ActionBar
 import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
-import android.widget.ImageButton
-import android.widget.MediaController
-import android.widget.VideoView
+import android.widget.*
 import com.odi.beranet.beraodi.R
+import com.odi.beranet.beraodi.odiLib.Permission_Result
 import com.odi.beranet.beraodi.odiLib.nativePage
 import com.odi.beranet.beraodi.odiLib.singleton
+import com.odi.beranet.beraodi.odiLib.vibratePhone
 import com.onesignal.OneSignal
-import java.io.File
-import java.io.IOException
+import java.io.*
+import java.lang.IllegalStateException
+import java.util.*
 
-class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPreparedListener {
+class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaController.MediaPlayerControl {
+    override fun isPlaying(): Boolean {
+        return mp!!.isPlaying
+    }
+
+    override fun canSeekForward(): Boolean {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        return true
+    }
+
+    override fun getDuration(): Int {
+        return mp!!.duration
+    }
+
+    override fun pause() {
+
+    }
+
+    override fun getBufferPercentage(): Int {
+        return 0
+    }
+
+    override fun seekTo(pos: Int) {
+
+    }
+
+    override fun getCurrentPosition(): Int {
+        return mp!!.currentPosition
+    }
+
+    override fun canSeekBackward(): Boolean {
+        return true
+    }
+
+    override fun start() {
+
+    }
+
+    override fun getAudioSessionId(): Int {
+       return 0
+    }
+
+    override fun canPause(): Boolean {
+        return !mp!!.isPlaying
+    }
+
 
     private val TAG:String = "previewVideo:"
 
@@ -48,7 +100,6 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     private var myActionBar: ActionBar? = null
 
     private var vMyUri:Uri? = null
-
 
     private var mp:MediaPlayer? = null
 
@@ -88,6 +139,17 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     private var videoUri:Uri? = null
 
 
+    private var mediaPlayerLayout:RelativeLayout? = null
+    override fun onBackPressed() {
+        mp.let { _value ->
+            _value!!.pause()
+            _value!!.stop()
+            _value!!.release()
+
+        }
+        super.onBackPressed()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview_video)
@@ -114,8 +176,6 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
 
         }
 
-
-
         navigationBarConfiguration()
         uiconfig()
     }
@@ -131,15 +191,34 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     override fun surfaceDestroyed(holder: SurfaceHolder?) { }
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
-        mp!!.setDataSource(this,vMyUri)
-        mp!!.prepare()
-        mp!!.setDisplay(holder)
-        mp!!.start()
+
+        try {
+            mp!!.setDataSource(this,vMyUri)
+            mp!!.prepare()
+            mp!!.setDisplay(holder)
+            mp?.setOnPreparedListener(this)
+            mp?.setOnCompletionListener(this)
+
+            mp!!.start()
+        }catch (e:IOException) {
+            println("$TAG ${e.toString()}")
+        }
+
+
+
     }
 
+    var mediaController:MediaController? = null
 
     private fun uiconfig() {
+        mediaPlayerLayout = findViewById(R.id.mediaPlayerLayout)
         videoView = findViewById(R.id.myVideoView_previewVideo)
+
+        mp = MediaPlayer()
+
+
+
+
         againButton = findViewById(R.id.againButton_previewVideo)
         saveButton = findViewById(R.id.saveButton_previewVideo)
         uploadButton = findViewById(R.id.uploadButton_previewVideo)
@@ -150,13 +229,18 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
         uploadButton.setOnClickListener(clickListener)
 
 
-
-        window.setFormat(PixelFormat.UNKNOWN);
+        window.setFormat(PixelFormat.UNKNOWN)
         surfaceHolder = videoView.holder
         surfaceHolder!!.setFixedSize(800, 480)
         surfaceHolder!!.addCallback(this)
 
-        mp = MediaPlayer()
+
+        mediaController = MediaController(this)
+        mediaController?.setAnchorView(mySurface)
+
+        videoView.setMediaController(mediaController)
+
+
     }
 
     val clickListener = View.OnClickListener { view ->
@@ -167,25 +251,24 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
         }
     }
 
-
-    private fun play() {
+    override fun onCompletion(mp: MediaPlayer?) {
         try {
-            mp?.setDataSource(currentVideoPath)
-            mp?.setOnPreparedListener(this)
-            mp?.prepareAsync()
-        }catch (e:IllegalArgumentException) {
-            Log.e(TAG, e.toString())
+            mp!!.seekTo(0)
+            mp!!.start()
         }catch (e:IllegalStateException) {
-            Log.e(TAG, e.toString())
-        }catch (e:IOException) {
-            Log.e(TAG, e.toString())
+            println("$TAG ${e.toString()} hata: 112")
         }
-
-        //mp!!.start()
     }
 
+    var mHandler: Handler? = null
+
     override fun onPrepared(mp: MediaPlayer?) {
-        mp!!.start()
+        //mp!!.start()
+
+        mHandler?.post(Runnable {
+            mediaController?.isEnabled = true
+            mediaController?.show()
+        })
     }
 
     private fun navigationBarConfiguration() {
@@ -200,11 +283,126 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     }
 
     private fun OnSaveButtonEvent() {
+        vibratePhone()
+
+        //saveVideoGallery()
+
+        check_writeRead_permission { status ->
+            if (status == true) {
+                var myFile = File(vMyUri!!.path)
+                saveVideoGallery(myFile)
+            }else {
+                Toast.makeText(applicationContext, "Okuma ve Yazma izinleriniz eksik.", Toast.LENGTH_LONG).show()
+            }
+        }
 
     }
 
     private fun OnUploadbuttonEvent() {
 
+    }
+
+    companion object {
+        private val ALLOWED_CHARACTERS_RANDOM = "0123456789qwertyuiopasdfghjklzxcvbnm"
+    }
+
+    private fun getRandomString(sizeOfRandomString: Int): String {
+        val random = Random()
+        val sb = StringBuilder(sizeOfRandomString)
+        for (i in 0 until sizeOfRandomString)
+            sb.append(ALLOWED_CHARACTERS_RANDOM[random.nextInt(ALLOWED_CHARACTERS_RANDOM.length)])
+        return sb.toString()
+    }
+
+    private val VIDEO_DIRECTORY = "/odiVideo"
+
+    private fun saveVideoGallery(filePath: File?) {
+
+        var randomName:String = getRandomString(8)
+        val values = ContentValues(3)
+        values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
+        //values.put(MediaStore.Video.Media.TITLE, "odi_$randomName");
+        //values.put(MediaStore.Video.Media.DATA, filePath?.getAbsolutePath());
+        //values.put(MediaStore.Video.Media.DATA, f.getAbsolutePath());
+
+        // Add a new record (identified by uri) without the video, but with the values just set.
+        val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+
+        try {
+            val currentFile = filePath
+            var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + VIDEO_DIRECTORY)
+            var newfile = File(wallpaperDirectory, Calendar.getInstance().timeInMillis.toString() + ".mp4")
+
+
+            var inputStream: InputStream = FileInputStream(currentFile)
+            var output: OutputStream? = contentResolver.openOutputStream(uri)
+
+
+            val dir = newfile
+            if (!dir.exists()) {
+                dir.mkdirs()
+            }
+
+            var buffer = ByteArray(1024)
+            if (inputStream != null) {
+
+                while (true) {
+                    val read: Int? = inputStream?.read(buffer!!)
+                    if (read!! <= 0)
+                        break
+
+                    output?.write(buffer, 0, read)
+                }
+            }
+
+            inputStream?.close()
+
+
+            output?.flush()
+            output?.close()
+            output = null
+
+            //val newFile = File("$outputPath.mp4")
+            sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri))
+
+            if (newfile.exists()) {
+                println("$TAG Gallery: SAVE VIDEO video dosyası var bulundu")
+            } else {
+                println("$TAG Gallery: SAVE VIDEO video dosyası yok bulunamadı")
+            }
+
+        } catch (e: FileNotFoundException) {
+            Log.e("VideoComp", e.message)
+        } catch (e: java.lang.Exception) {
+            Log.e("VideoComp", e.message)
+        }
+    }
+
+    internal fun check_writeRead_permission(completion: (Boolean?) -> Unit) {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            completion(true)
+        } else {
+            completion(false)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), Permission_Result.UPLOAD_VIDEO_GALLERY.value)
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (Permission_Result.UPLOAD_VIDEO_GALLERY.value == requestCode) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                var myFile = File(vMyUri!!.path)
+                saveVideoGallery(myFile)
+            }else {
+                setResult(RESULT_OK)
+                println("$TAG izin verilmedi okuma yazma")
+                // alert buraya yazılacak
+                Toast.makeText(applicationContext, "Okuma ve Yazma izinleriniz eksik.", Toast.LENGTH_LONG).show()
+            }
+
+        }
     }
 
 }
@@ -361,6 +559,7 @@ object FilePath2 {
         return "com.google.android.apps.photos.content" == uri
             .authority
     }
+
 
 
 

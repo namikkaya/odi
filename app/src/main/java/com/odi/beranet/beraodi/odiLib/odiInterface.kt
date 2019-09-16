@@ -2,6 +2,7 @@ package com.odi.beranet.beraodi.odiLib
 
 import android.net.Uri
 import com.odi.beranet.beraodi.models.async_upload_video_complete
+import java.io.IOException
 
 interface odiInterface {
     fun Interface_profilPhotoUploadStatus(status:HTTP_PROCESS_STATUS) {}
@@ -20,11 +21,14 @@ interface odiInterface {
      * */
     fun uploadVideoAsyncTaskComplete(resultData: async_upload_video_complete?) {}
 
+    fun uploadErrorAsyncTask(e:async_upload_video_complete){}
+
     /**Yükleme sırasında % de bilgilerinin kullanıcıya gösterilmesi için gereklidir. */
     fun onUploadVideoStatus(_id:String?, _progress:Int?, _complete:Boolean?) { }
 
     fun onUploadBitmapStatus(_id:String?, _progress:Int?, _complete:Boolean?) { }
 
+    fun onUploadExitPreloader() {}
     /**
      * compress edilen videonun durumunu bildirir.
      */

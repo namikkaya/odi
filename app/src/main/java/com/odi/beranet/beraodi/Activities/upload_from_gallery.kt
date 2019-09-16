@@ -186,11 +186,14 @@ class upload_from_gallery : baseActivity(), odiInterface {
     private fun onSendButtonEvent() {
         videoView?.pause()
         preloader()
-        videoUploadController?.getImageUrlWithAuthority("videoUpload", this,selectedUri!!, processType!!)
 
         val myFile = getUriToFile(selectedUri!!)
+        //saveVideoGallery(myFile)
+
+        videoUploadController?.getImageUrlWithAuthority("videoUpload", this, selectedUri!!, processType!!, myFile)
+
+
         //saveVideo(myFile)
-        saveVideoGallery(myFile)
     }
 
 
@@ -228,6 +231,13 @@ class upload_from_gallery : baseActivity(), odiInterface {
         preloaderManage(UI_PRELOADER.compress,_progress,_complete)
     }
 
+    override fun onUploadExitPreloader() {
+        super.onUploadExitPreloader()
+        getPreloaderContext().let {
+            getPreloaderContext()?.exitPreloader()
+        }
+    }
+
     private fun preloaderManage(status:UI_PRELOADER, progress:Int?, complete: Boolean?) {
         when(status) {
             UI_PRELOADER.video -> preloaderVideoUpload(progress, complete)
@@ -236,6 +246,7 @@ class upload_from_gallery : baseActivity(), odiInterface {
             else -> println("Problem oldu...")
         }
     }
+
 
 
     private fun preloaderBitmapUpload(progress:Int?, complete:Boolean?) {

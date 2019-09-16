@@ -6,7 +6,6 @@ import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.Bitmap
-import android.media.MediaScannerConnection
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Environment
@@ -16,14 +15,15 @@ import android.os.Message
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
+import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import android.webkit.WebViewClient
+import com.odi.beranet.beraodi.Activities.FilePath
+import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.async_upload_video
 import com.odi.beranet.beraodi.models.async_upload_video_complete
 import com.odi.beranet.beraodi.odiLib.*
 import com.vincent.videocompressor.VideoCompress
-import kotlinx.android.synthetic.main.activity_upload_from_gallery.*
 import java.io.*
 import java.lang.Exception
 import java.net.HttpURLConnection
@@ -46,6 +46,9 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
     var videoUri:Uri? = null
     var pageType:nativePage? = null
     var context:Context? = null
+    var myVideoFile:File? = null
+
+    var uploadClass:asyncUploadFile? = null
 
     override fun uploadVideoAsyncTaskComplete(resultData: async_upload_video_complete?) {
         super.uploadVideoAsyncTaskComplete(resultData)
@@ -54,12 +57,42 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         message.sendToTarget()
     }
 
+    init {
+
+    }
+
+
+
+    var errorStatus:Boolean = false
     private fun uploadFile(file:File, type:nativePage, uploadType:UPLOAD_FILE_TYPE) {
 
         uploadVideoMessageHandler = object : Handler(Looper.getMainLooper()) {
             override fun handleMessage(message: Message) {
                 val msg: async_upload_video_complete? = message.obj as? async_upload_video_complete
                 msg.let { value ->
+
+                    if (value!!._id == "error") {
+                        listener?.onUploadExitPreloader()
+
+                        // yükleme hatası oluştu alert açtır.
+
+                        val builder = AlertDialog.Builder(_this)
+                        builder.setTitle(R.string.UploadError)
+                        builder.setMessage(R.string.UploadErrorDesc)
+
+                        builder.setPositiveButton(R.string.Okey) { dialog, which ->
+                            _this.finish()
+                        }
+
+                        builder.show()
+
+                        uploadClass.let { value ->
+                            value!!.cancel(true)
+                        }
+
+                        return
+                    }
+
 
                     if (!value!!._uploadStatus!!) { // false ise yükleme yapılmaya devam ediliyor
                         val progressValue:Int = value!!._uploadProgress!!
@@ -69,7 +102,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                         }else {
                             listener?.onUploadVideoStatus(uploadId,progressValue,false)
                         }
-
                     }else {
                         Thread(Runnable { // yükleme işlemi bitti request atılacak
                             println("$TAG uploadVideoAsyncTaskComplete:  başarılı bir şekilde yüklendi")
@@ -79,9 +111,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                                 // image yüklendi video işlemi için çağrı
                                 listener?.onUploadBitmapStatus(uploadId,null,true)
                                 // video yükleme işlemi başlatılıyor
-                                /*videoProcessthis@videoUploadViewModel.context!!,
-                                    this@videoUploadViewModel.videoUri!!,
-                                    this@videoUploadViewModel.pageType!!*/
+
                                 println("$TAG uploadFile: trigger videoUploadStart ->>")
                                 videoUploadStart(this@videoUploadViewModel.context!!,
                                 this@videoUploadViewModel.videoUri!!,
@@ -99,7 +129,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
             println("$TAG type: $type - userId: ${singleton.userId!!} - uploadType!!: ${uploadType}")
             val myModel = async_upload_video("denemeID", file, this, type, singleton.userId!!, uploadType!!)
 
-            var upload = asyncUploadFile().execute(myModel)
+            uploadClass = asyncUploadFile().execute(myModel) as asyncUploadFile?
         }
 
     }
@@ -114,11 +144,12 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
      * 3. işlem videoCompress
      * 4. işlem upload video
      * */
-    fun getImageUrlWithAuthority(_uploadId:String, context: Context, uri: Uri, type:nativePage):String? {
+    fun getImageUrlWithAuthority(_uploadId:String, context: Context, uri: Uri, type:nativePage, videoFile:File?):String? {
         this.uploadId = _uploadId
         this.videoUri = uri
         this.pageType = type
         this.context = context
+        this.myVideoFile = videoFile
 
         val thumb = getThumbnail(uri)
 
@@ -146,13 +177,13 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                 //videoProcess(context, uri, type)
 
                 val extStore = Environment.getExternalStorageDirectory().absolutePath
+
                 val file = File ("$outputDir3.mp4")
                 val filePath = file.absolutePath
                 val fileUri = Uri.parse(extStore+file.toString())
 
-
                 if (file.exists()) {
-                    println("$TAG path: dosya var")
+                    println("$TAG path: dosya var dosya boyu: ${file.length()}")
                 }else {
                     println("$TAG path: dosya yok")
                 }
@@ -170,8 +201,10 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                 listener?.onCompressVideoStatus(uploadId,null,true)
 
                 //videoProcess(context, path, type)
+
                 Thread {
                     uploadFile(file,type,UPLOAD_FILE_TYPE.video)
+                    //getUriToFile(uri)?.let { uploadFile(it,type,UPLOAD_FILE_TYPE.video) } // samsung da çalıştı
                 }.run()
             }
 
@@ -186,23 +219,40 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         }
         //VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
 
-        VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
+        //String filePath = PathUtil.getPath(context,uri);
+        //var filePath = PathUtil.getPath(_this.applicationContext, uri)
+
+        //var myUri:Uri = Uri.fromFile(getUriToFile(uri))
+
+        var myfile = getUriToFile(uri)
+
+        var newUri = FilePath.getPath(_this,uri)
+
+        VideoCompress.compressVideoLow(getRealPathFromURI(_this,uri), "$outputDir3.mp4", newListener)
+
     }
+
+    private fun getUriToFile(myUri:Uri):File? {
+        val path = FilePath.getPath(_this,myUri)
+        val myFile = File(path)
+        return myFile
+    }
+
 
 
     fun getRealPathFromURI(context: Context, contentUri: Uri): String {
         var cursor: Cursor? = null
+        var column_index:Int? = null
         try {
-            val proj = arrayOf(MediaStore.Images.Media.DATA)
+            val proj = arrayOf(MediaStore.MediaColumns.DATA)
             cursor = context.contentResolver.query(contentUri, proj, null, null, null)
-            val column_index = cursor!!.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+            column_index = cursor!!.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA)
             cursor.moveToFirst()
-            return cursor.getString(column_index)
+            return cursor!!.getString(column_index!!)
         } finally {
             cursor?.close()
         }
     }
-
 
     private fun bitmapToFile(bitmap:Bitmap): File {
         val wrapper = ContextWrapper(_this.applicationContext)
@@ -221,10 +271,8 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         }
 
         val returningFile:File = File(file.absolutePath)
-        // Return the saved bitmap uri
         return returningFile
     }
-
 
     // video işlemi yapılıyor
     private fun videoProcess(context: Context, uri:Uri, type:nativePage) {
@@ -382,3 +430,4 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
     }
 
 }
+

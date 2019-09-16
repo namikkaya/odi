@@ -7,4 +7,7 @@
     <string name="cameraOrientationDesc1">Odilemek için telefonu sola döndür</string>
     <string name="cameraOrientationDesc2">Yatay (otomatik) döndürme özelliğinin açık olduğundan emin olun.</string>
     <string name="loadingContent">İçerik hazırlanıyor. Lütfen Bekleyiniz.</string>
+    <string name="Okey">Tamam</string>
+    <string name="UploadError">Yükleme Hatası</string>
+    <string name="UploadErrorDesc">Yükleme hatası oluştu. Sayfanızda video resminiz görünse bile yüklenmemiş olabilir. Lütfen kontrol ederek tekrar deneyiniz.</string>
 </resources>

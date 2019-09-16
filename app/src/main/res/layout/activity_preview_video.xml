@@ -25,58 +25,82 @@
                 android:id="@+id/mySurface"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_gravity="center"
-        />
+                android:layout_gravity="center"/>
 
         <RelativeLayout
+                android:foregroundGravity="bottom"
                 android:gravity = "bottom"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
             <LinearLayout
-                    android:weightSum="100"
-                    android:orientation="horizontal"
-                    android:background="@color/blackTransparent"
+                    android:gravity="bottom"
+                    android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="60dp">
+                    android:layout_height="match_parent">
+
+
 
                 <LinearLayout
-                        android:layout_gravity="left"
-                        android:gravity="left"
-                        android:layout_weight="50"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent">
-                    <ImageButton
-                            android:id="@+id/againButton_previewVideo"
-                            android:background="@null"
-                            android:src="@drawable/close"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-                    <ImageButton
-                            android:id="@+id/saveButton_previewVideo"
-                            android:background="@null"
-                            android:src="@drawable/close"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
+                        android:layout_width="match_parent"
+                        android:layout_height="100dp">
+
+                    <RelativeLayout
+                            android:id="@+id/mediaPlayerLayout"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent">
+
+                    </RelativeLayout>
+
                 </LinearLayout>
+
 
                 <LinearLayout
-                        android:layout_gravity="right"
-                        android:gravity="right"
-                        android:layout_weight="50"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent">
-                    <ImageButton
-                            android:id="@+id/uploadButton_previewVideo"
-                            android:background="@null"
-                            android:src="@drawable/close"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"/>
-                </LinearLayout>
+                        android:weightSum="100"
+                        android:orientation="horizontal"
+                        android:background="@color/blackTransparent"
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp">
 
+                    <LinearLayout
+                            android:layout_gravity="left"
+                            android:gravity="left"
+                            android:layout_weight="50"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        <ImageButton
+                                android:id="@+id/againButton_previewVideo"
+                                android:background="@null"
+                                android:src="@drawable/replay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+                        <ImageButton
+                                android:id="@+id/saveButton_previewVideo"
+                                android:background="@null"
+                                android:src="@drawable/kaydet"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                            android:layout_gravity="right"
+                            android:gravity="right"
+                            android:layout_weight="50"
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent">
+                        <ImageButton
+                                android:id="@+id/uploadButton_previewVideo"
+                                android:background="@null"
+                                android:src="@drawable/upload"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"/>
+                    </LinearLayout>
+
+                </LinearLayout>
 
 
             </LinearLayout>
+
 
         </RelativeLayout>
 

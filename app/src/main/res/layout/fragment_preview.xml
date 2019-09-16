@@ -133,7 +133,7 @@
                             android:visibility="invisible"
                             android:id="@+id/nextStepButton"
                             android:background="@null"
-                            android:src="@drawable/changecamera"
+                            android:src="@drawable/gec"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"/>
 
