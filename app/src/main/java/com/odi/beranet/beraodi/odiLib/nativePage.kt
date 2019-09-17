@@ -1,6 +1,8 @@
 package com.odi.beranet.beraodi.odiLib
 
-enum class nativePage {
+import java.io.Serializable
+
+enum class nativePage:Serializable {
     videoPlayer,
     photoCollage,
     getPhotoAlbum,

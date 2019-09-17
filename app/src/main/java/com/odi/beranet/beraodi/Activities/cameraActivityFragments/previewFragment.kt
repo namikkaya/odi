@@ -16,6 +16,7 @@ import android.media.MediaRecorder
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
 import android.os.Handler
 import android.os.HandlerThread
 import android.provider.MediaStore
@@ -99,6 +100,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private lateinit var  captureSession: CameraCaptureSession
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
 
+    val rnds:String = (0..16000).random().toString()
+
+
+    var videoFileHolder:File? = null
+
+
+    private var userId:String? = null
+    private var projectId:String? = null
+
     var recordTypeHolder:RECORD_TYPE? = null // dialog / monolog /play mode hangisinde kayıt yapılıyorsa
 
     private var previewSize:Point? = null
@@ -159,6 +169,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private var currentVideoFilePath: String = ""
 
     private fun previewSession() {
+        println("createVideo  previewSession çalıştırıld")
         setupMediaRecorder()
 
         try {
@@ -238,19 +249,51 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun createVideoFileName():String {
         val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
-        return "VIDEO_${timestamp}.mp4"
+        return "${projectId}_${userId}_VID_${timestamp}.mp4"
     }
 
     private fun createVideoFile():File {
-        val videoFile = File(context?.filesDir, createVideoFileName())
-        if (currentVideoFilePath == "") {
-            currentVideoFilePath = videoFile.absolutePath
-        }
+
+        println("createVideo: video dosyası oluşturulacak")
+        var folder = Environment.getExternalStorageDirectory()
+        var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"odiVideo/")
+        if(!videoFolder.exists())
+            videoFolder.mkdirs()
+
+
+
+        var newName = createVideoFileName()
+        println("createVideo: video ismi $newName")
+        /*val removeFile = File(videoFolder, newName)
+        if (removeFile.exists()) {
+            removeFile.delete()
+            println("createVideo: video aynı isimde vardı temizlendi")
+        }*/
+
+        val videoFile = File(videoFolder, newName)
+
+        currentVideoFilePath = videoFile.absolutePath
 
         return videoFile
     }
 
+    //sdcard daki dosyaları siler??
+    // fazladan
+    private fun getExternalFileDelete() {
+        var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"odiVideo/")
+        if(videoFolder.exists()) {
+            val files = videoFolder.listFiles()
+
+            for (i in 0 until files.size){
+                if (files[i].name.endsWith(".mp4")){
+                    files[i].delete()
+                }
+            }
+        }
+    }
+
     private fun getDirFile() {
+
         val letDirectory = File(context?.filesDir, "")
         //println("allfiles: ${letDirectory.mkdirs()}")
         val files = letDirectory.listFiles()
@@ -336,6 +379,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         stop()
                         reset()
 
+                        /*
                         setVideoSource(MediaRecorder.VideoSource.SURFACE)
                         setAudioSource(MediaRecorder.AudioSource.MIC)
                         setAudioEncodingBitRate(44100)
@@ -347,6 +391,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         setVideoSize(1280,720)
                         setVideoEncoder(MediaRecorder.VideoEncoder.H264)
                         setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                        */
 
 
                         prepare()
@@ -555,13 +600,16 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         checkCameraPermission()
     }
 
+    var fileStatus:Boolean = false
+
     private fun startRecordSession() {
         recordSession()
     }
 
     private fun stopRecordSession() {
+        fileStatus = true
         stopMediaRecorder()
-        previewSession()
+        //previewSession()
         uiCameraDesing(UIDESIGN.NORMAL)
         // thumbnail
         //createRoundThumb() // bitmap olarak dönecek
@@ -846,8 +894,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     // datalar indiriliyor ...
-    fun getData(dataList:playlistDataModel){
+    fun getData(dataList:playlistDataModel, userId:String?, projectId:String?){
         println("$TAG getData: ${dataList.type}")
+
+        this.userId = userId
+        this.projectId = projectId
+
         recordTypeHolder = dataList.type
         myMediaManager = odiMediaManager(dataList)
         myMediaManager!!.listener = this

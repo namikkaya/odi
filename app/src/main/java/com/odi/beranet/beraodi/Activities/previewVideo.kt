@@ -23,27 +23,30 @@ import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
 import android.support.v7.app.ActionBar
 import android.util.Log
+import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.widget.*
+import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import com.odi.beranet.beraodi.R
-import com.odi.beranet.beraodi.odiLib.Permission_Result
-import com.odi.beranet.beraodi.odiLib.nativePage
-import com.odi.beranet.beraodi.odiLib.singleton
-import com.odi.beranet.beraodi.odiLib.vibratePhone
+import com.odi.beranet.beraodi.odiLib.*
 import com.onesignal.OneSignal
 import java.io.*
 import java.lang.IllegalStateException
 import java.util.*
 
-class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPreparedListener, MediaPlayer.OnCompletionListener, MediaController.MediaPlayerControl {
+class previewVideo : baseActivity(),
+    SurfaceHolder.Callback,
+    MediaPlayer.OnPreparedListener,
+    MediaPlayer.OnCompletionListener,
+    MediaController.MediaPlayerControl,
+    odiInterface{
     override fun isPlaying(): Boolean {
         return mp!!.isPlaying
     }
 
     override fun canSeekForward(): Boolean {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         return true
     }
 
@@ -52,7 +55,11 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     }
 
     override fun pause() {
-
+        try {
+            mp!!.pause()
+        }catch (e:IllegalStateException){
+            println("$TAG ${e.toString()} -> kod: 126")
+        }
     }
 
     override fun getBufferPercentage(): Int {
@@ -60,7 +67,7 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     }
 
     override fun seekTo(pos: Int) {
-
+        mp!!.seekTo(pos)
     }
 
     override fun getCurrentPosition(): Int {
@@ -72,7 +79,11 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     }
 
     override fun start() {
-
+        try {
+            mp!!.start()
+        }catch (e:IllegalStateException){
+            println("$TAG hata: ${e.toString()} -> kod 125")
+        }
     }
 
     override fun getAudioSessionId(): Int {
@@ -80,30 +91,39 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     }
 
     override fun canPause(): Boolean {
-        return !mp!!.isPlaying
+        return true
     }
 
-
     private val TAG:String = "previewVideo:"
-
-    private var processType: nativePage? = null
-
 
     private lateinit var videoView:VideoView
 
     private lateinit var mySurface:SurfaceView
     private var surfaceHolder:SurfaceHolder? = null
+    private var mediaController:MediaController? = null
+    private var mediaPlayerLayout:RelativeLayout? = null
 
     private lateinit var againButton:ImageButton
     private lateinit var saveButton:ImageButton
     private lateinit var uploadButton:ImageButton
     private var myActionBar: ActionBar? = null
 
+    private var projectId:String? = null
+    private var userId:String? = null
     private var vMyUri:Uri? = null
+    private var processType: nativePage? = null
+
+    var mHandler: Handler? = null
+
 
     private var mp:MediaPlayer? = null
 
     var warningIntent: Intent? = null
+
+
+
+    var videoUploadController: videoUploadViewModel? = null
+
     /**
      * internet durum kontrolü
      * */
@@ -132,14 +152,6 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
         }
     }
 
-    private var currentVideoPath:String? = null
-    private var projectId:String? = null
-    private var userId:String? = null
-
-    private var videoUri:Uri? = null
-
-
-    private var mediaPlayerLayout:RelativeLayout? = null
     override fun onBackPressed() {
         mp.let { _value ->
             _value!!.pause()
@@ -159,21 +171,29 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
         {
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
-            //vMyUri = bundle.getUr("videoPath")
+            processType = bundle.getSerializable("type") as nativePage
             val str = bundle.getString("videoPath")
-
             vMyUri = Uri.parse(str)
 
-            println("$TAG video uri : $vMyUri")
 
+            println("$TAG video uri : $vMyUri")
+            /*
             var file = File(vMyUri!!.path)
             if (file.exists()){
                 println("$TAG video dosyası bulundu")
                 println("$TAG viedo dosyası boyutu: ${file.length()}")
             }else {
                 println("$TAG video dosyasında problem var")
-            }
+            }*/
 
+        }
+
+        videoUploadController = videoUploadViewModel(this,this)
+
+        videoUploadController?.check_writeRead_permission { status->
+            if (status == true) {
+
+            }
         }
 
         navigationBarConfiguration()
@@ -191,55 +211,55 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     override fun surfaceDestroyed(holder: SurfaceHolder?) { }
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
+        mediaPlayerConfig(holder)
+    }
 
+    private fun mediaPlayerConfig(holder:SurfaceHolder?) {
         try {
             mp!!.setDataSource(this,vMyUri)
             mp!!.prepare()
             mp!!.setDisplay(holder)
+
+            surfaceHolder = holder
+
             mp?.setOnPreparedListener(this)
             mp?.setOnCompletionListener(this)
 
-            mp!!.start()
+            //mp!!.start()
         }catch (e:IOException) {
             println("$TAG ${e.toString()}")
         }
-
-
-
     }
 
-    var mediaController:MediaController? = null
+
 
     private fun uiconfig() {
         mediaPlayerLayout = findViewById(R.id.mediaPlayerLayout)
         videoView = findViewById(R.id.myVideoView_previewVideo)
-
-        mp = MediaPlayer()
-
-
-
 
         againButton = findViewById(R.id.againButton_previewVideo)
         saveButton = findViewById(R.id.saveButton_previewVideo)
         uploadButton = findViewById(R.id.uploadButton_previewVideo)
         mySurface = findViewById(R.id.mySurface)
 
+
         againButton.setOnClickListener(clickListener)
         saveButton.setOnClickListener(clickListener)
         uploadButton.setOnClickListener(clickListener)
+        videoView.setOnClickListener(clickListener)
 
+        addMediaController()
+    }
+
+    private fun addMediaController() {
+        mp = MediaPlayer()
 
         window.setFormat(PixelFormat.UNKNOWN)
         surfaceHolder = videoView.holder
         surfaceHolder!!.setFixedSize(800, 480)
         surfaceHolder!!.addCallback(this)
 
-
-        mediaController = MediaController(this)
-        mediaController?.setAnchorView(mySurface)
-
-        videoView.setMediaController(mediaController)
-
+        videoView.requestFocus()
 
     }
 
@@ -248,26 +268,81 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
             R.id.recordButton -> OnAgainButtonEvent()
             R.id.saveButton_previewVideo -> OnSaveButtonEvent()
             R.id.uploadButton_previewVideo -> OnUploadbuttonEvent()
+            R.id.myVideoView_previewVideo -> OnMediaControllerStatusEvent()
+        }
+    }
+
+    private fun OnMediaControllerStatusEvent () {
+        if (mediaController != null) {
+            if (mediaController!!.isShowing) {
+                mediaController!!.hide()
+            }else {
+                mediaController!!.show(0)
+            }
+        }
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        println("$TAG onPause")
+        if (mp != null) {
+            try {
+               mp?.pause()
+
+            }catch (e:IllegalStateException){
+                println("$TAG hata: ${e.toString()}")
+            }
+
+        }
+    }
+
+    var firstStart:Boolean = false
+    override fun onResume() {
+        super.onResume()
+        if (mp != null) {
+            try {
+                if (firstStart) {
+                    finish();
+                    startActivity(intent)
+                }
+                firstStart = true
+            }catch (e:IllegalStateException){
+                println("$TAG ${e.toString()}")
+            }
         }
     }
 
     override fun onCompletion(mp: MediaPlayer?) {
         try {
-            mp!!.seekTo(0)
-            mp!!.start()
+            //mp!!.seekTo(0)
+            //mp!!.start()
         }catch (e:IllegalStateException) {
             println("$TAG ${e.toString()} hata: 112")
         }
     }
 
-    var mHandler: Handler? = null
+
 
     override fun onPrepared(mp: MediaPlayer?) {
-        //mp!!.start()
+        mediaController = MediaController(this)
+        mediaController?.setMediaPlayer(this)
+        mediaController?.setAnchorView(mediaPlayerLayout)
 
+
+        try {
+            videoView.setMediaController(mediaController)
+            mp!!.start()
+        }catch (e:IllegalStateException) {
+            println("$TAG hata: ${e.toString()} -- kod 124")
+        }
+
+        mHandler = Handler()
         mHandler?.post(Runnable {
-            mediaController?.isEnabled = true
-            mediaController?.show()
+            kotlin.run {
+                mediaController?.isEnabled = true
+                mediaController?.show(0)
+            }
         })
     }
 
@@ -279,14 +354,14 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
     }
 
     private fun OnAgainButtonEvent() {
-
+        vibratePhone()
+        finish()
     }
 
     private fun OnSaveButtonEvent() {
         vibratePhone()
 
         //saveVideoGallery()
-
         check_writeRead_permission { status ->
             if (status == true) {
                 var myFile = File(vMyUri!!.path)
@@ -318,14 +393,14 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
 
     private fun saveVideoGallery(filePath: File?) {
 
+        saveButton.isEnabled = false
+
         var randomName:String = getRandomString(8)
         val values = ContentValues(3)
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-        //values.put(MediaStore.Video.Media.TITLE, "odi_$randomName");
-        //values.put(MediaStore.Video.Media.DATA, filePath?.getAbsolutePath());
-        //values.put(MediaStore.Video.Media.DATA, f.getAbsolutePath());
+        //values.put(MediaStore.Video.Media.TITLE, "odi_$randomName")
+        //values.put(MediaStore.Video.Media.DATA, filePath?.absolutePath)
 
-        // Add a new record (identified by uri) without the video, but with the values just set.
         val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
 
         try {
@@ -343,7 +418,7 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
                 dir.mkdirs()
             }
 
-            var buffer = ByteArray(1024)
+            var buffer = ByteArray(4096)
             if (inputStream != null) {
 
                 while (true) {
@@ -371,10 +446,16 @@ class previewVideo : baseActivity(), SurfaceHolder.Callback, MediaPlayer.OnPrepa
                 println("$TAG Gallery: SAVE VIDEO video dosyası yok bulunamadı")
             }
 
+            Toast.makeText(this, "Video başarılı bir şekilde kaydedildi.", Toast.LENGTH_LONG).show()
+
         } catch (e: FileNotFoundException) {
             Log.e("VideoComp", e.message)
+            Toast.makeText(this, "Video bir hatadan dolayı kaydedilemedi. kod:2", Toast.LENGTH_LONG).show()
+            saveButton.isEnabled = true
         } catch (e: java.lang.Exception) {
             Log.e("VideoComp", e.message)
+            Toast.makeText(this, "Video bir hatadan dolayı kaydedilemedi. kod:3", Toast.LENGTH_LONG).show()
+            saveButton.isEnabled = true
         }
     }
 

@@ -22,10 +22,7 @@ import java.lang.Exception
 import java.util.*
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.util.Log
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
-import android.R.attr.data
-import android.support.v4.app.NotificationCompat.getExtras
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
@@ -290,6 +287,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
                 intent.putExtra("projectId", sendId)
+                intent.putExtra("type", nativePage.cameraShowReel)
                 startActivityForResult(intent, Activity_Result.CAMERA_SHOW_REEL_RESULT.value)
             }
 
@@ -298,6 +296,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
                 intent.putExtra("projectId", sendId)
+                intent.putExtra("type", nativePage.cameraIdentification)
                 startActivityForResult(intent, Activity_Result.CAMERA_TANITIM_RESULT.value)
             }
 
@@ -306,6 +305,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", sendId)
                 intent.putExtra("projectId", buttonId)
+                intent.putExtra("type", nativePage.cameraOdile)
                 startActivityForResult(intent, Activity_Result.CAMERA_ODILE_RESULT.value)
             }
 
@@ -416,6 +416,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             val intent = Intent(this, upload_from_gallery::class.java)
             intent.putExtra("selectedPath", selectedImageUri.toString())
+            println("yükleme: mainActivity $processType")
             intent.putExtra("processType", processType)
             startActivityForResult(intent, Activity_Result.UPLOAD_VIDEO_PAGE_RESULT.value)
 

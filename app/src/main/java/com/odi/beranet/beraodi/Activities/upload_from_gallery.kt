@@ -101,7 +101,7 @@ class upload_from_gallery : baseActivity(), odiInterface {
         val intent = intent
         val uriString = intent.getStringExtra("selectedPath") as String
         selectedUri = Uri.parse(uriString)
-        processType = intent.getSerializableExtra("processType") as nativePage
+        processType = intent.getSerializableExtra("processType") as? nativePage
     }
 
     private fun onUIDesignConfiguration() {

@@ -55,6 +55,7 @@ class cameraActivity() : baseActivity(),
 
     private var projectId:String? = null
     private var userId:String? = null
+    private var processType:nativePage? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,6 +68,8 @@ class cameraActivity() : baseActivity(),
         {
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
+            processType = bundle.getSerializable("type") as nativePage?
+            println("$TAG processType: $processType")
         }
 
         contentPreloader = findViewById(R.id.contentPreloader)
@@ -290,7 +293,6 @@ class cameraActivity() : baseActivity(),
 
                             playlistArray.add(_playlistItemDataModel)
 
-
                         }
                     }
 
@@ -321,7 +323,7 @@ class cameraActivity() : baseActivity(),
 
                         var playlistDataModel = playlistDataModel(RECORD_TYPE.MONOLOG, playlistArray)
                         var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
-                        myFragment.getData(playlistDataModel)
+                        myFragment.getData(playlistDataModel,userId, projectId)
                     }
                 }
             }
@@ -342,7 +344,7 @@ class cameraActivity() : baseActivity(),
                     contentPreloader.visibility = View.INVISIBLE
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.DIALOG, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
-                    myFragment.getData(playlistDataModel)
+                    myFragment.getData(playlistDataModel, userId, projectId)
                     println("Tektik: playMode dialog get data çalıştı")
                 }
                 RECORD_TYPE.PLAYMODE -> {
@@ -350,7 +352,7 @@ class cameraActivity() : baseActivity(),
                     contentPreloader.visibility = View.INVISIBLE
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
-                    myFragment.getData(playlistDataModel)
+                    myFragment.getData(playlistDataModel, userId, projectId)
                 }
             }
         }
@@ -385,6 +387,7 @@ class cameraActivity() : baseActivity(),
         intent.putExtra("videoPath", myUri)
         intent.putExtra("userId", userId)
         intent.putExtra("projectId", projectId)
+        intent.putExtra("type", processType)
         startActivityForResult(intent, Activity_Result.PREVIEW_VIDEO_RESULT.value)
 
     }

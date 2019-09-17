@@ -50,6 +50,33 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
     var uploadClass:asyncUploadFile? = null
 
+
+    /**
+     * @param _uploadId : işlem id si
+     * @param context: activity
+     * @param uri: video uri
+     * @param type: nativePage
+     * 1. işlem createBitmap
+     * 2. işlem upload bitmap
+     * 3. işlem videoCompress
+     * 4. işlem upload video
+     * */
+    fun getImageUrlWithAuthority(_uploadId:String, context: Context, uri: Uri, type:nativePage, videoFile:File?):String? {
+        this.uploadId = _uploadId
+        this.videoUri = uri
+        this.pageType = type
+        this.context = context
+        this.myVideoFile = videoFile
+
+        val thumb = getThumbnail(uri)
+
+        val thumbFile = bitmapToFile(thumb)
+
+        uploadFile(thumbFile, pageType!!, UPLOAD_FILE_TYPE.bitmap)
+
+        return null
+    }
+
     override fun uploadVideoAsyncTaskComplete(resultData: async_upload_video_complete?) {
         super.uploadVideoAsyncTaskComplete(resultData)
 
@@ -57,13 +84,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         message.sendToTarget()
     }
 
-    init {
-
-    }
-
-
-
-    var errorStatus:Boolean = false
     private fun uploadFile(file:File, type:nativePage, uploadType:UPLOAD_FILE_TYPE) {
 
         uploadVideoMessageHandler = object : Handler(Looper.getMainLooper()) {
@@ -134,32 +154,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
     }
 
-    /**
-     * @param _uploadId : işlem id si
-     * @param context: activity
-     * @param uri: video uri
-     * @param type: nativePage
-     * 1. işlem createBitmap
-     * 2. işlem upload bitmap
-     * 3. işlem videoCompress
-     * 4. işlem upload video
-     * */
-    fun getImageUrlWithAuthority(_uploadId:String, context: Context, uri: Uri, type:nativePage, videoFile:File?):String? {
-        this.uploadId = _uploadId
-        this.videoUri = uri
-        this.pageType = type
-        this.context = context
-        this.myVideoFile = videoFile
-
-        val thumb = getThumbnail(uri)
-
-        val thumbFile = bitmapToFile(thumb)
-
-        uploadFile(thumbFile, pageType!!, UPLOAD_FILE_TYPE.bitmap)
-
-        return null
-    }
-
     // işlem bittiğinde en son bu dosya silinecek
     /**
      * samsung hata uri dosyası boş geliyor...
@@ -217,18 +211,16 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
             }
 
         }
-        //VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
+        VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
 
         //String filePath = PathUtil.getPath(context,uri);
         //var filePath = PathUtil.getPath(_this.applicationContext, uri)
 
         //var myUri:Uri = Uri.fromFile(getUriToFile(uri))
 
-        var myfile = getUriToFile(uri)
-
-        var newUri = FilePath.getPath(_this,uri)
-
-        VideoCompress.compressVideoLow(getRealPathFromURI(_this,uri), "$outputDir3.mp4", newListener)
+        //var myfile = getUriToFile(uri)
+        //var newUri = FilePath.getPath(_this,uri)
+        //VideoCompress.compressVideoLow(getRealPathFromURI(_this,uri), "$outputDir3.mp4", newListener)
 
     }
 
@@ -237,8 +229,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         val myFile = File(path)
         return myFile
     }
-
-
 
     fun getRealPathFromURI(context: Context, contentUri: Uri): String {
         var cursor: Cursor? = null

@@ -38,30 +38,57 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
         type = params[0]?.type
         uploadFileType = params[0]?.uploadFileType
 
-        println("TİP: background $uploadFileType")
+        println("yükleme: ${params[0]?._uploadFile?.name}")
 
         var fileStringName:String = ""
         if (type == nativePage.uploadShowReel) {
-            if (uploadFileType == UPLOAD_FILE_TYPE.video) {
+            if (uploadFileType == UPLOAD_FILE_TYPE.video) { // hazır video showReel için
                 returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4"
                 fileStringName = "showreel_$userID.mp4"
             }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
-                returningRequestPath =
-                    "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4"
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4"
                 fileStringName = "showreel_$userID.jpg"
             }
-        }else if (type == nativePage.uploadTanitim){
+        }else if (type == nativePage.uploadTanitim){ // hazır video upload tanitim için
             println("Tip ne: $type")
             if (uploadFileType == UPLOAD_FILE_TYPE.video) {
                 returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
                 fileStringName = "tanitim_$userID.mp4"
             }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
-                returningRequestPath =
-                    "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
+                fileStringName = "tanitim_$userID.jpg"
+            }
+        }else if (type == nativePage.cameraShowReel) { // cameradan alınmış showreel
+            if (uploadFileType == UPLOAD_FILE_TYPE.video) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4"
+                fileStringName = "showreel_$userID.mp4"
+            }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=showreel&id=$userID&uzanti=mp4"
+                fileStringName = "showreel_$userID.jpg"
+            }
+        }else if (type == nativePage.cameraIdentification) { // cameradan alınmış tanitim
+            if (uploadFileType == UPLOAD_FILE_TYPE.video) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
+                fileStringName = "tanitim_$userID.mp4"
+            }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
+                fileStringName = "tanitim_$userID.jpg"
+            }
+        }else if (type == nativePage.cameraOdile) { // camera odile
+
+
+            /*String url = "http://odi.odiapp.com.tr/upld.php?fileName=" + file.getName().replace(file.getName(), ButonID + "_" + Userid +
+            "_VID_" + SetVideoText.replace(".mp4", "_out.mp4")+"&uzanti=mp4")*/
+
+
+            if (uploadFileType == UPLOAD_FILE_TYPE.video) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
+                fileStringName = "tanitim_$userID.mp4"
+            }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
+                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
                 fileStringName = "tanitim_$userID.jpg"
             }
         }
-
 
         resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null, uploadFileType)
 
@@ -104,7 +131,6 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
 
 
         streamListener = object : CopyStreamAdapter() {
-
             override fun bytesTransferred(totalBytesTransferred: Long, bytesTransferred: Int, streamSize: Long) {
                 super.bytesTransferred(totalBytesTransferred, bytesTransferred, streamSize)
                 val myPercent = (totalBytesTransferred * 100 / (file!!.length()).toInt())
@@ -118,10 +144,7 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
                     println("async: Video yükleniyor... Yükleme sonuçlandı")
                     removeCopyStreamListener(streamListener)
                 }
-
-
             }
-
         }
 
         ftpClient.copyStreamListener = streamListener
@@ -133,8 +156,6 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
             errorDataModel = async_upload_video_complete("error",userID,null,false,null,uploadFileType)
             listener?.uploadVideoAsyncTaskComplete(errorDataModel)
         }
-
-
 
         buffIn.close()
         ftpClient.logout()
