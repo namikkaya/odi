@@ -34,6 +34,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.odi.beranet.beraodi.Activities.cameraActivity
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.CameraViewModel
 import com.odi.beranet.beraodi.models.playlistDataModel
@@ -106,9 +107,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     var videoFileHolder:File? = null
 
 
-    private var userId:String? = null
-    private var projectId:String? = null
-
+    var userId:String? = null
+    var projectId:String? = null
+    var processType:nativePage? = null
     var recordTypeHolder:RECORD_TYPE? = null // dialog / monolog /play mode hangisinde kayıt yapılıyorsa
 
     private var previewSize:Point? = null
@@ -248,8 +249,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun createVideoFileName():String {
-        val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
-        return "${projectId}_${userId}_VID_${timestamp}.mp4"
+
+        if (processType == nativePage.cameraIdentification) { // tanitim
+            return "tanitim_$userId.mp4"
+        }else if (processType == nativePage.cameraShowReel) {
+            return "showreel_$userId.mp4"
+        }else {
+            val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
+            return "${this.projectId}_${this.userId}_VID_$timestamp.mp4"
+        }
     }
 
     private fun createVideoFile():File {
@@ -894,11 +902,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     // datalar indiriliyor ...
-    fun getData(dataList:playlistDataModel, userId:String?, projectId:String?){
+    fun getData(dataList:playlistDataModel){
         println("$TAG getData: ${dataList.type}")
-
-        this.userId = userId
-        this.projectId = projectId
 
         recordTypeHolder = dataList.type
         myMediaManager = odiMediaManager(dataList)

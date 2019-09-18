@@ -76,24 +76,25 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
             }
         }else if (type == nativePage.cameraOdile) { // camera odile
 
-
-            /*String url = "http://odi.odiapp.com.tr/upld.php?fileName=" + file.getName().replace(file.getName(), ButonID + "_" + Userid +
-            "_VID_" + SetVideoText.replace(".mp4", "_out.mp4")+"&uzanti=mp4")*/
-
+            val requestPath = "http://odi.odiapp.com.tr/upld.php?fileName=${params[0]?._uploadFile?.name}&uzanti=mp4"
 
             if (uploadFileType == UPLOAD_FILE_TYPE.video) {
-                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
-                fileStringName = "tanitim_$userID.mp4"
+                returningRequestPath = requestPath
+                fileStringName = params[0]?._uploadFile?.name!!
+
             }else if (uploadFileType == UPLOAD_FILE_TYPE.bitmap) {
-                returningRequestPath = "http://odi.odiapp.com.tr/?yeni_islem=tanitim&id=$userID&uzanti=mp4"
-                fileStringName = "tanitim_$userID.jpg"
+                // resim dosyasının ismini video mp4 uzantısı kesilerek ekleniyor
+
+
+                var jpgName = params[0]?._uploadFile?.name!!.replace(".mp4", ".jpg")
+                println("asyncN:  jpgName: $jpgName")
+                fileStringName = jpgName
+
             }
         }
 
         resultDataModel = async_upload_video_complete(uploadID,userID,returningRequestPath,true, null, uploadFileType)
-
         uploadFile(params[0]?._uploadFile, fileStringName)
-
         return "upload"
     }
 
@@ -138,7 +139,6 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
                 if (holderBytes <= myPercent) {
                     holderBytes = myPercent.toInt()
                     progressDataModel = async_upload_video_complete(null,null,null,false, holderBytes, uploadFileType)
-
                     listener?.uploadVideoAsyncTaskComplete(progressDataModel)
                 } else {
                     println("async: Video yükleniyor... Yükleme sonuçlandı")

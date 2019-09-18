@@ -377,6 +377,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        println("takibim: data $data")
         // PHOTO GALLERY
         if (requestCode == Activity_Result.GALLERY.value && resultCode == Activity.RESULT_OK) {
             println(TAG + "onActivityResult galeri dönüşü")
@@ -398,10 +399,10 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         }
         // CROP
         else if (requestCode == UCrop.REQUEST_CROP) {
+            // huvai telefonda crop özelliğinden dolayı image alınamadı
             handleCropResult(data!!)
+
         }
-
-
 
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
@@ -419,7 +420,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             println("yükleme: mainActivity $processType")
             intent.putExtra("processType", processType)
             startActivityForResult(intent, Activity_Result.UPLOAD_VIDEO_PAGE_RESULT.value)
-
         }
 
         if(requestCode == Activity_Result.UPLOAD_VIDEO_PAGE_RESULT.value && resultCode == Activity.RESULT_OK){
@@ -444,7 +444,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             var myFile = File(path)
             sendProfilePhoto(myFile)
         } else {
-            Toast.makeText(this, "Resim düzenlenirken bir hata oluştu.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Resim düzenlenirken bir hata oluştu. kod:12", Toast.LENGTH_SHORT).show()
         }
     }
 

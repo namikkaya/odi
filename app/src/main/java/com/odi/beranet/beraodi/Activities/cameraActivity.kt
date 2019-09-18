@@ -53,9 +53,9 @@ class cameraActivity() : baseActivity(),
 
     private var list:ArrayList<Fragment> = ArrayList<Fragment>()
 
-    private var projectId:String? = null
-    private var userId:String? = null
-    private var processType:nativePage? = null
+    var projectId:String? = null
+    var userId:String? = null
+    var processType:nativePage? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +69,7 @@ class cameraActivity() : baseActivity(),
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
             processType = bundle.getSerializable("type") as nativePage?
+            singleton.userId = userId
             println("$TAG processType: $processType")
         }
 
@@ -84,6 +85,10 @@ class cameraActivity() : baseActivity(),
         }
 
         val cameraFragment = previewFragment.newInstance()
+        cameraFragment.userId = this.userId
+        cameraFragment.projectId = this.projectId
+        cameraFragment.processType = this.processType
+
         list.add(cameraFragment)
 
         viewPager = findViewById(R.id.viewPager)
@@ -167,7 +172,7 @@ class cameraActivity() : baseActivity(),
         val queue = Volley.newRequestQueue(this)
 
         val url = "http://odi.odiapp.com.tr/core/odi.php?id=$projectId"
-        println("$TAG jsonData: strResp url: $url")
+        println("$TAG jsonData: strResp url: $url ->url")
         val stringReq = StringRequest(Request.Method.GET, url,
             Response.Listener<String> { response ->
 
@@ -182,6 +187,9 @@ class cameraActivity() : baseActivity(),
                     Log.d(TAG, e.toString() + " --> jsonError")
                     e.printStackTrace()
                 }
+
+                println("$TAG jsonData: ${data?.getJSONObject("PROJE")}")
+
 
                 val in_data = data?.getJSONObject("PROJE")
                 println("$TAG jsonData: strRespAll : $in_data")
@@ -323,7 +331,7 @@ class cameraActivity() : baseActivity(),
 
                         var playlistDataModel = playlistDataModel(RECORD_TYPE.MONOLOG, playlistArray)
                         var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
-                        myFragment.getData(playlistDataModel,userId, projectId)
+                        myFragment.getData(playlistDataModel)
                     }
                 }
             }
@@ -344,7 +352,7 @@ class cameraActivity() : baseActivity(),
                     contentPreloader.visibility = View.INVISIBLE
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.DIALOG, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
-                    myFragment.getData(playlistDataModel, userId, projectId)
+                    myFragment.getData(playlistDataModel)
                     println("Tektik: playMode dialog get data çalıştı")
                 }
                 RECORD_TYPE.PLAYMODE -> {
@@ -352,7 +360,7 @@ class cameraActivity() : baseActivity(),
                     contentPreloader.visibility = View.INVISIBLE
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
-                    myFragment.getData(playlistDataModel, userId, projectId)
+                    myFragment.getData(playlistDataModel)
                 }
             }
         }

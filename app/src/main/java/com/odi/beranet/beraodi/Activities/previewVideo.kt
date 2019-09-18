@@ -42,6 +42,115 @@ class previewVideo : baseActivity(),
     MediaPlayer.OnCompletionListener,
     MediaController.MediaPlayerControl,
     odiInterface{
+
+    /////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////
+    // <preloader --- >
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == Activity_Result.PRELOADER_FINISH.value && resultCode == RESULT_OK) {
+            intent.putExtra("STATUS", "OKEY")
+            setResult(RESULT_OK, intent)
+            finish()
+        }
+    }
+
+    var preloaderIntent: Intent? = null
+
+    private fun preloader() {
+        preloaderIntent = Intent(this, preloaderActivity::class.java)
+        preloaderIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        preloaderIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        //startActivity(preloaderIntent)
+        startActivityForResult(preloaderIntent, Activity_Result.PRELOADER_FINISH.value)
+    }
+
+    override fun onUploadBitmapStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
+        super.onUploadBitmapStatus(_id, _progress, _complete)
+        preloaderManage(UI_PRELOADER.bitmap,_progress,_complete)
+    }
+
+    override fun onCompressVideoStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
+        super.onCompressVideoStatus(_id, _progress, _complete)
+        preloaderManage(UI_PRELOADER.compress,_progress,_complete)
+    }
+
+    override fun onUploadVideoStatus(_id: String?, _progress: Int?, _complete: Boolean?) {
+        super.onUploadVideoStatus(_id, _progress, _complete)
+        preloaderManage(UI_PRELOADER.video,_progress,_complete)
+
+    }
+
+    override fun onUploadExitPreloader() {
+        super.onUploadExitPreloader()
+        getPreloaderContext().let {
+            getPreloaderContext()?.exitPreloader()
+        }
+    }
+
+
+    private fun preloaderManage(status:UI_PRELOADER, progress:Int?, complete: Boolean?) {
+        when(status) {
+            UI_PRELOADER.video -> preloaderVideoUpload(progress, complete)
+            UI_PRELOADER.bitmap -> preloaderBitmapUpload(progress,complete)
+            UI_PRELOADER.compress -> preloaderVideoCompress(progress,complete)
+            else -> println("Problem oldu...")
+        }
+    }
+
+
+
+    private fun preloaderBitmapUpload(progress:Int?, complete:Boolean?) {
+        if(!complete!!) {
+            getPreloaderContext().let {
+                getPreloaderContext()?.progressChangeData(progress, "Resim Yükleniyor", false)
+            }
+        }else {
+            getPreloaderContext().let {
+                getPreloaderContext()?.progressChangeData(progress, "Resim Yüklendi", false)
+            }
+        }
+    }
+
+    private fun preloaderVideoCompress(progress: Int?, complete: Boolean?){
+        if(!complete!!) {
+            getPreloaderContext().let {
+                getPreloaderContext()?.progressChangeData(progress, "Video Sıkıştırılıyor", false)
+            }
+        }else {
+            getPreloaderContext().let {
+                getPreloaderContext()?.progressChangeData(progress, "Video Hazır", false)
+            }
+        }
+    }
+
+    // video upload bittiğinde complete geldiğinde işlemin tamamı bitmiş olur
+    private fun preloaderVideoUpload(progress: Int?, complete: Boolean?){
+        if(!complete!!) {
+            getPreloaderContext().let {
+                getPreloaderContext()?.progressChangeData(progress, "Video Yükleniyor", false)
+            }
+
+        }else {
+            println("$TAG VİDEO YÜKLEME TAMAMLANDI")
+            getPreloaderContext().let {
+                getPreloaderContext()?.progressChangeData(progress, "Video Hazır", true)
+            }
+
+        }
+    }
+
+    private fun getPreloaderContext():preloaderActivity? {
+
+        if (singleton.preloaderContext as? preloaderActivity != null) {
+            val act = singleton.preloaderContext as? preloaderActivity
+            return act
+        }
+        return null
+    }
+
+    //-------------------------------------------------------------------
     override fun isPlaying(): Boolean {
         return mp!!.isPlaying
     }
@@ -106,6 +215,7 @@ class previewVideo : baseActivity(),
     private lateinit var againButton:ImageButton
     private lateinit var saveButton:ImageButton
     private lateinit var uploadButton:ImageButton
+    lateinit var testImage:ImageView
     private var myActionBar: ActionBar? = null
 
     private var projectId:String? = null
@@ -115,14 +225,10 @@ class previewVideo : baseActivity(),
 
     var mHandler: Handler? = null
 
-
     private var mp:MediaPlayer? = null
-
     var warningIntent: Intent? = null
+    var videoUploadController: cameraUploadViewModel? = null
 
-
-
-    var videoUploadController: videoUploadViewModel? = null
 
     /**
      * internet durum kontrolü
@@ -167,44 +273,20 @@ class previewVideo : baseActivity(),
         setContentView(R.layout.activity_preview_video)
 
         val bundle=intent.extras
-        if(bundle!=null)
-        {
+        if(bundle!=null) {
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
             processType = bundle.getSerializable("type") as nativePage
             val str = bundle.getString("videoPath")
             vMyUri = Uri.parse(str)
-
-
-            println("$TAG video uri : $vMyUri")
-            /*
-            var file = File(vMyUri!!.path)
-            if (file.exists()){
-                println("$TAG video dosyası bulundu")
-                println("$TAG viedo dosyası boyutu: ${file.length()}")
-            }else {
-                println("$TAG video dosyasında problem var")
-            }*/
-
         }
 
-        videoUploadController = videoUploadViewModel(this,this)
-
-        videoUploadController?.check_writeRead_permission { status->
-            if (status == true) {
-
-            }
-        }
+        videoUploadController = cameraUploadViewModel(this,this)
 
         navigationBarConfiguration()
         uiconfig()
     }
 
-    private fun getUriToFile(myUri:Uri):File? {
-        val path = FilePath2.getPath(this,myUri)
-        val myFile = File(path)
-        return myFile
-    }
 
     override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) { }
 
@@ -231,11 +313,10 @@ class previewVideo : baseActivity(),
         }
     }
 
-
-
     private fun uiconfig() {
         mediaPlayerLayout = findViewById(R.id.mediaPlayerLayout)
         videoView = findViewById(R.id.myVideoView_previewVideo)
+        testImage = findViewById(R.id.testImage)
 
         againButton = findViewById(R.id.againButton_previewVideo)
         saveButton = findViewById(R.id.saveButton_previewVideo)
@@ -322,8 +403,6 @@ class previewVideo : baseActivity(),
         }
     }
 
-
-
     override fun onPrepared(mp: MediaPlayer?) {
         mediaController = MediaController(this)
         mediaController?.setMediaPlayer(this)
@@ -374,7 +453,16 @@ class previewVideo : baseActivity(),
     }
 
     private fun OnUploadbuttonEvent() {
+        vibratePhone()
 
+        preloader()
+
+        println("$TAG onuploadbuttonEvent : click")
+        var myFile = File(vMyUri!!.path)
+        // gönderim işlemi başlatıldı.
+        videoUploadController?.let {
+            it.uploadStart(projectId!!,userId!!,this,vMyUri!!,processType!!,myFile)
+        }
     }
 
     companion object {

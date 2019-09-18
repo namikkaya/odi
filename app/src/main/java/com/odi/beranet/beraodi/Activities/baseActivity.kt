@@ -16,7 +16,6 @@ abstract class baseActivity: AppCompatActivity(), ReachabilityStateObserver {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         baseConfig()
     }
 

@@ -2,13 +2,9 @@ package com.odi.beranet.beraodi.Activities
 
 import android.content.*
 import android.net.Uri
-import android.support.v7.app.AppCompatActivity
 import android.support.v7.app.ActionBar
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.DialogTitle
 import android.view.View
 import android.widget.*
-import com.mikhaellopez.circularprogressbar.CircularProgressBar
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.odiLib.*
@@ -17,22 +13,11 @@ import android.provider.MediaStore
 import android.provider.DocumentsContract
 import android.database.Cursor
 import android.os.*
-import android.os.Environment.getExternalStorageDirectory
-import android.os.Environment.getExternalStorageDirectory
 import android.util.Log
 import java.io.*
 import java.util.*
-import java.nio.file.Files.exists
-import com.facebook.common.file.FileUtils.mkdirs
-import android.os.Environment.getExternalStorageDirectory
 import android.content.ContentValues
 import android.content.Intent
-
-
-
-
-
-
 
 
 class upload_from_gallery : baseActivity(), odiInterface {
@@ -140,8 +125,6 @@ class upload_from_gallery : baseActivity(), odiInterface {
             myFile.let {
                 if (myFile!!.exists()) {
                     println("$TAG fileSize: video dosyası bulundu")
-
-
                     val file_size = (myFile.length() / (1024 * 1024)).toString().toInt()
                     if (file_size > 50) {
                         sendButton.isClickable = false
@@ -188,12 +171,7 @@ class upload_from_gallery : baseActivity(), odiInterface {
         preloader()
 
         val myFile = getUriToFile(selectedUri!!)
-        //saveVideoGallery(myFile)
-
         videoUploadController?.getImageUrlWithAuthority("videoUpload", this, selectedUri!!, processType!!, myFile)
-
-
-        //saveVideo(myFile)
     }
 
 
@@ -290,7 +268,6 @@ class upload_from_gallery : baseActivity(), odiInterface {
     }
 
     private fun getPreloaderContext():preloaderActivity? {
-
         if (singleton.preloaderContext as? preloaderActivity != null) {
             val act = singleton.preloaderContext as? preloaderActivity
             return act
@@ -323,7 +300,6 @@ class upload_from_gallery : baseActivity(), odiInterface {
 
 
     private fun saveVideoGallery(filePath: File?) {
-
         var randomName:String = getRandomString(8)
         val values = ContentValues(3)
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")

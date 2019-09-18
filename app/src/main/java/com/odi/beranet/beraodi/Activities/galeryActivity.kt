@@ -635,7 +635,7 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
             }
 
         } else {
-            Toast.makeText(this, "Resim düzenlenirken bir hata oluştu.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Resim düzenlenirken bir hata oluştu. kod:11", Toast.LENGTH_SHORT).show()
         }
     }
 

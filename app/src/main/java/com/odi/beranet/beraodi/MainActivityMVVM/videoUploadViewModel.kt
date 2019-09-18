@@ -24,6 +24,7 @@ import com.odi.beranet.beraodi.models.async_upload_video
 import com.odi.beranet.beraodi.models.async_upload_video_complete
 import com.odi.beranet.beraodi.odiLib.*
 import com.vincent.videocompressor.VideoCompress
+import kotlinx.android.synthetic.main.activity_preview_video.*
 import java.io.*
 import java.lang.Exception
 import java.net.HttpURLConnection
@@ -37,12 +38,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
     var uploadId:String? = null
     var uploadVideoMessageHandler: Handler? = null
 
-    internal var outputDir =
-        Environment.getExternalStorageDirectory().toString() + File.separator + "Odi" + File.separator + System.currentTimeMillis()
-    internal var outputDir2 =
-        Environment.getExternalStorageDirectory().toString() + File.separator + "Odi_output" + File.separator + System.currentTimeMillis()
-    internal var outputDir3 =
-        Environment.getExternalStorageDirectory().toString() + File.separator + System.currentTimeMillis()
+    internal var outputDir3 = Environment.getExternalStorageDirectory().toString() + File.separator + System.currentTimeMillis()
     var videoUri:Uri? = null
     var pageType:nativePage? = null
     var context:Context? = null
@@ -147,9 +143,11 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
         if (singleton.userId != null) {
             println("$TAG type: $type - userId: ${singleton.userId!!} - uploadType!!: ${uploadType}")
-            val myModel = async_upload_video("denemeID", file, this, type, singleton.userId!!, uploadType!!)
+            val myModel = async_upload_video(this.uploadId, file, this, type, singleton.userId!!, uploadType!!)
 
             uploadClass = asyncUploadFile().execute(myModel) as asyncUploadFile?
+        }else {
+            println("$TAG singleton userId nil devam edemez.")
         }
 
     }
@@ -264,6 +262,93 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         return returningFile
     }
 
+    internal fun check_writeRead_permission(completion: (Boolean?) -> Unit) {
+        if (ContextCompat.checkSelfPermission(_this,
+                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(_this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            completion(true)
+        } else {
+            completion(false)
+            ActivityCompat.requestPermissions(_this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), Permission_Result.UPLOAD_VIDEO_GALLERY.value)
+        }
+    }
+
+    @Throws(IOException::class)
+    fun request(uri: String): String {
+        val ab = StringBuilder()
+        val url = URL(uri)
+        val conn = url.openConnection() as HttpURLConnection
+        try {
+
+            while (true){
+
+                val inStr = BufferedInputStream(conn.inputStream)
+                val bf = BufferedReader(InputStreamReader(inStr))
+
+                val inputLine: String? = bf.readLine()
+                if (inputLine!! != "")
+                    break
+                ab.append(inputLine)
+                println("$TAG async: request complete ")
+                //listener?.onUploadVideoStatus(uploadId, null, true)
+
+                if (fileDeletedEnd_holder != null) {
+                    if (fileDeletedEnd_holder!!.exists()) {
+                        if (fileDeletedEnd_holder!!.delete()) {
+                            println("$TAG delete file: dosya başarı ile silindi")
+                        }
+                    }
+                }
+
+                listener?.onUploadVideoStatus(uploadId,null,true)
+            }
+
+        } finally {
+            conn.disconnect()
+        }
+
+
+        return ab.toString()
+    }
+
+    private fun getThumbnail(uri:Uri):Bitmap{
+        val filePathColumn = arrayOf(MediaStore.Images.Media.DATA)
+        val cursor = _this.applicationContext.contentResolver.query(uri, filePathColumn, null, null, null)
+
+        if (cursor == null) {
+            val bitmap = ThumbnailUtils.createVideoThumbnail(uri.path, MediaStore.Images.Thumbnails.MINI_KIND)
+            //_this.testImage.setImageBitmap(bitmap)
+            return bitmap
+        }
+        cursor.moveToFirst()
+
+        val columnIndex = cursor.getColumnIndex(filePathColumn[0])
+        val picturePath = cursor.getString(columnIndex)
+        cursor.close()
+
+        return ThumbnailUtils.createVideoThumbnail(picturePath, MediaStore.Video.Thumbnails.MINI_KIND)
+    }
+
+    private fun bitmapToFile(bitmap: Bitmap, name: String):File?{
+        val filesDir = _this.applicationContext.getFilesDir()
+        val imageFile = File(filesDir, "$name.jpg")
+
+        val os: OutputStream
+        return try {
+            os = FileOutputStream(imageFile)
+            bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, os)
+            os.flush()
+            os.close()
+
+            imageFile
+        } catch (e: Exception) {
+            Log.e(javaClass.simpleName, "Error writing bitmap", e)
+            null
+        }
+
+
+    }
+
     // video işlemi yapılıyor
     private fun videoProcess(context: Context, uri:Uri, type:nativePage) {
         var inputStream:InputStream? = null
@@ -335,88 +420,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         catch (e: Exception) {
             Log.e("VideoComp", e.message)
         }
-    }
-
-    internal fun check_writeRead_permission(completion: (Boolean?) -> Unit) {
-        if (ContextCompat.checkSelfPermission(_this,
-                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(_this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-            completion(true)
-        } else {
-            completion(false)
-            ActivityCompat.requestPermissions(_this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), Permission_Result.UPLOAD_VIDEO_GALLERY.value)
-        }
-    }
-
-    @Throws(IOException::class)
-    fun request(uri: String): String {
-        val ab = StringBuilder()
-        val url = URL(uri)
-        val conn = url.openConnection() as HttpURLConnection
-        try {
-
-            while (true){
-
-                val inStr = BufferedInputStream(conn.inputStream)
-                val bf = BufferedReader(InputStreamReader(inStr))
-
-                val inputLine: String? = bf.readLine()
-                if (inputLine!! != "")
-                    break
-                ab.append(inputLine)
-                println("$TAG async: request complete ")
-                //listener?.onUploadVideoStatus(uploadId, null, true)
-
-                if (fileDeletedEnd_holder != null) {
-                    if (fileDeletedEnd_holder!!.exists()) {
-                        if (fileDeletedEnd_holder!!.delete()) {
-                            println("$TAG delete file: dosya başarı ile silindi")
-                        }
-                    }
-                }
-
-                listener?.onUploadVideoStatus(uploadId,null,true)
-            }
-
-        } finally {
-            conn.disconnect()
-        }
-
-
-        return ab.toString()
-    }
-
-    private fun getThumbnail(uri:Uri):Bitmap{
-        val filePathColumn = arrayOf(MediaStore.Images.Media.DATA)
-        val cursor = _this.applicationContext.contentResolver.query(uri, filePathColumn, null, null, null)
-        cursor.moveToFirst()
-
-        val columnIndex = cursor.getColumnIndex(filePathColumn[0])
-        val picturePath = cursor.getString(columnIndex)
-        cursor.close()
-
-        val bitmap = ThumbnailUtils.createVideoThumbnail(picturePath, MediaStore.Video.Thumbnails.MINI_KIND)
-        return bitmap
-    }
-
-    private fun bitmapToFile(bitmap: Bitmap, name: String):File?{
-        val filesDir = _this.applicationContext.getFilesDir()
-        val imageFile = File(filesDir, "$name.jpg")
-
-        val os: OutputStream
-        return try {
-            os = FileOutputStream(imageFile)
-            bitmap?.compress(Bitmap.CompressFormat.JPEG, 100, os)
-            os.flush()
-            os.close()
-
-            imageFile
-        } catch (e: Exception) {
-            Log.e(javaClass.simpleName, "Error writing bitmap", e)
-            null
-        }
-
-
     }
 
 }

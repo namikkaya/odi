@@ -70,12 +70,18 @@ class preloaderActivity : baseActivity() {
 
         }
         if (_title != null) {
+
+            /*
             runOnUiThread {
                 object : Runnable {
                     override fun run() {
                         titleText.text = _title!!
                     }
                 }
+            }*/
+
+            runOnUiThread {
+                titleText.text = _title!!
             }
 
             //titleText.text = _title!!
