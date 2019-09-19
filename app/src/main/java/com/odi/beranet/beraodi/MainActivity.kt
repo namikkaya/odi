@@ -330,16 +330,16 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         println("$TAG $userId sayfanın yüklenmesi gerekiyor")
         if (userId != null) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=$userId")
-            webView?.reload()
+            //webView?.reload()
             println("Takip: webViewOnload reload1")
         }else {
             if (singleton.onesignal_playerId != null) {
                 webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
-                webView?.reload()
+                //webView?.reload()
                 println("Takip: webViewOnload reload2")
             }else {
                 webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=")
-                webView?.reload()
+                //webView?.reload()
                 println("Takip: webViewOnload reload3")
             }
         }
@@ -406,7 +406,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
-            webView?.reload()
+            //webView?.reload()
             println("Takip: PHOTO_COLLAGE reload4")
         }
 
@@ -428,9 +428,18 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 if (status == "OKEY") {
                     Toast.makeText(applicationContext, "İşlem Başarılı.", Toast.LENGTH_SHORT).show()
                     webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
-                    webView?.reload()
+                    //webView?.reload()
                     println("Takip: UPLOAD_VIDEO_PAGE_RESULT reload5")
                 }
+            }
+        }
+
+        // camera dönüşü reloaded
+        if (requestCode == Activity_Result.CAMERA_SHOW_REEL_RESULT.value ||
+            requestCode == Activity_Result.CAMERA_ODILE_RESULT.value ||
+            requestCode == Activity_Result.CAMERA_TANITIM_RESULT.value) {
+            if (resultCode == Activity.RESULT_OK) {
+                webView?.reload()
             }
         }
     }

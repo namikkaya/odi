@@ -105,12 +105,13 @@
         </RelativeLayout>
 
     </RelativeLayout>
+    <!--
     <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
         <ImageView
                 android:id="@+id/testImage"
                 android:layout_width="200dp"
                 android:layout_height="200dp"/>
 
-    </RelativeLayout>
+    </RelativeLayout>-->
 
 </android.support.constraint.ConstraintLayout>

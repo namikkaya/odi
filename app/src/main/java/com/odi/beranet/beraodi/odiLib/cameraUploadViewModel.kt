@@ -293,9 +293,9 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
         val bitmap = ThumbnailUtils.createVideoThumbnail(uri.path, MediaStore.Images.Thumbnails.MINI_KIND)
         val ism = _this as? previewVideo
         //_this.testImage.setImageBitmap(bitmap)
-        ism?.let {
+        /*ism?.let {
             it.testImage.setImageBitmap(bitmap)
-        }
+        }*/
         return bitmap
     }
 

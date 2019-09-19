@@ -2,16 +2,13 @@ package com.odi.beranet.beraodi.Activities.cameraActivityFragments
 
 import android.Manifest
 import android.app.AlertDialog
-import android.arch.lifecycle.ViewModelProvider
 import android.content.Context
 import android.content.DialogInterface
 import android.content.pm.PackageManager
-import android.graphics.Matrix
-import android.graphics.Point
-import android.graphics.RectF
-import android.graphics.SurfaceTexture
+import android.graphics.*
 import android.hardware.SensorManager
 import android.hardware.camera2.*
+import android.media.CamcorderProfile
 import android.media.MediaRecorder
 import android.media.ThumbnailUtils
 import android.net.Uri
@@ -24,19 +21,15 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
 import android.support.v4.content.ContextCompat
 import android.support.v4.graphics.drawable.RoundedBitmapDrawableFactory
-import android.support.v7.app.AppCompatActivity
 import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
-import android.text.style.ForegroundColorSpan
 import android.util.*
 import android.view.*
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.TextView
-import com.odi.beranet.beraodi.Activities.cameraActivity
 import com.odi.beranet.beraodi.R
-import com.odi.beranet.beraodi.models.CameraViewModel
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.*
 import java.io.File
@@ -44,6 +37,7 @@ import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.Comparator
 import kotlin.collections.ArrayList
 
 private const val _this = "param1"
@@ -96,16 +90,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private lateinit var volumeButton: ImageButton
     private var timerManager:countDownManager? = null
     private var isRecording:Boolean = false
-    private val MAX_PREVIEW_WIDTH:Int = 1280
-    private val MAX_PREVIEW_HEIGT:Int = 720
+    private var MAX_PREVIEW_WIDTH:Int = 1280
+    private var MAX_PREVIEW_HEIGT:Int = 720
     private lateinit var  captureSession: CameraCaptureSession
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
 
-    val rnds:String = (0..16000).random().toString()
 
 
-    var videoFileHolder:File? = null
-
+    val cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_1080P)
 
     var userId:String? = null
     var projectId:String? = null
@@ -139,9 +131,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             Log.d(TAG , "managerProblem ")
             if(camera != null) {
                 cameraDevice = camera
-
                 previewSession()
-
             }
 
         }
@@ -169,12 +159,13 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private var currentVideoFilePath: String = ""
 
+
     private fun previewSession() {
-        println("createVideo  previewSession çalıştırıld")
         setupMediaRecorder()
 
         try {
             val surfaceTexture = textureView.surfaceTexture
+
 
             surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
             val surface = Surface(surfaceTexture)
@@ -264,11 +255,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         println("createVideo: video dosyası oluşturulacak")
         var folder = Environment.getExternalStorageDirectory()
-        var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"odiVideo/")
+
+        var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"videoOfOdiRecord")
         if(!videoFolder.exists())
             videoFolder.mkdirs()
-
-
 
         var newName = createVideoFileName()
         println("createVideo: video ismi $newName")
@@ -351,6 +341,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         mediaRecorder?.apply {
             try {
+
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setAudioSamplingRate(44100)
@@ -358,9 +349,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
                 setOutputFile(createVideoFile())
-                setVideoEncodingBitRate(10000000)
-                setVideoFrameRate(30)
-                setVideoSize(1280,720)
+                //setVideoEncodingBitRate(10000000)
+                setVideoEncodingBitRate(cpHigh.videoBitRate)
+                //setVideoFrameRate(30)
+                setVideoFrameRate(cpHigh.videoFrameRate)
+                DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
 
@@ -463,11 +456,13 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         }
     }
 
+    private var DISPLAY_WIDTH:Int? = 1280
+    private var DISPLAY_HEIGHT:Int? = 720
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
             println("$TAG onCreate init")
-
         }
     }
 
@@ -486,6 +481,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             println("$TAG orientation: transformImage return ")
             return
         }
+
         val matrix = Matrix()
         val rotation = activity?.windowManager?.defaultDisplay?.rotation
         val textureRectF = RectF(0F,0F,width.toFloat(),height.toFloat())
@@ -494,10 +490,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         val centerX = textureRectF.centerX()
         val centerY = textureRectF.centerY()
+
         if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
-            println("$TAG orientation: in if ")
-            previewRectF.offset(centerX-previewRectF.centerX(), centerY - previewRectF.centerY())
-            matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL)
+            previewRectF.offset(centerX - previewRectF.centerX(), centerY - previewRectF.centerY())
+
+            matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL) // FILL idi önce ki
+
             val scale = Math.max(width.toFloat() / previewSize!!.x.toFloat(), height.toFloat() / previewSize!!.y.toFloat() )
             matrix.postScale(scale,scale, centerX,centerY)
             matrix.postRotate(90F*(rotation-2),centerX,centerY)
@@ -701,7 +699,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun checkCameraPermission() {
         if (ContextCompat.checkSelfPermission(activity!!, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(activity!!, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            ContextCompat.checkSelfPermission(activity!!, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(activity!!, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(activity!!, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             println("$TAG checkGalleryPermission: OKEY")
             connectCamera()
         } else {

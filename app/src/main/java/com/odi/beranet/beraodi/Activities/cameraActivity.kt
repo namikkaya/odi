@@ -39,7 +39,6 @@ class cameraActivity() : baseActivity(),
     previewFragment.previewFragmentInterface,
     odiInterface{
 
-
     override fun internetConnectionStatus(status: Boolean) {
 
     }
@@ -182,15 +181,10 @@ class cameraActivity() : baseActivity(),
                 var data:JSONObject? = null
                 try {
                     data = XML.toJSONObject(strResp)
-
                 }catch (e: JSONException) {
                     Log.d(TAG, e.toString() + " --> jsonError")
                     e.printStackTrace()
                 }
-
-                println("$TAG jsonData: ${data?.getJSONObject("PROJE")}")
-
-
                 val in_data = data?.getJSONObject("PROJE")
                 println("$TAG jsonData: strRespAll : $in_data")
                 val in_projectType: Int? = in_data?.getInt("TIP") // 1
@@ -383,7 +377,9 @@ class cameraActivity() : baseActivity(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Activity_Result.PREVIEW_VIDEO_RESULT.value && resultCode == Activity.RESULT_OK) {
-
+            intent.putExtra("STATUS", "OKEY")
+            setResult(RESULT_OK, intent)
+            finish()
         }
     }
 

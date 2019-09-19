@@ -10,4 +10,8 @@
     <string name="Okey">Tamam</string>
     <string name="UploadError">Yükleme Hatası</string>
     <string name="UploadErrorDesc">Yükleme hatası oluştu. Sayfanızda video resminiz görünse bile yüklenmemiş olabilir. Lütfen kontrol ederek tekrar deneyiniz.</string>
+    <string name="exitSaveVideoTitle">Video Silinecek</string>
+    <string name="exitSaveVideoDesc">Geriye döndüğünüzde bu video silinecek. Bu işlemi yapmak istediğinize emin misiniz?</string>
+    <string name="exitSaveButtonYes">Çık</string>
+    <string name="exitSaveButtonNo">İptal</string>
 </resources>

@@ -1,10 +1,7 @@
 package com.odi.beranet.beraodi.Activities
 
 import android.Manifest
-import android.content.ContentUris
-import android.content.ContentValues
-import android.content.Context
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.PixelFormat
@@ -22,6 +19,7 @@ import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
 import android.support.v7.app.ActionBar
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.MotionEvent
 import android.view.SurfaceHolder
@@ -215,7 +213,7 @@ class previewVideo : baseActivity(),
     private lateinit var againButton:ImageButton
     private lateinit var saveButton:ImageButton
     private lateinit var uploadButton:ImageButton
-    lateinit var testImage:ImageView
+    //lateinit var testImage:ImageView
     private var myActionBar: ActionBar? = null
 
     private var projectId:String? = null
@@ -316,7 +314,7 @@ class previewVideo : baseActivity(),
     private fun uiconfig() {
         mediaPlayerLayout = findViewById(R.id.mediaPlayerLayout)
         videoView = findViewById(R.id.myVideoView_previewVideo)
-        testImage = findViewById(R.id.testImage)
+        //testImage = findViewById(R.id.testImage)
 
         againButton = findViewById(R.id.againButton_previewVideo)
         saveButton = findViewById(R.id.saveButton_previewVideo)
@@ -346,7 +344,7 @@ class previewVideo : baseActivity(),
 
     val clickListener = View.OnClickListener { view ->
         when (view.id) {
-            R.id.recordButton -> OnAgainButtonEvent()
+            R.id.againButton_previewVideo -> OnAgainButtonEvent()
             R.id.saveButton_previewVideo -> OnSaveButtonEvent()
             R.id.uploadButton_previewVideo -> OnUploadbuttonEvent()
             R.id.myVideoView_previewVideo -> OnMediaControllerStatusEvent()
@@ -370,7 +368,6 @@ class previewVideo : baseActivity(),
         if (mp != null) {
             try {
                mp?.pause()
-
             }catch (e:IllegalStateException){
                 println("$TAG hata: ${e.toString()}")
             }
@@ -408,6 +405,8 @@ class previewVideo : baseActivity(),
         mediaController?.setMediaPlayer(this)
         mediaController?.setAnchorView(mediaPlayerLayout)
 
+        val viewGroupLevel1 = mediaController?.getChildAt(0)
+        viewGroupLevel1?.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.blackTransparent))
 
         try {
             videoView.setMediaController(mediaController)
@@ -434,7 +433,30 @@ class previewVideo : baseActivity(),
 
     private fun OnAgainButtonEvent() {
         vibratePhone()
-        finish()
+        println("$TAG onAgainButtonEvent")
+        onAlert_againAlert()
+    }
+
+    private fun onAlert_againAlert() {
+        val alert = AlertDialog.Builder(this)
+
+        alert.setTitle(R.string.exitSaveVideoTitle)
+        alert.setMessage(R.string.exitSaveVideoDesc)
+
+        alert.setCancelable(false)
+
+        alert.setPositiveButton(R.string.exitSaveButtonYes){ dialog, which ->
+            vibratePhone()
+            finish()
+        }
+
+        alert.setNegativeButton(R.string.exitSaveButtonNo){ dialog, which ->
+            vibratePhone()
+        }
+
+        alert.show()
+
+        println("$TAG onAlertdialog open")
     }
 
     private fun OnSaveButtonEvent() {
@@ -456,10 +478,12 @@ class previewVideo : baseActivity(),
         vibratePhone()
 
         preloader()
+        mp?.let {
+            it.pause()
+        }
 
-        println("$TAG onuploadbuttonEvent : click")
         var myFile = File(vMyUri!!.path)
-        // gönderim işlemi başlatıldı.
+
         videoUploadController?.let {
             it.uploadStart(projectId!!,userId!!,this,vMyUri!!,processType!!,myFile)
         }
@@ -477,7 +501,7 @@ class previewVideo : baseActivity(),
         return sb.toString()
     }
 
-    private val VIDEO_DIRECTORY = "/odiVideo"
+    private val VIDEO_DIRECTORY = "videosOfOdi"
 
     private fun saveVideoGallery(filePath: File?) {
 
@@ -493,7 +517,21 @@ class previewVideo : baseActivity(),
 
         try {
             val currentFile = filePath
-            var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + VIDEO_DIRECTORY)
+
+            // klasör oluşturur
+            var f1 = File(Environment.getExternalStorageDirectory().absolutePath, VIDEO_DIRECTORY)
+            if (!f1.exists()) {
+                f1.mkdirs()
+            }
+
+
+            var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY)
+
+
+
+
+
+
             var newfile = File(wallpaperDirectory, Calendar.getInstance().timeInMillis.toString() + ".mp4")
 
 
