@@ -1,5 +1,6 @@
 package com.odi.beranet.beraodi
 
+import android.Manifest
 import android.app.Activity
 import android.content.*
 import android.graphics.Bitmap
@@ -24,6 +25,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.ContextCompat
 import android.view.View
 import android.view.WindowManager
 import android.view.animation.Animation
@@ -71,9 +74,10 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         println("Takip mainActivity onCreate")
         configuration()
-        onCheckFreeSpace()
 
     }
+
+
 
     private fun onCheckFreeSpace() {
         val stat = StatFs(Environment.getExternalStorageDirectory().path)
@@ -107,6 +111,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     override fun onResume() {
         super.onResume()
         println("Takip mainactivity onResume")
+        onCheckFreeSpace()
     }
 
     override fun onPause() {
@@ -284,33 +289,81 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             nativePage.cameraShowReel -> {
                 println("$TAG cameraStatus: showReel")
+                checkCameraControl(sendId, buttonId, nativePage.cameraShowReel, Activity_Result.CAMERA_SHOW_REEL_RESULT)
+                /*
                 val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
                 intent.putExtra("projectId", sendId)
                 intent.putExtra("type", nativePage.cameraShowReel)
-                startActivityForResult(intent, Activity_Result.CAMERA_SHOW_REEL_RESULT.value)
+                startActivityForResult(intent, Activity_Result.CAMERA_SHOW_REEL_RESULT.value)*/
             }
 
             nativePage.cameraIdentification -> {
                 println("$TAG cameraStatus: Tanitim")
-                val intent = Intent(this, cameraActivity::class.java)
+                checkCameraControl(sendId, buttonId, nativePage.cameraIdentification, Activity_Result.CAMERA_TANITIM_RESULT)
+                /*val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
                 intent.putExtra("projectId", sendId)
                 intent.putExtra("type", nativePage.cameraIdentification)
-                startActivityForResult(intent, Activity_Result.CAMERA_TANITIM_RESULT.value)
+                startActivityForResult(intent, Activity_Result.CAMERA_TANITIM_RESULT.value)*/
             }
 
             nativePage.cameraOdile -> {
                 println("$TAG cameraStatus: Camera Status")
-                val intent = Intent(this, cameraActivity::class.java)
+                checkCameraControl(sendId, buttonId, nativePage.cameraOdile, Activity_Result.CAMERA_ODILE_RESULT)
+                /*val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", sendId)
                 intent.putExtra("projectId", buttonId)
                 intent.putExtra("type", nativePage.cameraOdile)
-                startActivityForResult(intent, Activity_Result.CAMERA_ODILE_RESULT.value)
+                startActivityForResult(intent, Activity_Result.CAMERA_ODILE_RESULT.value)*/
             }
 
         }
 
+    }
+
+
+    var userIdHolder:String? = null
+    var projectIdHolder:String? = null
+    var typeHolder:nativePage? = null
+    var activityResult:Activity_Result? = null
+    private fun checkCameraControl(userId:String?, projectId:String?, type:nativePage, activityResult:Activity_Result) {
+        this.userIdHolder = userId
+        this.projectIdHolder = projectId
+        this.typeHolder = type
+        this.activityResult = activityResult
+        check_camera_permission { status ->
+            status?.let {
+                if (it) {
+                    startCamera(userId,projectId,type,activityResult)
+                }
+            }
+        }
+    }
+
+    private fun startCamera(userId:String?, projectId:String?, type:nativePage, activityResult:Activity_Result) {
+        val intent = Intent(this, cameraActivity::class.java)
+        intent.putExtra("userId", userId)
+        intent.putExtra("projectId", projectId)
+        intent.putExtra("type", type)
+        startActivityForResult(intent, activityResult.value)
+    }
+
+    internal fun check_camera_permission(completion: (Boolean?) -> Unit) {
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+            completion(true)
+        } else {
+            completion(false)
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                Manifest.permission.CAMERA,
+                Manifest.permission.RECORD_AUDIO),
+                Permission_Result.CAMERA_PERMISSION.value)
+        }
     }
 
     fun getPath(uri: Uri): String? {
@@ -370,6 +423,23 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 setResult(RESULT_OK)
                 println("$TAG izin verilmedi okuma yazma")
                 // alert buraya yazılacak
+
+                val title = this.resources.getString(R.string.permissionGeneralTitle)
+                val decs = this.resources.getString(R.string.permissionGeneralDesc)
+                this.infoDialog(title,decs)
+            }
+        }
+
+        if (Permission_Result.CAMERA_PERMISSION.value == requestCode) {
+            if (grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                grantResults[1] == PackageManager.PERMISSION_GRANTED &&
+                grantResults[2] == PackageManager.PERMISSION_GRANTED &&
+                grantResults[3] == PackageManager.PERMISSION_GRANTED) {
+                startCamera(userIdHolder,projectIdHolder,typeHolder!!,activityResult!!)
+            }else {
+                val title = this.resources.getString(R.string.permissionGeneralTitle)
+                val decs = this.resources.getString(R.string.permissionGeneralDesc)
+                this.infoDialog(title,decs)
             }
 
         }

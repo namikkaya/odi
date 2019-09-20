@@ -665,7 +665,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         stopRecordSession()
         stopBackgroundThread()
         closeCamera()
-        mOrientationListener.disable()
+
+        mOrientationListener?.let {
+            it.disable()
+        }
+
     }
 
     private fun setupCamera() {

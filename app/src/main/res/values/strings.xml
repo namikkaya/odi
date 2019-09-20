@@ -14,4 +14,7 @@
     <string name="exitSaveVideoDesc">Geriye döndüğünüzde bu video silinecek. Bu işlemi yapmak istediğinize emin misiniz?</string>
     <string name="exitSaveButtonYes">Çık</string>
     <string name="exitSaveButtonNo">İptal</string>
+    <string name="permissionGeneralTitle">İzinler Eksik</string>
+    <string name="permissionGeneralDesc">Uygulamanın kararlı çalışması için gerekli tüm izinlerin onaylanmış olması gerekiyor. Lütfen işlemi yaparken size sorulan izinleri onayladıktan sonra tekrar deneyiniz.</string>
+    <string name="permissionGeneralButton">Tamam</string>
 </resources>
