@@ -12,10 +12,7 @@ import android.media.CamcorderProfile
 import android.media.MediaRecorder
 import android.media.ThumbnailUtils
 import android.net.Uri
-import android.os.Bundle
-import android.os.Environment
-import android.os.Handler
-import android.os.HandlerThread
+import android.os.*
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.app.Fragment
@@ -37,8 +34,9 @@ import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.Comparator
 import kotlin.collections.ArrayList
+import com.vincent.*
+import com.vincent.videocompressor.VideoCompress
 
 private const val _this = "param1"
 
@@ -97,7 +95,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
 
 
-    val cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_1080P)
+    val cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P)
 
     var userId:String? = null
     var projectId:String? = null
@@ -346,16 +344,21 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setAudioSamplingRate(44100)
                 setAudioEncodingBitRate(96000)
+
+                //setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
+
                 setOutputFile(createVideoFile())
-                //setVideoEncodingBitRate(10000000)
-                setVideoEncodingBitRate(cpHigh.videoBitRate)
-                //setVideoFrameRate(30)
-                setVideoFrameRate(cpHigh.videoFrameRate)
-                DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
+
+                setVideoEncodingBitRate(10000000)
+                //setVideoEncodingBitRate(cpHigh.videoBitRate)
+                setVideoFrameRate(25)
+                //setVideoFrameRate(cpHigh.videoFrameRate)
+                //DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
+                setVideoSize(1280, 720)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
 
                 prepare()
 
@@ -370,6 +373,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         /// orientation setup
         orientationListenerConfig()
     }
+
+    //private File tempSoundFile; and then if(Build.VERSION.SDK_INT < 26) { recorder.setOutputFile(tempSoundFile.getAbsolutePath()); } else{ recorder.setOutputFile(tempSoundFile); }
+    //private var tempSon
 
     private fun stopMediaRecorder() {
         if (mediaRecorder != null) {
@@ -1019,4 +1025,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         myMediaManager?.onNext()
     }
 
+    private fun parseVideo(videoPath:String) {
+        //var channel = FileDataSourceImpl(videoPath)
+        //var isoFile = IsoFile(channel)
+        var channel = VideoCompress.getChannel(videoPath)
+        var isoFile = VideoCompress.getIsoFile(channel)
+        var trackBoxes = VideoCompress.getTrackBoxes(isoFile)
+
+
+    }
+
 }
+

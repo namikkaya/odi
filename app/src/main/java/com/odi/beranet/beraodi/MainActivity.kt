@@ -289,7 +289,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             nativePage.cameraShowReel -> {
                 println("$TAG cameraStatus: showReel")
-                checkCameraControl(sendId, buttonId, nativePage.cameraShowReel, Activity_Result.CAMERA_SHOW_REEL_RESULT)
+                checkCameraControl(buttonId, sendId, nativePage.cameraShowReel, Activity_Result.CAMERA_SHOW_REEL_RESULT)
                 /*
                 val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
@@ -300,7 +300,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             nativePage.cameraIdentification -> {
                 println("$TAG cameraStatus: Tanitim")
-                checkCameraControl(sendId, buttonId, nativePage.cameraIdentification, Activity_Result.CAMERA_TANITIM_RESULT)
+                checkCameraControl(buttonId, sendId, nativePage.cameraIdentification, Activity_Result.CAMERA_TANITIM_RESULT)
                 /*val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
                 intent.putExtra("projectId", sendId)
@@ -310,7 +310,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
             nativePage.cameraOdile -> {
                 println("$TAG cameraStatus: Camera Status")
-                checkCameraControl(sendId, buttonId, nativePage.cameraOdile, Activity_Result.CAMERA_ODILE_RESULT)
+                checkCameraControl(buttonId, sendId, nativePage.cameraOdile, Activity_Result.CAMERA_ODILE_RESULT)
                 /*val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", sendId)
                 intent.putExtra("projectId", buttonId)
@@ -435,6 +435,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 grantResults[1] == PackageManager.PERMISSION_GRANTED &&
                 grantResults[2] == PackageManager.PERMISSION_GRANTED &&
                 grantResults[3] == PackageManager.PERMISSION_GRANTED) {
+
                 startCamera(userIdHolder,projectIdHolder,typeHolder!!,activityResult!!)
             }else {
                 val title = this.resources.getString(R.string.permissionGeneralTitle)

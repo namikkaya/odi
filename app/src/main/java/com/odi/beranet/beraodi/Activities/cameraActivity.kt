@@ -31,7 +31,6 @@ import org.json.JSONObject
 import org.json.XML
 import java.io.UnsupportedEncodingException
 import java.nio.charset.Charset
-import java.time.Duration
 
 
 class cameraActivity() : baseActivity(),
@@ -82,6 +81,7 @@ class cameraActivity() : baseActivity(),
                     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         }
+
 
         val cameraFragment = previewFragment.newInstance()
         cameraFragment.userId = this.userId
@@ -170,8 +170,10 @@ class cameraActivity() : baseActivity(),
         // Instantiate the RequestQueue.
         val queue = Volley.newRequestQueue(this)
 
+
         val url = "http://odi.odiapp.com.tr/core/odi.php?id=$projectId"
-        println("$TAG jsonData: strResp url: $url ->url")
+        println("$TAG jsonData: strResp url: $url ->url ")
+
         val stringReq = StringRequest(Request.Method.GET, url,
             Response.Listener<String> { response ->
 

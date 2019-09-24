@@ -1,6 +1,13 @@
 package com.vincent.videocompressor;
 
 import android.os.AsyncTask;
+import com.coremedia.iso.IsoFile;
+import com.coremedia.iso.boxes.TrackBox;
+import com.googlecode.mp4parser.DataSource;
+import com.googlecode.mp4parser.FileDataSourceImpl;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by Vincent Woo
@@ -10,6 +17,27 @@ import android.os.AsyncTask;
 
 public class VideoCompress {
     private static final String TAG = VideoCompress.class.getSimpleName();
+
+    public static DataSource getChannel(String videoPath) throws IOException {
+        DataSource channel = (DataSource) new FileDataSourceImpl(videoPath);
+        return channel;
+    }
+
+    public static IsoFile getIsoFile(DataSource channel) {
+        IsoFile isoFile = null;
+        try {
+            isoFile = new IsoFile(channel);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return isoFile;
+
+    }
+
+    public static List<TrackBox> getTrackBoxes(IsoFile isoFile) {
+        List<TrackBox> trackBoxes = isoFile.getMovieBox().getBoxes(TrackBox.class);
+        return trackBoxes;
+    }
 
     public static VideoCompressTask compressVideoHigh(String srcPath, String destPath, CompressListener listener) {
         VideoCompressTask task = new VideoCompressTask(listener, VideoController.COMPRESS_QUALITY_HIGH);
