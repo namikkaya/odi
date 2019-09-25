@@ -288,7 +288,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }
 
             nativePage.cameraShowReel -> {
-                println("$TAG cameraStatus: showReel")
+                println("$TAG cameraDurumu: cameraShowReel buttonId: $buttonId sendId: $sendId")
                 checkCameraControl(buttonId, sendId, nativePage.cameraShowReel, Activity_Result.CAMERA_SHOW_REEL_RESULT)
                 /*
                 val intent = Intent(this, cameraActivity::class.java)
@@ -299,7 +299,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }
 
             nativePage.cameraIdentification -> {
-                println("$TAG cameraStatus: Tanitim")
+                println("$TAG cameraDurumu: cameraIdentification buttonId: $buttonId sendId: $sendId")
                 checkCameraControl(buttonId, sendId, nativePage.cameraIdentification, Activity_Result.CAMERA_TANITIM_RESULT)
                 /*val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", buttonId)
@@ -309,7 +309,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }
 
             nativePage.cameraOdile -> {
-                println("$TAG cameraStatus: Camera Status")
+                println("$TAG cameraDurumu: cameraIdentification buttonId: $buttonId sendId: $sendId")
                 checkCameraControl(buttonId, sendId, nativePage.cameraOdile, Activity_Result.CAMERA_ODILE_RESULT)
                 /*val intent = Intent(this, cameraActivity::class.java)
                 intent.putExtra("userId", sendId)

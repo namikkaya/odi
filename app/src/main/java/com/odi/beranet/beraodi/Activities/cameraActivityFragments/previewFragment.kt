@@ -29,14 +29,13 @@ import android.widget.TextView
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.*
+import com.vincent.videocompressor.VideoCompress
 import java.io.File
 import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
-import com.vincent.*
-import com.vincent.videocompressor.VideoCompress
 
 private const val _this = "param1"
 
@@ -131,7 +130,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 cameraDevice = camera
                 previewSession()
             }
-
         }
 
         override fun onDisconnected(camera: CameraDevice) {
@@ -207,7 +205,42 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun recordSession() {
         isRecording = true
-        mediaRecorder!!.start()
+        //mediaRecorder!!.start()
+        try {
+            mediaRecorder!!.start()
+        }catch (e:IllegalStateException) {
+            /*
+            val builder = AlertDialog.Builder(this)
+            builder.setTitle("Androidly Alert")
+            builder.setMessage("We have a message")
+
+
+            builder.setPositiveButton(android.R.string.yes) { dialog, which ->
+                Toast.makeText(applicationContext,
+                    android.R.string.yes, Toast.LENGTH_SHORT).show()
+            }
+
+            builder.setNegativeButton(android.R.string.no) { dialog, which ->
+                Toast.makeText(applicationContext,
+                    android.R.string.no, Toast.LENGTH_SHORT).show()
+            }
+
+            builder.setNeutralButton("Maybe") { dialog, which ->
+                Toast.makeText(applicationContext,
+                    "Maybe", Toast.LENGTH_SHORT).show()
+            }
+            builder.show()*/
+
+            var alertBuilder = AlertDialog.Builder(previewFragment@this.activity)
+            alertBuilder.setTitle(R.string.recordAlertTitle)
+            alertBuilder.setMessage(R.string.recordAlertDesc)
+
+            alertBuilder.setPositiveButton(R.string.permissionGeneralButton) { dialog, which ->
+                previewFragment@this.activity!!.finish()
+            }
+
+            return
+        }
         uiCameraDesing(UIDESIGN.RECORDING)
     }
 
@@ -341,24 +374,34 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             try {
 
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setAudioSource(MediaRecorder.AudioSource.DEFAULT)
                 setAudioSamplingRate(44100)
                 setAudioEncodingBitRate(96000)
-
-                //setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
-
                 setOutputFile(createVideoFile())
-
-                setVideoEncodingBitRate(10000000)
-                //setVideoEncodingBitRate(cpHigh.videoBitRate)
-                setVideoFrameRate(25)
-                //setVideoFrameRate(cpHigh.videoFrameRate)
-                //DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
-                setVideoSize(1280, 720)
+                //setVideoEncodingBitRate(10000000)
+                setVideoEncodingBitRate(cpHigh.videoBitRate)
+                //setVideoFrameRate(25)
+                setVideoFrameRate(cpHigh.videoFrameRate)
+                DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
+                //setVideoSize(1280, 720)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
+                /*
+                        setVideoSource(MediaRecorder.VideoSource.SURFACE)
+                        setAudioSource(MediaRecorder.AudioSource.MIC)
+                        setAudioEncodingBitRate(44100)
+                        setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                        setAudioChannels(2)
+                        setOutputFile(createVideoFile())
+                        setVideoEncodingBitRate(10000000)
+                        setVideoFrameRate(30)
+                        setVideoSize(1280,720)
+                        setVideoEncoder(MediaRecorder.VideoEncoder.H264)
+                        setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                        */
 
                 prepare()
 
@@ -384,26 +427,20 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 mediaRecorder?.apply {
                     try {
                         stop()
-                        reset()
+                        //reset()
 
-                        /*
-                        setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                        setAudioSource(MediaRecorder.AudioSource.MIC)
-                        setAudioEncodingBitRate(44100)
-                        setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                        setAudioChannels(2)
-                        setOutputFile(createVideoFile())
-                        setVideoEncodingBitRate(10000000)
-                        setVideoFrameRate(30)
-                        setVideoSize(1280,720)
-                        setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                        setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                        */
-
-
-                        prepare()
+                        //prepare()
                     }catch (e:IllegalStateException){
-                        Log.e(TAG, e.toString() + " stopMediaRecorder")
+                        Log.e(TAG, e.toString() + " stopMediaRecorder 11")
+                        /*val alert = AlertDialog.Builder(activity)
+                        alert.setTitle(R.string.recordAlert2Title)
+                        alert.setMessage(R.string.recordAlert2Desc)
+                        alert.setCancelable(false)
+
+                        alert.setPositiveButton(R.string.permissionGeneralButton) { dialogInterface: DialogInterface, i: Int ->
+                            activity!!.finish()
+                        }
+                        alert.show()*/
                     }
                 }
             }catch(stopException:RuntimeException){
@@ -772,9 +809,19 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             }
             Log.d(TAG, "stopRecording")
             // işlem buraya
-            val myUri = Uri.fromFile(File(currentVideoFilePath))
+
+
+            val newVideoPath = VideoCompress.parseVideo(currentVideoFilePath)
+            println("$TAG onRecordButtonEvent parseVideoPath: $newVideoPath")
+            //val myUri = Uri.fromFile(File(currentVideoFilePath)) // standart çalışan uygulama
+            val myUri = Uri.fromFile(File(newVideoPath))
+
+
+            //val myUri = Uri.fromFile(File(currentVideoFilePath))
             listener?.onPreviewFragment_Record_Success(myUri)
 
+            /*val myUri = Uri.fromFile(File(currentVideoFilePath))
+            listener?.onPreviewFragment_Record_Success(myUri)*/
         }else {
            startCountDown()
         }
@@ -962,7 +1009,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         isRecording = false
         stopRecordSession()
         uiCameraDesing(UIDESIGN.ENDING)
-        val myUri = Uri.fromFile(File(currentVideoFilePath))
+
+        //****
+
+
+        val newVideoPath = VideoCompress.parseVideo(currentVideoFilePath)
+        println("$TAG odimediaManagerListener_dialogTextComplete parseVideoPath: $newVideoPath")
+        //val myUri = Uri.fromFile(File(currentVideoFilePath)) // standart çalışan uygulama
+        val myUri = Uri.fromFile(File(newVideoPath))
         listener?.onPreviewFragment_Record_Success(myUri)
     }
 
@@ -1025,15 +1079,40 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         myMediaManager?.onNext()
     }
 
-    private fun parseVideo(videoPath:String) {
-        //var channel = FileDataSourceImpl(videoPath)
-        //var isoFile = IsoFile(channel)
+    /*private fun parseVideo(videoPath:String):String {
         var channel = VideoCompress.getChannel(videoPath)
         var isoFile = VideoCompress.getIsoFile(channel)
         var trackBoxes = VideoCompress.getTrackBoxes(isoFile)
 
+        var isError:Boolean = false
 
-    }
+        for (item in trackBoxes) {
+            var firstEntry = VideoCompress.getFirstEntry(item)
+            if (firstEntry.delta > 10000) {
+                isError = true
+                firstEntry.delta = 3000
+            }
+        }
+
+        var file = VideoCompress.getOutputMediaFile()
+        var filePath = file.absolutePath
+        if (isError) {
+            var movie = VideoCompress.getNewMovie()
+            for (item in trackBoxes) {
+                movie.addTrack(VideoCompress.getMp4TrackImpl(item,channel))
+            }
+            movie.matrix = isoFile.movieBox.movieHeaderBox.matrix
+            var out = VideoCompress.getContainer(movie)
+
+            var fc: FileChannel = RandomAccessFile(filePath,"rw").channel
+            out.writeContainer(fc)
+            fc.close()
+
+            return filePath
+        }
+
+        return videoPath
+    }*/
 
 }
 

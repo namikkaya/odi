@@ -21,6 +21,8 @@ import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 
+
+
 class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterface?): odiInterface  {
     private val TAG:String = "cameraUploadViewModel"
 
@@ -124,22 +126,17 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
                     if (value!!._id == "error") {
                         listener?.onUploadExitPreloader()
 
-                        // yükleme hatası oluştu alert açtır.
-
-                        val builder = AlertDialog.Builder(_this)
-                        builder.setTitle(R.string.UploadError)
-                        builder.setMessage(R.string.UploadErrorDesc)
-
-                        builder.setPositiveButton(R.string.Okey) { dialog, which ->
-                            _this.finish()
-                        }
-
-                        builder.show()
+                        //_this.uploadVideoError = true
+                        Thread(Runnable { // yükleme işlemi bitti request atılacak
+                            val myThis = _this as? previewVideo
+                            if (myThis != null) {
+                                myThis.errorVideoProblem = true
+                            }
+                        }).start()
 
                         uploadClass.let { value ->
                             value!!.cancel(true)
                         }
-
                         return
                     }
 

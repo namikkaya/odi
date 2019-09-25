@@ -228,6 +228,8 @@ class previewVideo : baseActivity(),
     var warningIntent: Intent? = null
     var videoUploadController: cameraUploadViewModel? = null
 
+    public var errorVideoProblem:Boolean = false
+
 
     /**
      * internet durum kontrolü
@@ -270,6 +272,8 @@ class previewVideo : baseActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview_video)
+
+        println("$TAG resetTakip onCreate")
 
         val bundle=intent.extras
         if(bundle!=null) {
@@ -379,13 +383,30 @@ class previewVideo : baseActivity(),
     var firstStart:Boolean = false
     override fun onResume() {
         super.onResume()
+        println("$TAG resetTakip onResume")
         if (mp != null) {
             try {
                 if (firstStart) {
-                    finish();
+                    finish()
                     startActivity(intent)
                 }
                 firstStart = true
+
+                if (errorVideoProblem) {
+                    errorVideoProblem = false
+                    /*val builder = AlertDialog.Builder(this)
+                    builder.setTitle(R.string.UploadError)
+
+                    builder.setMessage(R.string.UploadErrorDesc)
+
+                    builder.setPositiveButton(R.string.permissionGeneralButton){dialog, which ->
+
+                    }
+
+                    val dialog: AlertDialog = builder.create()
+                    dialog.show()*/
+                    Toast.makeText(getApplicationContext(), "Video yüklenemedi. Şuan bir sorun var. Lütfen videonuzu kaydedip odi ekibiyle iletişime geçin.", Toast.LENGTH_LONG).show();
+                }
             }catch (e:IllegalStateException){
                 println("$TAG ${e.toString()}")
             }

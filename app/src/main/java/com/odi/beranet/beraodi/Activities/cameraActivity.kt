@@ -11,6 +11,7 @@ import android.os.StatFs
 import android.support.v4.app.Fragment
 import android.support.v4.text.HtmlCompat
 import android.support.v4.view.ViewPager
+import android.support.v7.app.AlertDialog
 import android.util.Log
 import android.view.View
 import android.view.WindowManager
@@ -67,6 +68,7 @@ class cameraActivity() : baseActivity(),
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
             processType = bundle.getSerializable("type") as nativePage?
+            println("$TAG projectID: $projectId - userId: $userId")
             singleton.userId = userId
             println("$TAG processType: $processType")
         }
@@ -170,8 +172,13 @@ class cameraActivity() : baseActivity(),
         // Instantiate the RequestQueue.
         val queue = Volley.newRequestQueue(this)
 
+        var url:String = ""
+        if (processType == nativePage.cameraOdile) {
+            url = "http://odi.odiapp.com.tr/core/odi.php?id=$userId"
+        }else {
+            url = "http://odi.odiapp.com.tr/core/odi.php?id=$projectId"
+        }
 
-        val url = "http://odi.odiapp.com.tr/core/odi.php?id=$projectId"
         println("$TAG jsonData: strResp url: $url ->url ")
 
         val stringReq = StringRequest(Request.Method.GET, url,
@@ -187,35 +194,44 @@ class cameraActivity() : baseActivity(),
                     Log.d(TAG, e.toString() + " --> jsonError")
                     e.printStackTrace()
                 }
-                val in_data = data?.getJSONObject("PROJE")
-                println("$TAG jsonData: strRespAll : $in_data")
-                val in_projectType: Int? = in_data?.getInt("TIP") // 1
 
+                try {
+                    val in_data = data?.getJSONObject("PROJE")
+                    println("$TAG jsonData: strRespAll : $in_data")
+                    val in_projectType: Int? = in_data?.getInt("TIP") // 1
 
+                    when (in_projectType) {
+                        1 -> dataTypeHolder = RECORD_TYPE.MONOLOG
+                        2 -> dataTypeHolder = RECORD_TYPE.DIALOG
+                        3 -> dataTypeHolder = RECORD_TYPE.PLAYMODE
+                    }
 
-                when (in_projectType) {
-                    1 -> dataTypeHolder = RECORD_TYPE.MONOLOG
-                    2 -> dataTypeHolder = RECORD_TYPE.DIALOG
-                    3 -> dataTypeHolder = RECORD_TYPE.PLAYMODE
+                    if (dataTypeHolder != null) {
+                        if (dataTypeHolder == RECORD_TYPE.MONOLOG) {
+                            val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
+                            //println("$TAG jsonData: strResp : $in_Attr")
+                            jsonParser(dataTypeHolder, in_Attr, null)
+                        }
+                        if (dataTypeHolder == RECORD_TYPE.DIALOG) {
+                            val intAttrArray:JSONArray? = in_data?.getJSONArray("ATTR")
+                            //println("$TAG jsonData: strResp dialog : $intAttrArray")
+                            jsonParser(dataTypeHolder, null, intAttrArray)
+                        }
+                        if(dataTypeHolder == RECORD_TYPE.PLAYMODE) {
+                            val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
+                            jsonParser(dataTypeHolder, in_Attr, null)
+                        }
+                    }
+                }catch (e:Exception) {
+                    val builder = AlertDialog.Builder(this)
+                    builder.setTitle(R.string.contentProblemTitle)
+                    builder.setMessage(R.string.contentProblemDesc)
+
+                    builder.setPositiveButton(R.string.Okey) { dialog, which ->
+                        this.finish()
+                    }
+                    builder.show()
                 }
-
-                if (dataTypeHolder != null) {
-                    if (dataTypeHolder == RECORD_TYPE.MONOLOG) {
-                        val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
-                        //println("$TAG jsonData: strResp : $in_Attr")
-                        jsonParser(dataTypeHolder, in_Attr, null)
-                    }
-                    if (dataTypeHolder == RECORD_TYPE.DIALOG) {
-                        val intAttrArray:JSONArray? = in_data?.getJSONArray("ATTR")
-                        //println("$TAG jsonData: strResp dialog : $intAttrArray")
-                        jsonParser(dataTypeHolder, null, intAttrArray)
-                    }
-                    if(dataTypeHolder == RECORD_TYPE.PLAYMODE) {
-                        val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
-                        jsonParser(dataTypeHolder, in_Attr, null)
-                    }
-                }
-
 
 
             }, Response.ErrorListener {
