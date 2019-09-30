@@ -426,6 +426,7 @@ class previewVideo : baseActivity(),
         mediaController = MediaController(this)
         mediaController?.setMediaPlayer(this)
         mediaController?.setAnchorView(mediaPlayerLayout)
+        mediaController?.setPadding(0,0,0,0)
 
         val viewGroupLevel1 = mediaController?.getChildAt(0)
         viewGroupLevel1?.setBackgroundColor(ContextCompat.getColor(applicationContext, R.color.blackTransparent))
@@ -470,6 +471,10 @@ class previewVideo : baseActivity(),
         alert.setPositiveButton(R.string.exitSaveButtonYes){ dialog, which ->
             vibratePhone()
             deleteVideoFile()
+            //finish()
+
+            intent.putExtra("STATUS", "RESET")
+            setResult(RESULT_OK, intent)
             finish()
         }
 

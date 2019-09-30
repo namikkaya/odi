@@ -26,11 +26,13 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.odi.beranet.beraodi.Activities.previewVideo
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.*
 import com.vincent.videocompressor.VideoCompress
 import java.io.File
+import java.io.IOException
 import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
@@ -75,7 +77,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private var textContainerVisible:Boolean = false
     private val TAG: String? = "previewFragment"
     private var listener: previewFragmentInterface? = null
-    private lateinit var textureView: TextureView
+    private lateinit var textureView: AutoFitTextureView//TextureView
     private lateinit var recordButton: ImageButton
     private lateinit var changeCameraButton: ImageButton
     private lateinit var cameraCloseButton: ImageButton
@@ -209,6 +211,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         try {
             mediaRecorder!!.start()
         }catch (e:IllegalStateException) {
+            Log.e(TAG, e.toString() + " kod 124")
+
+
+
             /*
             val builder = AlertDialog.Builder(this)
             builder.setTitle("Androidly Alert")
@@ -278,7 +284,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             return "showreel_$userId.mp4"
         }else {
             val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
-            return "${this.projectId}_${this.userId}_VID_$timestamp.mp4"
+            return "${this.userId}_${this.projectId}_VID_$timestamp.mp4"
         }
     }
 
@@ -339,14 +345,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         if (mediaRecorder != null) {
             try {
                 mediaRecorder?.stop()
-                mediaRecorder?.reset()
-                mediaRecorder?.release()
-                mediaRecorder = null
+
             }catch (e:IllegalStateException) {
                 Log.e(TAG, e.toString() + " setupMediaRecorder")
             }
 
         }
+        mediaRecorder?.reset()
+        mediaRecorder?.release()
+        mediaRecorder = null
 
         mediaRecorder = MediaRecorder()
 
@@ -374,7 +381,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             try {
 
                 setVideoSource(MediaRecorder.VideoSource.SURFACE)
+
                 setAudioSource(MediaRecorder.AudioSource.DEFAULT)
+                //setAudioSource(MediaRecorder.AudioSource.MIC)
+
                 setAudioSamplingRate(44100)
                 setAudioEncodingBitRate(96000)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -382,12 +392,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setOutputFile(createVideoFile())
                 //setVideoEncodingBitRate(10000000)
                 setVideoEncodingBitRate(cpHigh.videoBitRate)
-                //setVideoFrameRate(25)
                 setVideoFrameRate(cpHigh.videoFrameRate)
                 DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
                 //setVideoSize(1280, 720)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB) //acc
 
                 /*
                         setVideoSource(MediaRecorder.VideoSource.SURFACE)
@@ -409,6 +418,18 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 Log.e(TAG, "$e mediaRecorder 1")
             }catch (e:java.lang.RuntimeException) {
                 Log.e(TAG, "$e mediaRecorder 2")
+            }catch (e:IOException) {
+                Log.e(TAG, "$e mediaRecorder 3")
+                if (!restart) {
+                    var intent = activity?.intent
+                    activity?.finish()
+                    startActivity(intent)
+                    activity!!.overridePendingTransition(0,0);
+                    restart = true
+                }else {
+                    restart = false
+                }
+
             }
 
         }
@@ -417,17 +438,19 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         orientationListenerConfig()
     }
 
+    var restart:Boolean = false
+
     //private File tempSoundFile; and then if(Build.VERSION.SDK_INT < 26) { recorder.setOutputFile(tempSoundFile.getAbsolutePath()); } else{ recorder.setOutputFile(tempSoundFile); }
     //private var tempSon
 
     private fun stopMediaRecorder() {
         if (mediaRecorder != null) {
-            // test için kapatıldı
             try{
+
                 mediaRecorder?.apply {
                     try {
                         stop()
-                        //reset()
+                        release()
 
                         //prepare()
                     }catch (e:IllegalStateException){
@@ -442,6 +465,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         }
                         alert.show()*/
                     }
+                    reset()
                 }
             }catch(stopException:RuntimeException){
                 Log.e(TAG, stopException.toString())
@@ -511,6 +535,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun transformImage(width:Int, height:Int) {
 
+        textureView.setAspectRatio(width,height)
+
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
 
@@ -527,6 +553,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         val matrix = Matrix()
         val rotation = activity?.windowManager?.defaultDisplay?.rotation
+
         val textureRectF = RectF(0F,0F,width.toFloat(),height.toFloat())
 
         var previewRectF:RectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat()) // yan olduğu için x ve y yer değiştirir.
@@ -534,18 +561,30 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         val centerX = textureRectF.centerX()
         val centerY = textureRectF.centerY()
 
+
+        var myRate:Float = 0F
         if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
             previewRectF.offset(centerX - previewRectF.centerX(), centerY - previewRectF.centerY())
 
             matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL) // FILL idi önce ki
 
-            val scale = Math.max(width.toFloat() / previewSize!!.x.toFloat(), height.toFloat() / previewSize!!.y.toFloat() )
-            matrix.postScale(scale,scale, centerX,centerY)
+            println("$TAG transformImage: 1 width: ${width.toFloat()} - height: ${height.toFloat()}")
+            println("$TAG transformImage: 2 width: ${previewSize!!.x.toFloat()} - height: ${previewSize!!.y.toFloat()}")
+
+            //val scale = Math.max(width.toFloat() / previewSize!!.x.toFloat(), height.toFloat() / previewSize!!.y.toFloat() )
+            //val newWidth = previewSize!!.y.toFloat() * (1280/720)
+            //val calcWidth = previewSize!!.x.toFloat() / newWidth
+            //val scale = Math.max(calcWidth , 1F)
+
+            val olmasiGereken = (previewSize!!.x.toFloat()*720) / 1280
+
+            matrix.postScale(1F, 1F, centerX, centerY)
+
+            matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL)
+
             matrix.postRotate(90F*(rotation-2),centerX,centerY)
         }
-
         textureView.setTransform(matrix)
-
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -659,6 +698,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         fileStatus = true
         stopMediaRecorder()
         //previewSession()
+
         uiCameraDesing(UIDESIGN.NORMAL)
         // thumbnail
         //createRoundThumb() // bitmap olarak dönecek
@@ -1079,40 +1119,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         myMediaManager?.onNext()
     }
 
-    /*private fun parseVideo(videoPath:String):String {
-        var channel = VideoCompress.getChannel(videoPath)
-        var isoFile = VideoCompress.getIsoFile(channel)
-        var trackBoxes = VideoCompress.getTrackBoxes(isoFile)
-
-        var isError:Boolean = false
-
-        for (item in trackBoxes) {
-            var firstEntry = VideoCompress.getFirstEntry(item)
-            if (firstEntry.delta > 10000) {
-                isError = true
-                firstEntry.delta = 3000
-            }
-        }
-
-        var file = VideoCompress.getOutputMediaFile()
-        var filePath = file.absolutePath
-        if (isError) {
-            var movie = VideoCompress.getNewMovie()
-            for (item in trackBoxes) {
-                movie.addTrack(VideoCompress.getMp4TrackImpl(item,channel))
-            }
-            movie.matrix = isoFile.movieBox.movieHeaderBox.matrix
-            var out = VideoCompress.getContainer(movie)
-
-            var fc: FileChannel = RandomAccessFile(filePath,"rw").channel
-            out.writeContainer(fc)
-            fc.close()
-
-            return filePath
-        }
-
-        return videoPath
-    }*/
 
 }
 

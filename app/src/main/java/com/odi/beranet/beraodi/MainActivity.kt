@@ -404,9 +404,9 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     override fun onClick(url: String?) {
         if (finder != null && url != null) {
             finder?.inspectorOnClick(url!!) { nativePage, sendId, buttonId ->
-                println("$TAG inspectorOnClick: np: $nativePage")
-                println("$TAG inspectorOnClick: userId: $sendId")
-                println("$TAG inspectorOnClick: projectId: $buttonId")
+                //println("$TAG inspectorOnClick: np: $nativePage")
+                //println("$TAG inspectorOnClick: userId: $sendId")
+                //println("$TAG inspectorOnClick: projectId: $buttonId")
                 nativePageDecider(nativePage,sendId,buttonId)
             }
         }

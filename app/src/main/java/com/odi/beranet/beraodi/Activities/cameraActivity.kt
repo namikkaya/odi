@@ -233,7 +233,6 @@ class cameraActivity() : baseActivity(),
                     builder.show()
                 }
 
-
             }, Response.ErrorListener {
                 println("$TAG errorVolley error Listener")
             }
@@ -327,8 +326,6 @@ class cameraActivity() : baseActivity(),
                         val in_duration:Int? = attr?.getInt("duration")
                         val in_type:String? = attr?.getString("type")
 
-
-
                         var _playlistItemDataModel = playlistItemDataModel(in_index,
                             in_text,
                             in_duration!!.toLong(),
@@ -394,10 +391,25 @@ class cameraActivity() : baseActivity(),
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == Activity_Result.PREVIEW_VIDEO_RESULT.value && resultCode == Activity.RESULT_OK ) {
+
+            if (data?.getStringExtra("STATUS") == "OKEY") {
+                intent.putExtra("STATUS", "OKEY")
+                setResult(RESULT_OK, intent)
+                finish()
+                println("$TAG takip: geri dönüş okey")
+            }else if (data?.getStringExtra("STATUS") == "RESET") {
+                var intent = intent
+                this.finish()
+                startActivity(intent)
+                overridePendingTransition(0,0)
+                println("$TAG takip: geri dönüş reset")
+            }
+
+        }
+
         if (requestCode == Activity_Result.PREVIEW_VIDEO_RESULT.value && resultCode == Activity.RESULT_OK) {
-            intent.putExtra("STATUS", "OKEY")
-            setResult(RESULT_OK, intent)
-            finish()
+
         }
     }
 

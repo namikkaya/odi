@@ -3,10 +3,22 @@
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
+             android:background="@color/black"
              tools:context=".Activities.cameraActivityFragments.previewFragment">
 
+    <RelativeLayout
+            android:gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        <TextView
+                android:textColor="@color/White"
+                android:text="Kamera Ayarlanıyor. Lütfen Bekleyiniz."
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"/>
+
+    </RelativeLayout>
     <FrameLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
-        <TextureView
+        <com.odi.beranet.beraodi.odiLib.AutoFitTextureView
                 android:id="@+id/textureView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
