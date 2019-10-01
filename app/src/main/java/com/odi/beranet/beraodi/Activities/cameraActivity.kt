@@ -392,7 +392,6 @@ class cameraActivity() : baseActivity(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Activity_Result.PREVIEW_VIDEO_RESULT.value && resultCode == Activity.RESULT_OK ) {
-
             if (data?.getStringExtra("STATUS") == "OKEY") {
                 intent.putExtra("STATUS", "OKEY")
                 setResult(RESULT_OK, intent)

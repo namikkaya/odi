@@ -49,6 +49,7 @@ class previewVideo : baseActivity(),
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Activity_Result.PRELOADER_FINISH.value && resultCode == RESULT_OK) {
             deleteVideoFile()
+            Toast.makeText(applicationContext, "Video başarılı bir şekilde yüklendi.", Toast.LENGTH_LONG).show()
             intent.putExtra("STATUS", "OKEY")
             setResult(RESULT_OK, intent)
             finish()
@@ -61,7 +62,6 @@ class previewVideo : baseActivity(),
         preloaderIntent = Intent(this, preloaderActivity::class.java)
         preloaderIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         preloaderIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-        //startActivity(preloaderIntent)
         startActivityForResult(preloaderIntent, Activity_Result.PRELOADER_FINISH.value)
     }
 
