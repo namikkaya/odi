@@ -22,7 +22,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 
-
 class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterface?): odiInterface  {
     private val TAG:String = "cameraUploadViewModel"
 
@@ -70,8 +69,6 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
         this.videoFile = videoFile
 
         orgVideoName = videoFile?.name
-
-        println("$TAG orgVideoName: $orgVideoName")
 
 
         if (type == nativePage.cameraOdile) {
@@ -179,7 +176,6 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
             }
         }
 
-
         val myModel = async_upload_video(projectId, file, this, type, userId!!, uploadType!!)
         uploadClass = asyncUploadFile().execute(myModel) as asyncUploadFile?
 
@@ -205,9 +201,8 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
                     break
                 }
                 ab.append(inputLine)
-                println("$TAG async: request complete ")
-                //listener?.onUploadVideoStatus(uploadId, null, true)
 
+                // R
                 if (fileDeletedEnd_holder != null) {
                     if (fileDeletedEnd_holder!!.exists()) {
                         if (fileDeletedEnd_holder!!.delete()) {

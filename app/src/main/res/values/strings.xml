@@ -23,4 +23,5 @@
     <string name="recordAlert2Desc">Sistemsel bir sorun yüzünden videonuz yüklenemedi. Hata devam ederse lütfen odi ekibiyle iletişim kurun.</string>
     <string name="contentProblemTitle">İçerik Problemi!</string>
     <string name="contentProblemDesc">İçerik şuan yüklenemedi. Lütfen daha sonra tekrar deneyin. Sorun devam ediyorsa odi ekibiyle iletişime geçebilirsiniz.</string>
+    <string name="rotateImageDesc">Ekran Çevirme</string>
 </resources>
