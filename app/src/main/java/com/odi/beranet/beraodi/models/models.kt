@@ -176,3 +176,7 @@ data class playlistReplik(val text:String?, val duration: Long?, val type: Strin
 data class karaokeModel(val startIndex:Int?, val endIndex:Int?, val subtitle:String?, val lineNo:Int?, val bound:Rect?) {}
 
 data class videoData(val uri:Uri?):Serializable {}
+
+// db
+data class dataBaseItemModel(val id:String?, val videoPath:String?, val projectId:String?, val thumb:String?): Serializable {}
+data class dataBaseProjectModel(val id:String?, val projectId:String?, val projectStatus:String?, val createDate:String?) {}

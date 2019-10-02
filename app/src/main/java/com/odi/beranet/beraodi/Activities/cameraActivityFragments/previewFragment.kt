@@ -599,6 +599,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         countDownObject = view.findViewById(R.id.countDown)
         nextButton = view.findViewById(R.id.nextStepButton)
         volumeButton = view.findViewById(R.id.volumeButton)
+
+
+
+
         subtitleText.movementMethod = ScrollingMovementMethod()
 
         val displayMetrics = DisplayMetrics()
@@ -704,7 +708,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         //createRoundThumb() // bitmap olarak dönecek
     }
 
-    private fun createVideoThumb() = ThumbnailUtils.createVideoThumbnail(currentVideoFilePath, MediaStore.Video.Thumbnails.MICRO_KIND)
+    private fun createVideoThumb() = ThumbnailUtils.createVideoThumbnail(currentVideoFilePath, MediaStore.Video.Thumbnails.MINI_KIND)
     private fun createRoundThumb(): android.support.v4.graphics.drawable.RoundedBitmapDrawable {
         val drawable = RoundedBitmapDrawableFactory.create(resources, createVideoThumb())
         drawable.isCircular = true

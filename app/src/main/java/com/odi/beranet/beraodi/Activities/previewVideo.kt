@@ -4,9 +4,11 @@ import android.Manifest
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
+import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.media.AudioManager
 import android.media.MediaPlayer
+import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Build
 import android.support.v7.app.AppCompatActivity
@@ -529,8 +531,12 @@ class previewVideo : baseActivity(),
         return sb.toString()
     }
 
+
+
+
     private val VIDEO_DIRECTORY = "videosOfOdi"
 
+    // video telefon galerisine kaydeder...
     private fun saveVideoGallery(filePath: File?) {
 
         saveButton.isEnabled = false
@@ -554,11 +560,6 @@ class previewVideo : baseActivity(),
 
 
             var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY)
-
-
-
-
-
 
             var newfile = File(wallpaperDirectory, Calendar.getInstance().timeInMillis.toString() + ".mp4")
 
@@ -647,5 +648,33 @@ class previewVideo : baseActivity(),
         }
     }
 
+    private fun saveDataBase() {
+        val bitmap = createVideoThumb(vMyUri!!.path)
+        val imageFile = createImage("randomName", bitmap)
+
+    }
+
+
+    private fun createVideoThumb(videoPath:String):Bitmap = ThumbnailUtils.createVideoThumbnail(videoPath, MediaStore.Video.Thumbnails.MINI_KIND)
+
+    private fun createImage(name:String, bitmap:Bitmap):File? {
+        val file_path = Environment.getExternalStorageDirectory().absolutePath + "/odiThumb"
+        val file = File(file_path)
+        if (!file.exists()) {
+            file.mkdirs()
+        }
+        var myFile = File(file,name+".jpg")
+        try {
+            var fOut:FileOutputStream = FileOutputStream(myFile)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fOut)
+            fOut.flush()
+            fOut.close()
+        }catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+
+        return myFile
+    }
 }
 

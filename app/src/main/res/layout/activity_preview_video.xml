@@ -84,17 +84,32 @@
                     </LinearLayout>
 
                     <LinearLayout
+                            android:orientation="horizontal"
                             android:layout_gravity="right"
                             android:gravity="right"
                             android:layout_weight="50"
                             android:layout_width="0dp"
                             android:layout_height="match_parent">
+
+                        <com.odi.beranet.beraodi.odiLib.RoundRectCornerImageView
+                                android:layout_marginRight="8dp"
+                                android:layout_marginTop="4dp"
+                                android:layout_marginBottom="4dp"
+                                android:scaleType="centerCrop"
+                                android:id="@+id/galleryButton"
+                                android:src="@drawable/odi_logo"
+                                android:layout_width="74dp"
+                                android:layout_height="wrap_content"/>
+
+
                         <ImageButton
                                 android:id="@+id/uploadButton_previewVideo"
                                 android:background="@null"
                                 android:src="@drawable/upload"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"/>
+
+
                     </LinearLayout>
 
                 </LinearLayout>
@@ -106,13 +121,5 @@
         </RelativeLayout>
 
     </RelativeLayout>
-    <!--
-    <RelativeLayout android:layout_width="match_parent" android:layout_height="match_parent">
-        <ImageView
-                android:id="@+id/testImage"
-                android:layout_width="200dp"
-                android:layout_height="200dp"/>
-
-    </RelativeLayout>-->
 
 </android.support.constraint.ConstraintLayout>
