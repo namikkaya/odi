@@ -12,4 +12,5 @@
     <color name="myOrangeLight">#23FFBF80</color>
     <color name="slideButtonGrey">#AFAFAF</color>
     <color name="slideButtonOrangeLight">#FFB464</color>
+    <color name="videoGalleryBlackBackground">#C9161616</color>
 </resources>

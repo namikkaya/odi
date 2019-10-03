@@ -30,11 +30,16 @@ import android.view.View
 import android.widget.*
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import com.odi.beranet.beraodi.R
+import com.odi.beranet.beraodi.models.correctionData
+import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.odiLib.*
+import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.animationManager
+import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import com.onesignal.OneSignal
 import java.io.*
 import java.lang.IllegalStateException
 import java.util.*
+import kotlin.collections.ArrayList
 
 class previewVideo : baseActivity(),
     SurfaceHolder.Callback,
@@ -50,7 +55,11 @@ class previewVideo : baseActivity(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == Activity_Result.PRELOADER_FINISH.value && resultCode == RESULT_OK) {
-            deleteVideoFile()
+
+            if (!videoSaveStatus) {
+                deleteVideoFile()
+            }
+
             Toast.makeText(applicationContext, "Video başarılı bir şekilde yüklendi.", Toast.LENGTH_LONG).show()
             intent.putExtra("STATUS", "OKEY")
             setResult(RESULT_OK, intent)
@@ -216,6 +225,8 @@ class previewVideo : baseActivity(),
     private lateinit var againButton:ImageButton
     private lateinit var saveButton:ImageButton
     private lateinit var uploadButton:ImageButton
+    private lateinit var thumbImage:ImageView
+    private lateinit var galleryButton:RoundRectCornerImageView
     //lateinit var testImage:ImageView
     private var myActionBar: ActionBar? = null
 
@@ -223,6 +234,7 @@ class previewVideo : baseActivity(),
     private var userId:String? = null
     private var vMyUri:Uri? = null
     private var processType: nativePage? = null
+    private var videoSaveStatus:Boolean = false
 
     var mHandler: Handler? = null
 
@@ -232,6 +244,8 @@ class previewVideo : baseActivity(),
 
     public var errorVideoProblem:Boolean = false
 
+
+    var videoGalleryIntent: Intent? = null
 
     /**
      * internet durum kontrolü
@@ -271,6 +285,8 @@ class previewVideo : baseActivity(),
         super.onBackPressed()
     }
 
+
+    var onStartOpenVideoGalleryStatus:Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview_video)
@@ -279,9 +295,13 @@ class previewVideo : baseActivity(),
 
         val bundle=intent.extras
         if(bundle!=null) {
+            processType = bundle.getSerializable("type") as nativePage
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
-            processType = bundle.getSerializable("type") as nativePage
+
+            bundle.getBoolean("onVideoGalleryStart").let { it ->
+                onStartOpenVideoGalleryStatus = it
+            }
             val str = bundle.getString("videoPath")
             vMyUri = Uri.parse(str)
         }
@@ -327,12 +347,15 @@ class previewVideo : baseActivity(),
         saveButton = findViewById(R.id.saveButton_previewVideo)
         uploadButton = findViewById(R.id.uploadButton_previewVideo)
         mySurface = findViewById(R.id.mySurface)
+        thumbImage = findViewById(R.id.thumbImage)
+        galleryButton = findViewById(R.id.galleryButton)
 
 
         againButton.setOnClickListener(clickListener)
         saveButton.setOnClickListener(clickListener)
         uploadButton.setOnClickListener(clickListener)
         videoView.setOnClickListener(clickListener)
+        galleryButton.setOnClickListener(clickListener)
 
         addMediaController()
     }
@@ -355,6 +378,7 @@ class previewVideo : baseActivity(),
             R.id.saveButton_previewVideo -> OnSaveButtonEvent()
             R.id.uploadButton_previewVideo -> OnUploadbuttonEvent()
             R.id.myVideoView_previewVideo -> OnMediaControllerStatusEvent()
+            R.id.galleryButton -> OnOpenVideoGalleryActivityEvent()
         }
     }
 
@@ -391,6 +415,7 @@ class previewVideo : baseActivity(),
                 if (firstStart) {
                     finish()
                     startActivity(intent)
+                    overridePendingTransition(0,0)
                 }
                 firstStart = true
 
@@ -408,6 +433,10 @@ class previewVideo : baseActivity(),
                     val dialog: AlertDialog = builder.create()
                     dialog.show()*/
                     Toast.makeText(getApplicationContext(), "Video yüklenemedi. Şuan bir sorun var. Lütfen videonuzu kaydedip odi ekibiyle iletişime geçin.", Toast.LENGTH_LONG).show();
+                }
+                if (onStartOpenVideoGalleryStatus){
+                    onStartOpenVideoGalleryStatus = false
+                    OnOpenVideoGalleryActivityEvent()
                 }
             }catch (e:IllegalStateException){
                 println("$TAG ${e.toString()}")
@@ -459,7 +488,14 @@ class previewVideo : baseActivity(),
     private fun OnAgainButtonEvent() {
         vibratePhone()
         println("$TAG onAgainButtonEvent")
-        onAlert_againAlert()
+
+        if (!videoSaveStatus) {
+            onAlert_againAlert()
+        }else {
+            intent.putExtra("STATUS", "RESET")
+            setResult(RESULT_OK, intent)
+            finish()
+        }
     }
 
     private fun onAlert_againAlert() {
@@ -492,11 +528,20 @@ class previewVideo : baseActivity(),
     private fun OnSaveButtonEvent() {
         vibratePhone()
 
-        //saveVideoGallery()
+        saveButton.isEnabled = false
+        saveButton.alpha = 0.5f
+
+        mediaController?.let { it ->
+            if (it.isShowing) {
+                it.hide()
+            }
+        }
+
         check_writeRead_permission { status ->
             if (status == true) {
                 var myFile = File(vMyUri!!.path)
-                saveVideoGallery(myFile)
+                //saveVideoGallery(myFile)
+                saveDataBase()
             }else {
                 Toast.makeText(applicationContext, "Okuma ve Yazma izinleriniz eksik.", Toast.LENGTH_LONG).show()
             }
@@ -630,11 +675,15 @@ class previewVideo : baseActivity(),
         if (Permission_Result.UPLOAD_VIDEO_GALLERY.value == requestCode) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
                 var myFile = File(vMyUri!!.path)
-                saveVideoGallery(myFile)
+                //saveVideoGallery(myFile)
+                saveDataBase()
+                saveButton.isEnabled = false
+                saveButton.alpha = 0.5f
             }else {
+                saveButton.isEnabled = true
+                saveButton.alpha = 1f
                 setResult(RESULT_OK)
                 println("$TAG izin verilmedi okuma yazma")
-                // alert buraya yazılacak
                 Toast.makeText(applicationContext, "Okuma ve Yazma izinleriniz eksik.", Toast.LENGTH_LONG).show()
             }
 
@@ -648,12 +697,36 @@ class previewVideo : baseActivity(),
         }
     }
 
+    // test et user idyi
+
+    private var animManager:animationManager? = null
+
     private fun saveDataBase() {
+        val correction = getProjectAndUserData()
+
         val bitmap = createVideoThumb(vMyUri!!.path)
-        val imageFile = createImage("randomName", bitmap)
+        var randomName:String = getRandomString(8)
+        val imageFile = createImage(randomName, bitmap)
 
+        thumbImage.setImageBitmap(bitmap)
+
+        animManager = animationManager(galleryButton,thumbImage)
+        animManager?.startAnimation()
+
+        val item = dataBaseItemModel(null,vMyUri!!.path, correction.projectId, imageFile!!.path)
+        println("$TAG saveDataBase projectId: ${correction.projectId}")
+        println("$TAG saveDataBase userId: ${correction.userId}")
+        println("$TAG saveDataBase imagePath: ${imageFile!!.path}")
+        println("$TAG saveDataBase video path: ${vMyUri!!.path} --")
+        videoGalleryManager.insertVideoItem(applicationContext,item){ status ->
+            if(status) {
+                println("$TAG saveDataBase: video yazıldı. yeni proje dosyası açıldı")
+            }else {
+                println("$TAG saveDataBase: video var olan proje ye yazıldı.")
+            }
+            videoSaveStatus = true
+        }
     }
-
 
     private fun createVideoThumb(videoPath:String):Bitmap = ThumbnailUtils.createVideoThumbnail(videoPath, MediaStore.Video.Thumbnails.MINI_KIND)
 
@@ -665,7 +738,7 @@ class previewVideo : baseActivity(),
         }
         var myFile = File(file,name+".jpg")
         try {
-            var fOut:FileOutputStream = FileOutputStream(myFile)
+            var fOut = FileOutputStream(myFile)
             bitmap.compress(Bitmap.CompressFormat.JPEG, 85, fOut)
             fOut.flush()
             fOut.close()
@@ -675,6 +748,36 @@ class previewVideo : baseActivity(),
 
 
         return myFile
+    }
+
+    private fun getProjectAndUserData() : correctionData {
+        var myUserId:String = ""
+        var myProjectId:String = ""
+        if (processType == nativePage.cameraOdile) {
+            myUserId = projectId!!
+            myProjectId = userId!!
+        }else {
+            myUserId = userId!!
+            myProjectId = projectId!!
+        }
+        return correctionData(myUserId, myProjectId)
+    }
+
+    private fun OnOpenVideoGalleryActivityEvent() {
+        vibratePhone()
+        val correction = getProjectAndUserData()
+
+        videoGalleryManager.getProjectVideos(applicationContext, correction.projectId!!) { status, data:ArrayList<dataBaseItemModel>? ->
+            videoGalleryIntent = Intent(this, videoGalleryActivity::class.java)
+            videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+            videoGalleryIntent?.putExtra("galleryData", data)
+
+            startActivityForResult(videoGalleryIntent, Activity_Result.VIDEO_GALLERY_PAGE.value)
+        }
+
+
+
     }
 }
 

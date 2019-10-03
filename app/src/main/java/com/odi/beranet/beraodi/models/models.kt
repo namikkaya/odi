@@ -180,3 +180,4 @@ data class videoData(val uri:Uri?):Serializable {}
 // db
 data class dataBaseItemModel(val id:String?, val videoPath:String?, val projectId:String?, val thumb:String?): Serializable {}
 data class dataBaseProjectModel(val id:String?, val projectId:String?, val projectStatus:String?, val createDate:String?) {}
+data class correctionData(val userId:String?, val projectId:String?)

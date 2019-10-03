@@ -28,9 +28,13 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import com.odi.beranet.beraodi.Activities.previewVideo
 import com.odi.beranet.beraodi.R
+import com.odi.beranet.beraodi.models.correctionData
+import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.*
+import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import com.vincent.videocompressor.VideoCompress
+import kotlinx.android.synthetic.main.activity_preview_video.*
 import java.io.File
 import java.io.IOException
 import java.lang.IllegalArgumentException
@@ -78,6 +82,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private val TAG: String? = "previewFragment"
     private var listener: previewFragmentInterface? = null
     private lateinit var textureView: AutoFitTextureView//TextureView
+    private lateinit var cameraGalleryButton:RoundRectCornerImageView
     private lateinit var recordButton: ImageButton
     private lateinit var changeCameraButton: ImageButton
     private lateinit var cameraCloseButton: ImageButton
@@ -94,7 +99,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private lateinit var  captureSession: CameraCaptureSession
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
 
-
+    private var myCorrectionData:correctionData? = null
+    private var videoGalleryStatus:Boolean = false
 
     val cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P)
 
@@ -351,7 +357,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             }
 
         }
-        mediaRecorder?.reset()
+        try {
+            mediaRecorder?.reset()
+        }catch (e:IllegalStateException){
+            Log.e("TAG", e.toString())
+        }
+        //mediaRecorder?.reset()
         mediaRecorder?.release()
         mediaRecorder = null
 
@@ -396,7 +407,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
                 //setVideoSize(1280, 720)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB) //acc
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC) //acc AMR_NB
 
                 /*
                         setVideoSource(MediaRecorder.VideoSource.SURFACE)
@@ -451,7 +462,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                     try {
                         stop()
                         release()
-
                         //prepare()
                     }catch (e:IllegalStateException){
                         Log.e(TAG, e.toString() + " stopMediaRecorder 11")
@@ -520,6 +530,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             R.id.textControlButton -> onTextControlButtonEvent()
             R.id.nextStepButton -> onNextButtonEvent()
             R.id.volumeButton -> onVolumeButtonEvent()
+            R.id.cameraGalleryButton -> onCameraGalleryButtonEvent()
         }
     }
 
@@ -590,6 +601,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         var view = inflater.inflate(R.layout.fragment_preview, container, false)
         textureView = view.findViewById(R.id.textureView)
+        cameraGalleryButton = view.findViewById(R.id.cameraGalleryButton)
         recordButton = view.findViewById(R.id.recordButton)
         changeCameraButton = view.findViewById(R.id.changeCamera)
         cameraCloseButton = view.findViewById(R.id.cameraCloseButton)
@@ -599,6 +611,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         countDownObject = view.findViewById(R.id.countDown)
         nextButton = view.findViewById(R.id.nextStepButton)
         volumeButton = view.findViewById(R.id.volumeButton)
+
+
+        getGalleryData() // gallery bilgisini alır.
 
 
 
@@ -622,6 +637,28 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         return view
     }
 
+    private fun getGalleryData() {
+        myCorrectionData = getProjectAndUserData()
+        myCorrectionData?.let { it ->
+            println("$TAG saveDataBase: projectId:${it.projectId} - userId:${it.userId}")
+            videoGalleryManager.getProjectVideos(activity!!.applicationContext, it.projectId!!) { status, items:ArrayList<dataBaseItemModel>? ->
+                items?.let { itv ->
+                    println("$TAG saveDataBase: projeye ait video sayısı: ${itv.size}")
+                    if (itv.size > 0) {
+                        cameraGalleryButton.visibility = View.VISIBLE
+                        videoGalleryStatus = true
+                        for (i in 0 until itv.size) {
+                            println("$TAG saveDataBase: video: ${itv[i].videoPath} thumb: ${itv[i].thumb}")
+                        }
+                    }else {
+                        videoGalleryStatus = false
+                        cameraGalleryButton.visibility = View.INVISIBLE
+                    }
+                }
+            }
+        }
+    }
+
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
@@ -636,6 +673,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         textControlButton.setOnClickListener(clickListener)
         nextButton.setOnClickListener(clickListener)
         volumeButton.setOnClickListener(clickListener)
+        cameraGalleryButton.setOnClickListener(clickListener)
 
         // video unutma
         getDirFile()
@@ -971,6 +1009,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 cameraCloseButton.visibility = View.VISIBLE
                 changeCameraButton.visibility = View.VISIBLE
                 volumeButton.visibility = View.VISIBLE
+                if (videoGalleryStatus) {
+                    cameraGalleryButton.visibility = View.VISIBLE
+                }
             }
             UIDESIGN.RECORDING -> {
                 uiDesingHolder = UIDESIGN.RECORDING
@@ -979,6 +1020,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 textContainer.visibility = View.VISIBLE
                 changeCameraButton.visibility = View.INVISIBLE
                 volumeButton.visibility = View.INVISIBLE
+                if (videoGalleryStatus) {
+                    cameraGalleryButton.visibility = View.INVISIBLE
+                }
             }
             UIDESIGN.ENDING -> {
                 uiDesingHolder = UIDESIGN.ENDING
@@ -998,6 +1042,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 cameraCloseButton.visibility = View.INVISIBLE
                 changeCameraButton.visibility = View.INVISIBLE
                 volumeButton.visibility = View.INVISIBLE
+
+                if (videoGalleryStatus) {
+                    cameraGalleryButton.visibility = View.INVISIBLE
+                }
             }
         }
     }
@@ -1123,6 +1171,22 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         myMediaManager?.onNext()
     }
 
+    private fun getProjectAndUserData() : correctionData {
+        var myUserId:String = ""
+        var myProjectId:String = ""
+        if (processType == nativePage.cameraOdile) {
+            myUserId = projectId!!
+            myProjectId = userId!!
+        }else {
+            myUserId = userId!!
+            myProjectId = projectId!!
+        }
+        return correctionData(myUserId, myProjectId)
+    }
+
+    private fun onCameraGalleryButtonEvent(){
+        // parametre ekleyerek başlangıçtan sonra pop up açtır
+    }
 
 }
 

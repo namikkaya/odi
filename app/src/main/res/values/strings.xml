@@ -9,19 +9,31 @@
     <string name="loadingContent">İçerik hazırlanıyor. Lütfen Bekleyiniz.</string>
     <string name="Okey">Tamam</string>
     <string name="UploadError">Yükleme Hatası</string>
-    <string name="UploadErrorDesc">Yükleme hatası oluştu. Sayfanızda video resminiz görünse bile yüklenmemiş olabilir. Lütfen kontrol ederek tekrar deneyiniz.</string>
+    <string name="UploadErrorDesc">Yükleme hatası oluştu. Sayfanızda video resminiz görünse bile yüklenmemiş olabilir.
+        Lütfen kontrol ederek tekrar deneyiniz.
+    </string>
     <string name="exitSaveVideoTitle">Video Silinecek</string>
-    <string name="exitSaveVideoDesc">Geriye döndüğünüzde bu video silinecek. Bu işlemi yapmak istediğinize emin misiniz?</string>
+    <string name="exitSaveVideoDesc">Geriye döndüğünüzde bu video silinecek. Bu işlemi yapmak istediğinize emin
+        misiniz?
+    </string>
     <string name="exitSaveButtonYes">Çık</string>
     <string name="exitSaveButtonNo">İptal</string>
     <string name="permissionGeneralTitle">İzinler Eksik</string>
-    <string name="permissionGeneralDesc">Uygulamanın kararlı çalışması için gerekli tüm izinlerin onaylanmış olması gerekiyor. Lütfen işlemi yaparken size sorulan izinleri onayladıktan sonra tekrar deneyiniz.</string>
+    <string name="permissionGeneralDesc">Uygulamanın kararlı çalışması için gerekli tüm izinlerin onaylanmış olması
+        gerekiyor. Lütfen işlemi yaparken size sorulan izinleri onayladıktan sonra tekrar deneyiniz.
+    </string>
     <string name="permissionGeneralButton">Tamam</string>
     <string name="recordAlertTitle">Kamera Açılamadı!</string>
-    <string name="recordAlertDesc">Donanımsal bir sebepten dolayı odi kameranıza erişemedi. Lütfen uygulamayı kapatıp cihaz kamerasını kontrol ettikten sonra tekrar deneyiniz.</string>
+    <string name="recordAlertDesc">Donanımsal bir sebepten dolayı odi kameranıza erişemedi. Lütfen uygulamayı kapatıp
+        cihaz kamerasını kontrol ettikten sonra tekrar deneyiniz.
+    </string>
     <string name="recordAlert2Title">Odi sistem hatası!</string>
-    <string name="recordAlert2Desc">Sistemsel bir sorun yüzünden videonuz yüklenemedi. Hata devam ederse lütfen odi ekibiyle iletişim kurun.</string>
+    <string name="recordAlert2Desc">Sistemsel bir sorun yüzünden videonuz yüklenemedi. Hata devam ederse lütfen odi
+        ekibiyle iletişim kurun.
+    </string>
     <string name="contentProblemTitle">İçerik Problemi!</string>
-    <string name="contentProblemDesc">İçerik şuan yüklenemedi. Lütfen daha sonra tekrar deneyin. Sorun devam ediyorsa odi ekibiyle iletişime geçebilirsiniz.</string>
+    <string name="contentProblemDesc">İçerik şuan yüklenemedi. Lütfen daha sonra tekrar deneyin. Sorun devam ediyorsa
+        odi ekibiyle iletişime geçebilirsiniz.
+    </string>
     <string name="rotateImageDesc">Ekran Çevirme</string>
 </resources>

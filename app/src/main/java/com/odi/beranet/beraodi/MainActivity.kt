@@ -33,6 +33,10 @@ import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.RelativeLayout
 import com.odi.beranet.beraodi.Activities.*
+import com.odi.beranet.beraodi.models.dataBaseItemModel
+import com.odi.beranet.beraodi.models.dataBaseProjectModel
+import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
+import kotlin.collections.ArrayList
 import android.webkit.WebViewClient as WebViewClient1
 
 
@@ -75,9 +79,21 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         println("Takip mainActivity onCreate")
         configuration()
 
+        /*
+        videoGalleryManager.getAllVideos(applicationContext) { status,data:ArrayList<dataBaseItemModel>? ->
+
+            println("$TAG saveDataBase: $status = data video: ${data!![0].videoPath} thumb: ${data!![0].thumb}")
+        }
+
+        videoGalleryManager.getAllProject(applicationContext) { status,data:ArrayList<dataBaseProjectModel>? ->
+            for (i in 0 until data!!.size) {
+                println("$TAG saveDataBase: project: ${data[i].projectId}")
+            }
+        }
+        */
+
+
     }
-
-
 
     private fun onCheckFreeSpace() {
         val stat = StatFs(Environment.getExternalStorageDirectory().path)

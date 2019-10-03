@@ -412,7 +412,7 @@ class cameraActivity() : baseActivity(),
         }
     }
 
-    private fun goToPreviewVideo(videoPath:Uri?) {
+    private fun goToPreviewVideo(videoPath:Uri?, onStartVideoGalleryStatus:Boolean = false) {
         val intent = Intent(this@cameraActivity, previewVideo::class.java)
         val myUri:String = videoPath!!.toString()
 
@@ -421,6 +421,7 @@ class cameraActivity() : baseActivity(),
         intent.putExtra("userId", userId)
         intent.putExtra("projectId", projectId)
         intent.putExtra("type", processType)
+        intent.putExtra("onVideoGalleryStart", onStartVideoGalleryStatus)
         startActivityForResult(intent, Activity_Result.PREVIEW_VIDEO_RESULT.value)
 
     }

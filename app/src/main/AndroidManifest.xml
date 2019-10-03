@@ -11,7 +11,7 @@
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
-    <uses-permission android:name="android.permission.STORAGE" />
+    <uses-permission android:name="android.permission.STORAGE"/>
 
     <uses-feature
             android:name="android.hardware.camera"
@@ -27,12 +27,16 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
+        <activity android:name=".Activities.videoGalleryActivity"
+                  android:launchMode="singleTop"
+                  android:theme="@style/Theme.AppCompat.Translucent">
+        </activity>
         <activity
+                android:name=".Activities.previewVideo"
                 android:configChanges="keyboardHidden|orientation|screenSize"
                 android:screenOrientation="landscape"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
-                android:windowSoftInputMode="adjustResize"
-                android:name=".Activities.previewVideo">
+                android:windowSoftInputMode="adjustResize">
         </activity>
         <activity
                 android:name=".Activities.orientationActivity"
@@ -66,9 +70,7 @@
                 android:name=".Activities.preloaderActivity"
                 android:launchMode="singleTop"
                 android:theme="@style/Theme.AppCompat.Translucent">
-        </activity>
-
-        <!-- @style/Theme.AppCompat.Translucent-->
+        </activity> <!-- @style/Theme.AppCompat.Translucent -->
         <activity
                 android:name=".Activities.warningActivity"
                 android:launchMode="singleTop"

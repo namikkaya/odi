@@ -95,6 +95,29 @@
                                     android:layout_height="match_parent"/>
 
                         </FrameLayout>
+                        <FrameLayout
+                                android:layout_weight="28"
+                                android:layout_width="0dp"
+                                android:layout_height="match_parent">
+
+
+                            <RelativeLayout
+                                    android:layout_margin="8dp"
+                                    android:gravity="center|right"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent">
+
+                                <com.odi.beranet.beraodi.odiLib.RoundRectCornerImageView
+                                        android:scaleType="centerCrop"
+                                        android:id="@+id/cameraGalleryButton"
+                                        android:src="@drawable/odi_logo"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="match_parent"/>
+
+                            </RelativeLayout>
+
+
+                        </FrameLayout>
 
                     </LinearLayout>
 
@@ -122,11 +145,10 @@
 
                 </FrameLayout>
 
-
-
             </LinearLayout>
 
             <LinearLayout
+                    android:orientation="horizontal"
                     android:layout_weight="10"
                     android:layout_width="0dp"
                     android:layout_height="match_parent">
