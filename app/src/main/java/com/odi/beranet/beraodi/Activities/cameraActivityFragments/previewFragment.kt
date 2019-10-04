@@ -62,6 +62,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
          * Record success
          */
         fun onPreviewFragment_Record_Success(path:Uri?) {}
+
+        /**
+         * start Gallery
+         */
+        fun onPreviewFragment_GalleryActivityStart() {}
     }
 
     private var myMediaManager:odiMediaManager? = null
@@ -1185,7 +1190,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun onCameraGalleryButtonEvent(){
-        // parametre ekleyerek başlangıçtan sonra pop up açtır
+        vibratePhone()
+        listener?.onPreviewFragment_GalleryActivityStart()
     }
 
 }

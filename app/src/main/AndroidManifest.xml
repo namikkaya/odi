@@ -29,7 +29,7 @@
             android:usesCleartextTraffic="true">
         <activity android:name=".Activities.videoGalleryActivity"
                   android:launchMode="singleTop"
-                  android:theme="@style/Theme.AppCompat.Translucent">
+                  android:theme="@style/Theme.AppCompat.NewTrans">
         </activity>
         <activity
                 android:name=".Activities.previewVideo"

@@ -70,11 +70,19 @@ enum class UPLOAD_FILE_TYPE {
 
 /***
  * Yükleme sayfasında karşıya yapılan yüklemenin preloaderının durumlarını haber verir
- *
  */
 enum class UI_PRELOADER {
     bitmap,
     video,
     compress,
     complete
+}
+
+
+/**
+ * video izleme sayfasına gönderirken hangi durumdan gelindiğini haber verir
+ */
+enum class VIDEO_PREVIEW_STATUS {
+    SAVED,
+    RECORDING
 }

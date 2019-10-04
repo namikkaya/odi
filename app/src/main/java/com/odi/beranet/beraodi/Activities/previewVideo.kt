@@ -1,6 +1,7 @@
 package com.odi.beranet.beraodi.Activities
 
 import android.Manifest
+import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
 import android.database.Cursor
@@ -64,6 +65,28 @@ class previewVideo : baseActivity(),
             intent.putExtra("STATUS", "OKEY")
             setResult(RESULT_OK, intent)
             finish()
+        }
+        if (requestCode == Activity_Result.VIDEO_GALLERY_PAGE.value) {
+            if (resultCode == RESULT_OK) {
+                data?.let { it->
+                    if (it.getSerializableExtra("selectedData") != null) {
+                        val myModel = it.getSerializableExtra("selectedData") as dataBaseItemModel
+                        println("$TAG video path: ${myModel.videoPath}")
+
+                        singleton.uriPath = myModel.videoPath
+
+                        /*var myFile = File(myModel.videoPath)
+                        vMyUri = Uri.fromFile(myFile)
+                        addMediaController()*/
+                    }
+                }
+
+            }
+            if(resultCode == RESULT_CANCELED) {
+                if (singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.SAVED) {
+                    finish()
+                }
+            }
         }
     }
 
@@ -276,22 +299,23 @@ class previewVideo : baseActivity(),
     }
 
     override fun onBackPressed() {
-        mp.let { _value ->
-            _value!!.pause()
-            _value!!.stop()
-            _value!!.release()
-
+        if (mp != null) {
+            mp!!.pause()
+            mp!!.stop()
+            mp!!.release()
         }
         super.onBackPressed()
     }
 
 
-    var onStartOpenVideoGalleryStatus:Boolean = false
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview_video)
 
         println("$TAG resetTakip onCreate")
+
+        navigationBarConfiguration()
+        uiconfig()
 
         val bundle=intent.extras
         if(bundle!=null) {
@@ -299,33 +323,58 @@ class previewVideo : baseActivity(),
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
 
-            bundle.getBoolean("onVideoGalleryStart").let { it ->
-                onStartOpenVideoGalleryStatus = it
+            if (singleton.uriPath != null) {
+                var myFile = File(singleton.uriPath)
+                vMyUri = Uri.fromFile(myFile)
+                addMediaController()
+                println("$TAG sing: true")
+            }else {
+                if(bundle.getString("videoPath") != null) {
+                    val str = bundle.getString("videoPath")
+                    vMyUri = Uri.parse(str)
+                    addMediaController()
+                    println("$TAG sing: false")
+                }
             }
-            val str = bundle.getString("videoPath")
-            vMyUri = Uri.parse(str)
+
+
+
+
         }
+
+        println("$TAG previewVideoStatus = ${singleton.previewVideoStatus}")
+        if(singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.SAVED ||
+            singleton.previewVideoStatus == null) {
+            saveButton.isEnabled = false
+            saveButton.visibility = View.INVISIBLE
+        }
+
 
         videoUploadController = cameraUploadViewModel(this,this)
 
-        navigationBarConfiguration()
-        uiconfig()
     }
 
 
-    override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) { }
+    override fun surfaceChanged(holder: SurfaceHolder?, format: Int, width: Int, height: Int) {
+        mediaPlayerConfig(holder)
+        println("$TAG surfaceChanged")
+    }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) { }
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
         mediaPlayerConfig(holder)
+        println("$TAG surfaceCreated")
     }
 
     private fun mediaPlayerConfig(holder:SurfaceHolder?) {
+        println("$TAG mediaPlayerConfig init ${vMyUri?.path}")
+
         try {
             mp!!.setDataSource(this,vMyUri)
             mp!!.prepare()
             mp!!.setDisplay(holder)
+
 
             surfaceHolder = holder
 
@@ -334,7 +383,9 @@ class previewVideo : baseActivity(),
 
             //mp!!.start()
         }catch (e:IOException) {
-            println("$TAG ${e.toString()}")
+            println("$TAG ${e.toString()} -- hata32")
+        }catch (e:IllegalStateException) {
+            println("$TAG ${e.toString()} -- hata33")
         }
     }
 
@@ -357,10 +408,22 @@ class previewVideo : baseActivity(),
         videoView.setOnClickListener(clickListener)
         galleryButton.setOnClickListener(clickListener)
 
-        addMediaController()
+
     }
 
     private fun addMediaController() {
+        if (mp != null) {
+            mp!!.pause()
+            mp!!.stop()
+            mp!!.release()
+            mp = null
+        }
+
+        if (surfaceHolder != null) {
+            surfaceHolder!!.removeCallback(this)
+            surfaceHolder = null
+        }
+
         mp = MediaPlayer()
 
         window.setFormat(PixelFormat.UNKNOWN)
@@ -369,6 +432,7 @@ class previewVideo : baseActivity(),
         surfaceHolder!!.addCallback(this)
 
         videoView.requestFocus()
+        println("$TAG addMediaController init")
 
     }
 
@@ -412,36 +476,27 @@ class previewVideo : baseActivity(),
         println("$TAG resetTakip onResume")
         if (mp != null) {
             try {
-                if (firstStart) {
-                    finish()
-                    startActivity(intent)
-                    overridePendingTransition(0,0)
-                }
-                firstStart = true
 
                 if (errorVideoProblem) {
                     errorVideoProblem = false
-                    /*val builder = AlertDialog.Builder(this)
-                    builder.setTitle(R.string.UploadError)
-
-                    builder.setMessage(R.string.UploadErrorDesc)
-
-                    builder.setPositiveButton(R.string.permissionGeneralButton){dialog, which ->
-
-                    }
-
-                    val dialog: AlertDialog = builder.create()
-                    dialog.show()*/
                     Toast.makeText(getApplicationContext(), "Video yüklenemedi. Şuan bir sorun var. Lütfen videonuzu kaydedip odi ekibiyle iletişime geçin.", Toast.LENGTH_LONG).show();
                 }
-                if (onStartOpenVideoGalleryStatus){
-                    onStartOpenVideoGalleryStatus = false
-                    OnOpenVideoGalleryActivityEvent()
-                }
+
             }catch (e:IllegalStateException){
                 println("$TAG ${e.toString()}")
             }
         }
+
+        if (singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.SAVED){
+            OnOpenVideoGalleryActivityEvent()
+        }
+
+        if (firstStart) {
+            finish()
+            startActivity(intent)
+            overridePendingTransition(0,0)
+        }
+        firstStart = true
     }
 
     override fun onCompletion(mp: MediaPlayer?) {
@@ -488,6 +543,8 @@ class previewVideo : baseActivity(),
     private fun OnAgainButtonEvent() {
         vibratePhone()
         println("$TAG onAgainButtonEvent")
+
+        singleton.uriPath = null
 
         if (!videoSaveStatus) {
             onAlert_againAlert()
@@ -690,11 +747,16 @@ class previewVideo : baseActivity(),
         }
     }
 
+    //** delete
     fun deleteVideoFile() {
+        /*if (vMyUri == null) {
+            return
+        }
+
         var myFile = File(vMyUri!!.path)
         if (myFile.exists()) {
             myFile.delete()
-        }
+        }*/
     }
 
     // test et user idyi
@@ -764,6 +826,7 @@ class previewVideo : baseActivity(),
     }
 
     private fun OnOpenVideoGalleryActivityEvent() {
+
         vibratePhone()
         val correction = getProjectAndUserData()
 
@@ -775,9 +838,8 @@ class previewVideo : baseActivity(),
 
             startActivityForResult(videoGalleryIntent, Activity_Result.VIDEO_GALLERY_PAGE.value)
         }
-
-
-
     }
+
+
 }
 

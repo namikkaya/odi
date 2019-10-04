@@ -19,6 +19,11 @@ class singleton {
 
         var preloaderContext:Any? = null
 
+        //var onStartOpenVideoGalleryStatus:Boolean = false
 
+        var previewVideoStatus:VIDEO_PREVIEW_STATUS? = null
+        var originalVideoPath:String? = null
+
+        var uriPath:String? = null
     }
 }

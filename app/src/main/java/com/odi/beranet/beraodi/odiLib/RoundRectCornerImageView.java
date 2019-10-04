@@ -1,10 +1,12 @@
 package com.odi.beranet.beraodi.odiLib;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.util.AttributeSet;
+import com.odi.beranet.beraodi.R;
 
 public class RoundRectCornerImageView extends android.support.v7.widget.AppCompatImageView {
     private float radius = 54.0f;
@@ -18,6 +20,16 @@ public class RoundRectCornerImageView extends android.support.v7.widget.AppCompa
 
     public RoundRectCornerImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        if (attrs != null) {
+            TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.RoundRectCornerImageView, 0, 0);
+
+            radius = a.getDimensionPixelSize(R.styleable.RoundRectCornerImageView_round, 0);
+            System.out.println("gelenRad: " + radius);
+
+            a.recycle();
+        }
+
         init();
     }
 

@@ -150,6 +150,11 @@ class cameraActivity() : baseActivity(),
         finish()
     }
 
+    override fun onPreviewFragment_GalleryActivityStart() {
+        super.onPreviewFragment_GalleryActivityStart()
+        goToPreviewVideo(null,true)
+    }
+
     override fun onBackPressed() {
         return
     }
@@ -412,16 +417,28 @@ class cameraActivity() : baseActivity(),
         }
     }
 
+
     private fun goToPreviewVideo(videoPath:Uri?, onStartVideoGalleryStatus:Boolean = false) {
         val intent = Intent(this@cameraActivity, previewVideo::class.java)
-        val myUri:String = videoPath!!.toString()
+
+        var myUri:String? = null
+        videoPath?.let{ it->
+            myUri = it.toString()
+        }
+
+        if (onStartVideoGalleryStatus) {
+            singleton.previewVideoStatus = VIDEO_PREVIEW_STATUS.SAVED
+            singleton.originalVideoPath = null
+        }else {
+            singleton.previewVideoStatus = VIDEO_PREVIEW_STATUS.RECORDING
+            singleton.originalVideoPath = myUri
+        }
 
         val sendVideoData = videoData(videoPath)
         intent.putExtra("videoPath", myUri)
         intent.putExtra("userId", userId)
         intent.putExtra("projectId", projectId)
         intent.putExtra("type", processType)
-        intent.putExtra("onVideoGalleryStart", onStartVideoGalleryStatus)
         startActivityForResult(intent, Activity_Result.PREVIEW_VIDEO_RESULT.value)
 
     }

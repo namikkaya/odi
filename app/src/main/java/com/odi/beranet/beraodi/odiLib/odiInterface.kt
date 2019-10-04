@@ -41,7 +41,4 @@ interface odiInterface {
     fun OnPlaylistItemPlayerEnd(index: Int?, type:RECORD_TYPE){}
 
 
-    // video galery sayfası açılamısı için camera fragment dan camera activity e tetiklenir
-    fun onVideoGalleryActivityStart(){}
-
 }

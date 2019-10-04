@@ -1,14 +1,20 @@
 package com.odi.beranet.beraodi.odiLib.videoGalleryLibrary;
 
+import android.app.Activity;
 import android.content.Context;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import com.odi.beranet.beraodi.R;
 import com.odi.beranet.beraodi.models.dataBaseItemModel;
+import com.squareup.picasso.Picasso;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class videoGalleryGridViewAdapter extends BaseAdapter {
@@ -45,9 +51,10 @@ public class videoGalleryGridViewAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.gallery_video_cell_layout, null);
+
             holder = new gridViewHolder();
             holder.cellText = convertView.findViewById(R.id.cellText);
-            holder.cellIdText = convertView.findViewById(R.id.cellId);
+            holder.cellImage = convertView.findViewById(R.id.galleryVideoCellImageView);
             convertView.setTag(holder);
         }else {
             holder = (gridViewHolder) convertView.getTag();
@@ -55,16 +62,25 @@ public class videoGalleryGridViewAdapter extends BaseAdapter {
 
         dataBaseItemModel item = list.get(position);
         if (item != null) {
-            holder.cellText.setText(item.getVideoPath());
-            holder.cellIdText.setText(item.getId());
+            String[] arrayString = item.getVideoPath().split("/");
+
+            String name = arrayString[arrayString.length-1];
+
+            holder.cellText.setText(name);
+
+            File f = new File(item.getThumb());
+
+            Picasso.get().load(f).into(holder.cellImage);
+            holder.cellImage.setScaleType(ImageView.ScaleType.FIT_XY);
         }
 
         return convertView;
 
     }
 
+
     private static class gridViewHolder {
         public TextView cellText;
-        public TextView cellIdText;
+        public ImageView cellImage;
     }
 }

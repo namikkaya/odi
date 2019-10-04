@@ -202,14 +202,19 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
                 }
                 ab.append(inputLine)
 
-                // R
-                if (fileDeletedEnd_holder != null) {
+                // Bu dosya silinmememesi gerekiyor 10 gün sonra kendi silinecek
+
+                // kaydedilmiş dosya ise silinmesin yoksa silinecek ---
+
+
+
+                /*if (fileDeletedEnd_holder != null) {
                     if (fileDeletedEnd_holder!!.exists()) {
                         if (fileDeletedEnd_holder!!.delete()) {
                             println("$TAG delete file: dosya başarı ile silindi")
                         }
                     }
-                }
+                }*/
 
                 listener?.onUploadVideoStatus(projectId,null,true)
             }

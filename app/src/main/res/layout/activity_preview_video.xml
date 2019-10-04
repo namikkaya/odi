@@ -3,6 +3,7 @@
         xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:RoundRectCornerImageView="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context=".Activities.previewVideo">
@@ -92,6 +93,7 @@
                             android:layout_height="match_parent">
 
                         <com.odi.beranet.beraodi.odiLib.RoundRectCornerImageView
+                                RoundRectCornerImageView:round="8dp"
                                 android:layout_marginRight="8dp"
                                 android:layout_marginTop="4dp"
                                 android:layout_marginBottom="4dp"
