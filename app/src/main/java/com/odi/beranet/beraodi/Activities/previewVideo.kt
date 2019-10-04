@@ -352,6 +352,8 @@ class previewVideo : baseActivity(),
 
         videoUploadController = cameraUploadViewModel(this,this)
 
+
+
     }
 
 
@@ -407,6 +409,13 @@ class previewVideo : baseActivity(),
         uploadButton.setOnClickListener(clickListener)
         videoView.setOnClickListener(clickListener)
         galleryButton.setOnClickListener(clickListener)
+
+        videoGalleryManager.getProjectVideos(applicationContext,projectId!!){ status: Boolean, data: ArrayList<dataBaseItemModel>? ->
+            data.let {
+
+            }
+
+        }
 
 
     }
