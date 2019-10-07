@@ -3,6 +3,7 @@ package com.odi.beranet.beraodi.odiLib.dataBaseLibrary
 import android.content.Context
 import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.models.dataBaseProjectModel
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -77,8 +78,24 @@ class gallleryManager (val context: Context){
      * @param callback : ArrayList<dataBaseItemModel>?
      */
     fun getProjectVideos(projectId:String, callback: (Boolean, ArrayList<dataBaseItemModel>?) -> Unit) {
+        var callbackData: ArrayList<dataBaseItemModel> = ArrayList<dataBaseItemModel>()
         myDbManager.getProjectVideos(projectId) { data ->
-            callback(true,data)
+            for (i in 0 until data.size) {
+                var myVideoFile = File(data[i].videoPath)
+                var myThumbFile = File(data[i].thumb)
+                if (this.flManager.checkFile(myVideoFile)) {
+                    if (this.flManager.checkFile(myVideoFile)) {
+                        callbackData.add(data[i])
+                    }else{
+                        this.videoDelete(data[i])
+                    }
+                }else {
+                    this.videoDelete(data[i])
+                }
+            }
+
+
+            callback(true,callbackData)
         }
     }
 
@@ -120,6 +137,13 @@ class gallleryManager (val context: Context){
                 if (status) {
                     flManager.deleteFile(value!!)
                     println("$TAG video DELETE FİLE")
+                }
+            }
+
+            flManager.pathToFile(it.thumb) { status, value ->
+                if (status) {
+                    flManager.deleteFile(value!!)
+                    println("$TAG bitmap DELETE FİLE")
                 }
             }
 
@@ -194,6 +218,14 @@ class gallleryManager (val context: Context){
                             if (projectId == item.projectId) {
                                 videoDelete(videoItem)
                                 // dosyanın silinmesi
+                                flManager.pathToFile(videoItem.videoPath) { status, value ->
+                                    if (status) {
+                                        flManager.deleteFile(value!!)
+                                        // dosya silindi...
+                                    }else {
+                                        // dosya yok
+                                    }
+                                }
                                 flManager.pathToFile(videoItem.videoPath) { status, value ->
                                     if (status) {
                                         flManager.deleteFile(value!!)

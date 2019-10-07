@@ -396,13 +396,19 @@ class cameraActivity() : baseActivity(),
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == Activity_Result.PREVIEW_VIDEO_RESULT.value && resultCode == Activity.RESULT_OK ) {
-            if (data?.getStringExtra("STATUS") == "OKEY") {
+        if (requestCode == Activity_Result.PREVIEW_VIDEO_RESULT.value) {
+
+            println("$TAG dbTakip: onActivityResult çalıştı data: $data = ${data?.getStringExtra("STATUS")} resultcode: $requestCode")
+
+
+            if (data?.getStringExtra("STATUS") == "OKEY" || singleton.cameraResult == 1) {
+                singleton.cameraResult = 0
                 intent.putExtra("STATUS", "OKEY")
                 setResult(RESULT_OK, intent)
                 finish()
-                println("$TAG takip: geri dönüş okey")
-            }else if (data?.getStringExtra("STATUS") == "RESET") {
+                println("$TAG dbTakip: geri dönüş okey")
+            }else if (data?.getStringExtra("STATUS") == "RESET" || singleton.cameraResult == 2) {
+                singleton.cameraResult = 0
                 var intent = intent
                 this.finish()
                 startActivity(intent)

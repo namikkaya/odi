@@ -25,5 +25,8 @@ class singleton {
         var originalVideoPath:String? = null
 
         var uriPath:String? = null
+        var thumbPath:String? = null
+
+        var cameraResult:Int = 0 // 0 ise  okey 1 reset
     }
 }

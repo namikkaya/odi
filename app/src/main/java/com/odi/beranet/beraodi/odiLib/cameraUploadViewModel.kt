@@ -20,6 +20,8 @@ import com.vincent.videocompressor.VideoCompress
 import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterface?): odiInterface  {
@@ -73,6 +75,7 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
         if (type == nativePage.cameraOdile) {
             var name = videoFile!!.name!!.replace(".mp4", "_out.jpg")
+
             val thumb = getThumbnail(uri)
             val thumbFile = bitmapToFile(thumb, name)
 
@@ -86,7 +89,10 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
             val thumb = getThumbnail(uri)
             val thumbFile = bitmapToFile(thumb, orgVideoName!!)
 
-            val outputpath = outputDir4 + orgVideoName
+            val outputpath = outputDir4 + createVideoFileName(type)
+
+            println("$TAG dbTakip: outputpath: $outputpath - dir: ${outputpath} - orgVideoName: $orgVideoName")
+
             outputVideoName = outputpath
 
             uploadFile(thumbFile!!, type!!, UPLOAD_FILE_TYPE.bitmap)
@@ -96,13 +102,46 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
             val thumb = getThumbnail(uri)
             val thumbFile = bitmapToFile(thumb, orgVideoName!!)
 
-            val outputpath = outputDir4 + orgVideoName
+            val outputpath = outputDir4 + createVideoFileName(type)
+
+
+            println("$TAG dbTakip: outputpath: $outputpath - dir: ${outputpath} - orgVideoName: $orgVideoName")
+
             outputVideoName = outputpath
 
             uploadFile(thumbFile!!, type!!, UPLOAD_FILE_TYPE.bitmap)
         }
+    }
+
+    private fun createVideoFileName(processType:nativePage):String {
+
+        if (processType == nativePage.cameraIdentification) { // tanitim
+            return "tanitim_$userId.mp4"
+        }else if (processType == nativePage.cameraShowReel) {
+            return "showreel_$userId.mp4"
+        }else {
+            val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
+            return "${this.userId}_${this.projectId}_VID_$timestamp.mp4"
+        }
+    }
 
 
+    private val VIDEO_DIRECTORY_2 = "videoOfOdiRecord"
+    private fun renameFile(oldName:String, newName:String):File? {
+        val dir = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY_2)
+        if (dir.exists()) {
+            var from = File(oldName)
+            var to = File(newName)
+            if (from.exists()) {
+                from.renameTo(to)
+                println("$TAG dbTakip rename file from: ${from.path} -- to: ${to.path}")
+                return to
+            }else {
+                return null
+            }
+        }else {
+            return null
+        }
     }
 
     override fun uploadVideoAsyncTaskComplete(resultData: async_upload_video_complete?) {

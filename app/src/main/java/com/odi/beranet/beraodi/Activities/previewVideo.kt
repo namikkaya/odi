@@ -1,35 +1,26 @@
 package com.odi.beranet.beraodi.Activities
 
 import android.Manifest
-import android.app.Activity
 import android.content.*
 import android.content.pm.PackageManager
-import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
-import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.ThumbnailUtils
 import android.net.Uri
-import android.os.Build
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
 import android.os.Handler
-import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.support.v4.content.FileProvider
 import android.support.v7.app.ActionBar
 import android.support.v7.app.AlertDialog
 import android.util.Log
-import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.widget.*
-import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.correctionData
 import com.odi.beranet.beraodi.models.dataBaseItemModel
@@ -37,6 +28,7 @@ import com.odi.beranet.beraodi.odiLib.*
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.animationManager
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import com.onesignal.OneSignal
+import com.squareup.picasso.Picasso
 import java.io.*
 import java.lang.IllegalStateException
 import java.util.*
@@ -55,15 +47,19 @@ class previewVideo : baseActivity(),
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+
         if (requestCode == Activity_Result.PRELOADER_FINISH.value && resultCode == RESULT_OK) {
 
             if (!videoSaveStatus) {
                 deleteVideoFile()
             }
-
+            println("$TAG dbTakip: onActivityResult ")
             Toast.makeText(applicationContext, "Video başarılı bir şekilde yüklendi.", Toast.LENGTH_LONG).show()
             intent.putExtra("STATUS", "OKEY")
             setResult(RESULT_OK, intent)
+
+            singleton.cameraResult = 1
+
             finish()
         }
         if (requestCode == Activity_Result.VIDEO_GALLERY_PAGE.value) {
@@ -74,7 +70,9 @@ class previewVideo : baseActivity(),
                         println("$TAG video path: ${myModel.videoPath}")
 
                         singleton.uriPath = myModel.videoPath
+                        singleton.thumbPath = myModel.thumb
 
+                        singleton.cameraResult = 2
                         /*var myFile = File(myModel.videoPath)
                         vMyUri = Uri.fromFile(myFile)
                         addMediaController()*/
@@ -312,7 +310,7 @@ class previewVideo : baseActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview_video)
 
-        println("$TAG resetTakip onCreate")
+
 
         navigationBarConfiguration()
         uiconfig()
@@ -322,6 +320,8 @@ class previewVideo : baseActivity(),
             processType = bundle.getSerializable("type") as nativePage
             projectId = bundle.getString("projectId")
             userId = bundle.getString("userId")
+
+            println("$TAG projectId: $projectId")
 
             if (singleton.uriPath != null) {
                 var myFile = File(singleton.uriPath)
@@ -410,14 +410,45 @@ class previewVideo : baseActivity(),
         videoView.setOnClickListener(clickListener)
         galleryButton.setOnClickListener(clickListener)
 
+        /*
         videoGalleryManager.getProjectVideos(applicationContext,projectId!!){ status: Boolean, data: ArrayList<dataBaseItemModel>? ->
             data.let {
 
             }
 
         }
+*/
+
+    }
+
+    private fun getGalleryData() {
+        val correction = getProjectAndUserData()
+        videoGalleryManager.getProjectVideos(applicationContext, correction.projectId!!) { status, items:ArrayList<dataBaseItemModel>? ->
+            items?.let { itv ->
+                println("$TAG saveDataBase: projeye ait video sayısı: ${itv.size}")
+                itv.reverse()
+                if (itv.size > 0) {
+                    galleryButton.visibility = View.VISIBLE
+                    if (singleton.thumbPath == null) {
+                        for (i in 0 until itv.size) {
+                            println("$TAG saveDataBase: video: ${itv[i].videoPath} thumb: ${itv[i].thumb}")
+                            if (i == 0) {
+                                var file = File(itv[i].thumb)
+
+                                Picasso.get().load(file).into(galleryButton)
+                            }
+                        }
+                    }else {
+                        var file = File(singleton.thumbPath)
+                        Picasso.get().load(file).into(galleryButton)
+                    }
 
 
+                }else {
+                    galleryButton.visibility = View.INVISIBLE
+                }
+            }
+        }
     }
 
     private fun addMediaController() {
@@ -482,6 +513,7 @@ class previewVideo : baseActivity(),
     var firstStart:Boolean = false
     override fun onResume() {
         super.onResume()
+        getGalleryData()
         println("$TAG resetTakip onResume")
         if (mp != null) {
             try {
@@ -499,6 +531,7 @@ class previewVideo : baseActivity(),
         if (singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.SAVED){
             OnOpenVideoGalleryActivityEvent()
         }
+
 
         if (firstStart) {
             finish()
@@ -554,8 +587,9 @@ class previewVideo : baseActivity(),
         println("$TAG onAgainButtonEvent")
 
         singleton.uriPath = null
+        singleton.thumbPath = null
 
-        if (!videoSaveStatus) {
+        if (!videoSaveStatus && singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.RECORDING) {
             onAlert_againAlert()
         }else {
             intent.putExtra("STATUS", "RESET")
@@ -593,6 +627,7 @@ class previewVideo : baseActivity(),
 
     private fun OnSaveButtonEvent() {
         vibratePhone()
+
 
         saveButton.isEnabled = false
         saveButton.alpha = 0.5f
@@ -646,6 +681,7 @@ class previewVideo : baseActivity(),
 
 
     private val VIDEO_DIRECTORY = "videosOfOdi"
+    private val VIDEO_DIRECTORY_2 = "videoOfOdiRecord"
 
     // video telefon galerisine kaydeder...
     private fun saveVideoGallery(filePath: File?) {
@@ -673,6 +709,7 @@ class previewVideo : baseActivity(),
             var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY)
 
             var newfile = File(wallpaperDirectory, Calendar.getInstance().timeInMillis.toString() + ".mp4")
+
 
 
             var inputStream: InputStream = FileInputStream(currentFile)
@@ -758,14 +795,15 @@ class previewVideo : baseActivity(),
 
     //** delete
     fun deleteVideoFile() {
-        /*if (vMyUri == null) {
+        if (vMyUri == null) {
             return
         }
 
         var myFile = File(vMyUri!!.path)
         if (myFile.exists()) {
             myFile.delete()
-        }*/
+            println("$TAG dbTakip recording dosya siliniyor...")
+        }
     }
 
     // test et user idyi
@@ -776,7 +814,8 @@ class previewVideo : baseActivity(),
         val correction = getProjectAndUserData()
 
         val bitmap = createVideoThumb(vMyUri!!.path)
-        var randomName:String = getRandomString(8)
+        var randomName:String = getRandomString(16)
+
         val imageFile = createImage(randomName, bitmap)
 
         thumbImage.setImageBitmap(bitmap)
@@ -784,11 +823,39 @@ class previewVideo : baseActivity(),
         animManager = animationManager(galleryButton,thumbImage)
         animManager?.startAnimation()
 
-        val item = dataBaseItemModel(null,vMyUri!!.path, correction.projectId, imageFile!!.path)
+        // klasör oluşturur
+        var f1 = File(Environment.getExternalStorageDirectory().absolutePath, VIDEO_DIRECTORY_2)
+        if (!f1.exists()) {
+            f1.mkdirs()
+        }
+
+        println("$TAG saveDataBase dbTakip orjinal: ${vMyUri!!.path} --")
+
+        var videoPath = vMyUri!!.path
+        if (processType == nativePage.cameraShowReel || processType == nativePage.cameraIdentification) {
+            val newName = randomName + ".mp4"
+
+            val myFileName = File(f1,newName)
+
+            println("$TAG saveDataBase dbTakip yeni: ${myFileName.path} -- ")
+
+            var newFile = renameFile(vMyUri!!.path , myFileName.path)
+            videoPath = newFile!!.path
+        }
+
+        var checkFile = File(vMyUri!!.path)
+        if (checkFile.exists()) {
+            println("$TAG saveDataBase dbTakip: eski dosya kontrolü: VAR")
+        }else{
+            println("$TAG saveDataBase dbTakip: eski dosya kontrolü: YOK")
+        }
+
+        val item = dataBaseItemModel(null, videoPath, correction.projectId, imageFile!!.path)
         println("$TAG saveDataBase projectId: ${correction.projectId}")
         println("$TAG saveDataBase userId: ${correction.userId}")
         println("$TAG saveDataBase imagePath: ${imageFile!!.path}")
         println("$TAG saveDataBase video path: ${vMyUri!!.path} --")
+
         videoGalleryManager.insertVideoItem(applicationContext,item){ status ->
             if(status) {
                 println("$TAG saveDataBase: video yazıldı. yeni proje dosyası açıldı")
@@ -796,6 +863,25 @@ class previewVideo : baseActivity(),
                 println("$TAG saveDataBase: video var olan proje ye yazıldı.")
             }
             videoSaveStatus = true
+        }
+
+        getGalleryData()
+    }
+
+    private fun renameFile(oldName:String, newName:String):File? {
+        val dir = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY_2)
+        if (dir.exists()) {
+            var from = File(oldName)
+            var to = File(newName)
+            if (from.exists()) {
+                from.renameTo(to)
+                println("$TAG dbTakip rename file from: ${from.path} -- to: ${to.path}")
+                return to
+            }else {
+                return null
+            }
+        }else {
+            return null
         }
     }
 
@@ -836,16 +922,46 @@ class previewVideo : baseActivity(),
 
     private fun OnOpenVideoGalleryActivityEvent() {
 
-        vibratePhone()
-        val correction = getProjectAndUserData()
+        if (VIDEO_PREVIEW_STATUS.RECORDING != singleton.previewVideoStatus || videoSaveStatus) {
+            vibratePhone()
+            val correction = getProjectAndUserData()
 
-        videoGalleryManager.getProjectVideos(applicationContext, correction.projectId!!) { status, data:ArrayList<dataBaseItemModel>? ->
-            videoGalleryIntent = Intent(this, videoGalleryActivity::class.java)
-            videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
-            videoGalleryIntent?.putExtra("galleryData", data)
+            videoGalleryManager.getProjectVideos(applicationContext, correction.projectId!!) { status, data:ArrayList<dataBaseItemModel>? ->
+                videoGalleryIntent = Intent(this, videoGalleryActivity::class.java)
+                videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                videoGalleryIntent?.putExtra("galleryData", data)
 
-            startActivityForResult(videoGalleryIntent, Activity_Result.VIDEO_GALLERY_PAGE.value)
+                startActivityForResult(videoGalleryIntent, Activity_Result.VIDEO_GALLERY_PAGE.value)
+            }
+        }else if (!videoSaveStatus){
+            val alert = AlertDialog.Builder(this)
+
+            alert.setTitle(R.string.exitSaveVideoTitle)
+            alert.setMessage(R.string.galleriGidis)
+
+            alert.setCancelable(false)
+
+            alert.setPositiveButton(R.string.exitSaveButtonNext){ dialog, which ->
+                vibratePhone()
+                deleteVideoFile()
+                val correction = getProjectAndUserData()
+
+                videoGalleryManager.getProjectVideos(applicationContext, correction.projectId!!) { status, data:ArrayList<dataBaseItemModel>? ->
+                    videoGalleryIntent = Intent(this, videoGalleryActivity::class.java)
+                    videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    videoGalleryIntent?.putExtra("galleryData", data)
+
+                    startActivityForResult(videoGalleryIntent, Activity_Result.VIDEO_GALLERY_PAGE.value)
+                }
+            }
+
+            alert.setNegativeButton(R.string.exitSaveButtonNo){ dialog, which ->
+                vibratePhone()
+            }
+
+            alert.show()
         }
     }
 

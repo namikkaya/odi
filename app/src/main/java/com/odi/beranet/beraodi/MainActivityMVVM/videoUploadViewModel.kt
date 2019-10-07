@@ -292,6 +292,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                 println("$TAG async: request complete ")
                 //listener?.onUploadVideoStatus(uploadId, null, true)
 
+                /*
                 if (fileDeletedEnd_holder != null) {
                     if (fileDeletedEnd_holder!!.exists()) {
                         if (fileDeletedEnd_holder!!.delete()) {
@@ -299,6 +300,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                         }
                     }
                 }
+                */
 
                 listener?.onUploadVideoStatus(uploadId,null,true)
             }

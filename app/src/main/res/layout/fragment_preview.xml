@@ -104,7 +104,7 @@
 
                             <RelativeLayout
                                     android:layout_margin="8dp"
-                                    android:gravity="center|right"
+                                    android:gravity="center"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent">
 
@@ -113,8 +113,8 @@
                                         android:scaleType="centerCrop"
                                         android:id="@+id/cameraGalleryButton"
                                         android:src="@drawable/odi_logo"
-                                        android:layout_width="match_parent"
-                                        android:layout_height="match_parent"/>
+                                        android:layout_width="48dp"
+                                        android:layout_height="48dp"/>
 
                             </RelativeLayout>
 
@@ -201,6 +201,7 @@
 
     <include
             android:id="@+id/countDownLayout"
-            layout="@layout/countdown_layout"/>
+            layout="@layout/countdown_layout" android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true"/>
 
 </FrameLayout>

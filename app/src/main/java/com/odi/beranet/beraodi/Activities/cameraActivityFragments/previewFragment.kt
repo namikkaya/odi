@@ -33,6 +33,7 @@ import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.odiLib.*
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
+import com.squareup.picasso.Picasso
 import com.vincent.videocompressor.VideoCompress
 import kotlinx.android.synthetic.main.activity_preview_video.*
 import java.io.File
@@ -288,7 +289,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun createVideoFileName():String {
-
         if (processType == nativePage.cameraIdentification) { // tanitim
             return "tanitim_$userId.mp4"
         }else if (processType == nativePage.cameraShowReel) {
@@ -617,12 +617,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         nextButton = view.findViewById(R.id.nextStepButton)
         volumeButton = view.findViewById(R.id.volumeButton)
 
-
-        getGalleryData() // gallery bilgisini alır.
-
-
-
-
         subtitleText.movementMethod = ScrollingMovementMethod()
 
         val displayMetrics = DisplayMetrics()
@@ -649,11 +643,16 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             videoGalleryManager.getProjectVideos(activity!!.applicationContext, it.projectId!!) { status, items:ArrayList<dataBaseItemModel>? ->
                 items?.let { itv ->
                     println("$TAG saveDataBase: projeye ait video sayısı: ${itv.size}")
+                    itv.reverse()
                     if (itv.size > 0) {
                         cameraGalleryButton.visibility = View.VISIBLE
                         videoGalleryStatus = true
                         for (i in 0 until itv.size) {
                             println("$TAG saveDataBase: video: ${itv[i].videoPath} thumb: ${itv[i].thumb}")
+                            if (i == 0) {
+                                var file = File(itv[i].thumb)
+                                Picasso.get().load(file).into(cameraGalleryButton)
+                            }
                         }
                     }else {
                         videoGalleryStatus = false
@@ -663,6 +662,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             }
         }
     }
+
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
@@ -774,6 +774,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     override fun onResume() {
         super.onResume()
         setupCamera()
+        getGalleryData() // gallery bilgisini alır.
     }
 
     override fun onPause() {

@@ -100,8 +100,8 @@
                                 android:scaleType="centerCrop"
                                 android:id="@+id/galleryButton"
                                 android:src="@drawable/odi_logo"
-                                android:layout_width="74dp"
-                                android:layout_height="wrap_content"/>
+                                android:layout_width="60dp"
+                                android:layout_height="60dp"/>
 
 
                         <ImageButton
