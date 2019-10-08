@@ -81,7 +81,7 @@ class previewVideo : baseActivity(),
 
             }
             if(resultCode == RESULT_CANCELED) {
-                if (singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.SAVED) {
+                if (singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.SAVED || singleton.previewVideoStatus == VIDEO_PREVIEW_STATUS.RECORDING) {
                     finish()
                 }
             }
@@ -310,8 +310,6 @@ class previewVideo : baseActivity(),
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview_video)
 
-
-
         navigationBarConfiguration()
         uiconfig()
 
@@ -336,9 +334,6 @@ class previewVideo : baseActivity(),
                     println("$TAG sing: false")
                 }
             }
-
-
-
 
         }
 
@@ -372,6 +367,7 @@ class previewVideo : baseActivity(),
     private fun mediaPlayerConfig(holder:SurfaceHolder?) {
         println("$TAG mediaPlayerConfig init ${vMyUri?.path}")
 
+
         try {
             mp!!.setDataSource(this,vMyUri)
             mp!!.prepare()
@@ -382,6 +378,7 @@ class previewVideo : baseActivity(),
 
             mp?.setOnPreparedListener(this)
             mp?.setOnCompletionListener(this)
+            // oynatılan video silinmeye giderse
 
             //mp!!.start()
         }catch (e:IOException) {
@@ -431,10 +428,9 @@ class previewVideo : baseActivity(),
                     galleryButton.visibility = View.VISIBLE
                     if (singleton.thumbPath == null) {
                         for (i in 0 until itv.size) {
-                            println("$TAG saveDataBase: video: ${itv[i].videoPath} thumb: ${itv[i].thumb}")
+                            //println("$TAG saveDataBase: video: ${itv[i].videoPath} thumb: ${itv[i].thumb}")
                             if (i == 0) {
                                 var file = File(itv[i].thumb)
-
                                 Picasso.get().load(file).into(galleryButton)
                             }
                         }
@@ -513,6 +509,13 @@ class previewVideo : baseActivity(),
     var firstStart:Boolean = false
     override fun onResume() {
         super.onResume()
+
+        if (singleton.gotoCamera) {
+            singleton.gotoCamera = false
+            finish()
+            return
+        }
+
         getGalleryData()
         println("$TAG resetTakip onResume")
         if (mp != null) {
@@ -533,12 +536,14 @@ class previewVideo : baseActivity(),
         }
 
 
+
         if (firstStart) {
             finish()
             startActivity(intent)
             overridePendingTransition(0,0)
         }
         firstStart = true
+
     }
 
     override fun onCompletion(mp: MediaPlayer?) {
@@ -931,6 +936,13 @@ class previewVideo : baseActivity(),
                 videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                 videoGalleryIntent?.putExtra("galleryData", data)
+                videoGalleryIntent?.putExtra("projectId", correction.projectId!!)
+
+                if (vMyUri != null) {
+                    singleton.removeVideoPath = vMyUri!!.path
+                }else {
+                    singleton.removeVideoPath = null
+                }
 
                 startActivityForResult(videoGalleryIntent, Activity_Result.VIDEO_GALLERY_PAGE.value)
             }
@@ -952,6 +964,13 @@ class previewVideo : baseActivity(),
                     videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     videoGalleryIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                     videoGalleryIntent?.putExtra("galleryData", data)
+                    videoGalleryIntent?.putExtra("projectId", correction.projectId!!)
+
+                    if (vMyUri != null) {
+                        singleton.removeVideoPath = vMyUri!!.path
+                    }else {
+                        singleton.removeVideoPath = null
+                    }
 
                     startActivityForResult(videoGalleryIntent, Activity_Result.VIDEO_GALLERY_PAGE.value)
                 }

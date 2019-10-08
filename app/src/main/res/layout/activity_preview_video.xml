@@ -15,6 +15,7 @@
             android:layout_height="match_parent">
 
 
+
         <VideoView
                 android:foregroundGravity="center"
                 android:id="@+id/myVideoView_previewVideo"
@@ -87,7 +88,7 @@
                     <LinearLayout
                             android:orientation="horizontal"
                             android:layout_gravity="right"
-                            android:gravity="right"
+                            android:gravity="right|center_vertical"
                             android:layout_weight="50"
                             android:layout_width="0dp"
                             android:layout_height="match_parent">
@@ -100,8 +101,8 @@
                                 android:scaleType="centerCrop"
                                 android:id="@+id/galleryButton"
                                 android:src="@drawable/odi_logo"
-                                android:layout_width="60dp"
-                                android:layout_height="60dp"/>
+                                android:layout_width="46dp"
+                                android:layout_height="46dp"/>
 
 
                         <ImageButton

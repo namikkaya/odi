@@ -25,11 +25,11 @@ fun Fragment.vibratePhone() {
     }
 }
 
-fun AppCompatActivity.vibratePhone() {
+fun AppCompatActivity.vibratePhone(shock:Long = 80) {
     val vibrator = this?.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     if (Build.VERSION.SDK_INT >= 26) {
-        vibrator.vibrate(VibrationEffect.createOneShot(80, VibrationEffect.DEFAULT_AMPLITUDE))
+        vibrator.vibrate(VibrationEffect.createOneShot(shock, VibrationEffect.DEFAULT_AMPLITUDE))
     } else {
-        vibrator.vibrate(80)
+        vibrator.vibrate(shock)
     }
 }

@@ -28,6 +28,12 @@ class videoGalleryManager () {
             }
         }
 
+        fun deleteVideoItem(applicationContext: Context, itemModel: dataBaseItemModel, callback: (Boolean) -> Unit) {
+            var myManager: gallleryManager? = gallleryManager(applicationContext)
+            myManager?.videoDelete(itemModel)
+            callback(true)
+        }
+
 
         /**
          * Video ekler ve eğer bu video olmayan bir projeye ait ise buna ek olarak proje de oluşturur.

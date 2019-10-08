@@ -38,4 +38,8 @@
         odi ekibiyle iletişime geçebilirsiniz.
     </string>
     <string name="rotateImageDesc">Ekran Çevirme</string>
+    <string name="videoRemoveTitle">Video Silinecek</string>
+    <string name="videoRemoveDesc">Seçtiğiniz video silindikten sonra geriye alamazsınız. Bu işlemi yapmak istiyor musunuz?</string>
+    <string name="videoRemoveYes">Sil</string>
+    <string name="videoRemoveNo">İptal</string>
 </resources>

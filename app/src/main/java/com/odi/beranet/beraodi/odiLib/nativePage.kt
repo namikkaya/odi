@@ -84,5 +84,7 @@ enum class UI_PRELOADER {
  */
 enum class VIDEO_PREVIEW_STATUS {
     SAVED,
-    RECORDING
+    RECORDING,
+    NORMAL
 }
+

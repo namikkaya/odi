@@ -28,5 +28,9 @@ class singleton {
         var thumbPath:String? = null
 
         var cameraResult:Int = 0 // 0 ise  okey 1 reset
+
+        // silinen video tekrar oynatma kontrolü gerçekleşecek
+        var removeVideoPath:String? = null
+        var gotoCamera:Boolean = false
     }
 }
