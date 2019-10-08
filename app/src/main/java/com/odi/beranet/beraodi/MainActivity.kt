@@ -128,6 +128,14 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         super.onResume()
         println("Takip mainactivity onResume")
         onCheckFreeSpace()
+
+        videoGalleryManager.clearExpired(applicationContext)  { status:Boolean ->
+            if (status) {
+                println("$TAG silinecek videolar silindi")
+            }else {
+                println("$TAG silinecek video yok")
+            }
+        }
     }
 
     override fun onPause() {

@@ -13,16 +13,56 @@
             android:layout_height="match_parent">
 
         <LinearLayout
-                android:gravity="right"
-                android:layout_gravity="right"
-                android:layout_margin="8dp"
+                android:weightSum="100"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-            <Button
-                    android:id="@+id/videoGalleryCloseButton"
-                    android:text="kapat"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+
+            <LinearLayout
+                    android:layout_weight="80"
+                    android:layout_gravity="left"
+                    android:layout_margin="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content">
+
+                <RelativeLayout
+                        android:gravity="left|center_vertical"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent">
+                    <TextView
+                            android:id="@+id/daysText"
+                            android:padding="4dp"
+                            android:text="..."
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"/>
+                </RelativeLayout>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                    android:layout_weight="20"
+                    android:layout_margin="8dp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content">
+
+                <RelativeLayout
+                        android:gravity="right|center_vertical"
+                        android:layout_gravity="right"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content">
+
+                    <Button
+                            android:id="@+id/videoGalleryCloseButton"
+                            android:text="kapat"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"/>
+
+                </RelativeLayout>
+
+
+            </LinearLayout>
+
+
 
         </LinearLayout>
 

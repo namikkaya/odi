@@ -9,12 +9,16 @@ import android.view.View
 import android.widget.AdapterView
 import android.widget.Button
 import android.widget.GridView
+import android.widget.TextView
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.dataBaseItemModel
+import com.odi.beranet.beraodi.models.dataBaseProjectModel
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import com.odi.beranet.beraodi.odiLib.singleton
 import com.odi.beranet.beraodi.odiLib.vibratePhone
 import com.odi.beranet.beraodi.odiLib.videoGalleryLibrary.videoGalleryGridViewAdapter
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.collections.ArrayList
 
 class videoGalleryActivity : AppCompatActivity(),AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
@@ -25,6 +29,7 @@ class videoGalleryActivity : AppCompatActivity(),AdapterView.OnItemClickListener
     private lateinit var galleryGridView: GridView
     private lateinit var videoGalleryCloseButton:Button
     private var myActionBar: ActionBar? = null
+    private lateinit var daysText:TextView
 
     // DATA
     var videoGalleryData:ArrayList<dataBaseItemModel> = ArrayList<dataBaseItemModel>()
@@ -34,12 +39,14 @@ class videoGalleryActivity : AppCompatActivity(),AdapterView.OnItemClickListener
     private lateinit var galleryAdapter: videoGalleryGridViewAdapter
 
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_video_gallery)
-        videoGalleryCloseButton = findViewById(R.id.videoGalleryCloseButton)
-        videoGalleryCloseButton.setOnClickListener(clickListener)
 
+        videoGalleryCloseButton = findViewById(R.id.videoGalleryCloseButton)
+        daysText = findViewById(R.id.daysText)
+        videoGalleryCloseButton.setOnClickListener(clickListener)
 
         navigationBarConfiguration()
 
@@ -54,6 +61,65 @@ class videoGalleryActivity : AppCompatActivity(),AdapterView.OnItemClickListener
                 projectId = extras.getString("projectId")
             }
         }
+
+        videoGalleryManager.getAllProject(applicationContext){ status:Boolean, data: ArrayList<dataBaseProjectModel>?->
+            if (status) {
+                for (i in 0 until data!!.size) {
+                    if (projectId == data[i].projectId) {
+                        println("$TAG project expired time: ${data[i].createDate}")
+
+                        val currentDate: Date = getCurrentDateTime()
+                        val projectDate: Date = data[i].createDate!!.toDate(timeFormat)
+
+                        var projectTimeAdd = toCalendar(projectDate)
+                        projectTimeAdd.add(Calendar.DATE, 5)
+
+                        println("$TAG project expired ekli zaman: ${projectTimeAdd.time}")
+
+                        val finalDate = projectTimeAdd.time.time - currentDate.time
+                        val seconds = finalDate / 1000
+                        val minutes = seconds / 60
+                        val hours = minutes / 60
+                        val daysRemaining = hours / 24
+                        println("$TAG expired geriye kalan zaman:  ${daysRemaining} gün - $hours saat - $minutes dakika  sonra bu videolar silinecek ")
+
+                        var myDays:String? = ""
+                        if (daysRemaining < 1) {
+                            daysText.text = "Bugun içinde bu videolar silinecek."
+                        }else{
+                            myDays = daysRemaining.toString()
+                            daysText.text = "$myDays gün sonra bu videolar silinecek."
+                        }
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    fun toCalendar(date:Date):Calendar {
+        val cal = Calendar.getInstance()
+        cal.time = date
+        return cal
+    }
+
+
+    private val timeFormat:String = "yyyy-MM-dd HH:mm:ss"
+
+    fun Date.toString(format: String, locale: Locale = Locale.getDefault()): String {
+        val formatter = SimpleDateFormat(format, locale)
+        return formatter.format(this)
+    }
+
+    fun getCurrentDateTime(): Date {
+        return Calendar.getInstance().time
+    }
+
+    fun String.toDate(format: String): Date { // format "dd-MM-yyyy" -- date
+        val date = SimpleDateFormat(format).parse(this)
+        println(date.time)
+        return date
     }
 
     val clickListener = View.OnClickListener { view ->
