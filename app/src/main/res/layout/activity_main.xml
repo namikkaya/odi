@@ -29,15 +29,39 @@
             android:background="@color/colorAccent"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-        <ImageView
-                android:layout_marginTop="43dp"
-                android:foregroundGravity="center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:id="@+id/splash"
-                android:scaleType="center"
-                android:background="@drawable/odi_logo" />
+
+        <RelativeLayout
+                android:gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            <ImageView
+                    android:layout_marginTop="43dp"
+                    android:foregroundGravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/splash"
+                    android:scaleType="center"
+                    android:background="@drawable/odi_logo" />
+
+        </RelativeLayout>
+        <RelativeLayout
+                android:gravity="bottom|right"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            <TextView
+                    android:textSize="12sp"
+                    android:padding="8dp"
+                    android:textColor="@color/White"
+                    android:id="@+id/versionNumber"
+                    android:text="odi: 0.0.0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+        </RelativeLayout>
+
     </RelativeLayout>
+
+
 
 
 

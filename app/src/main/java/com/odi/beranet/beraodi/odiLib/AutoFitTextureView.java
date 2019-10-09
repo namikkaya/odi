@@ -28,6 +28,7 @@ public class AutoFitTextureView extends TextureView {
      * @param width  Relative horizontal size
      * @param height Relative vertical size
      */
+
     public void setAspectRatio(int width, int height) {
         if (width < 0 || height < 0) {
             throw new IllegalArgumentException("Size cannot be negative.");

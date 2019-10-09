@@ -36,7 +36,7 @@ android {
         minSdkVersion 26
         targetSdkVersion 28
         versionCode 21
-        versionName "1.1.9"
+        versionName "2.0.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
@@ -88,4 +88,5 @@ dependencies {
     implementation 'com.android.volley:volley:1.1.1'
     implementation files('libs/java-json.jar')
     //implementation 'com.googlecode.mp4parser:isoparser:1.1.22'
+    implementation 'com.github.douglasjunior:android-simple-tooltip:0.2.3'
 }

@@ -29,6 +29,8 @@
             android:usesCleartextTraffic="true">
         <activity android:name=".Activities.videoGalleryActivity"
                   android:launchMode="singleTop"
+                  android:configChanges="keyboardHidden|orientation|screenSize"
+                  android:windowSoftInputMode="adjustResize"
                   android:theme="@style/Theme.AppCompat.NewTrans">
         </activity>
         <activity

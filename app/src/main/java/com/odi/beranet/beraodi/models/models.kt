@@ -12,6 +12,8 @@ import android.media.AudioManager
 import android.media.AudioAttributes
 import android.os.Build
 import android.os.Handler
+import android.view.Gravity
+import android.view.View
 import java.io.Serializable
 
 
@@ -181,3 +183,6 @@ data class videoData(val uri:Uri?):Serializable {}
 data class dataBaseItemModel(val id:String?, val videoPath:String?, val projectId:String?, val thumb:String?): Serializable {}
 data class dataBaseProjectModel(val id:String?, val projectId:String?, val projectStatus:String?, val createDate:String?) {}
 data class correctionData(val userId:String?, val projectId:String?)
+
+// tooltip
+data class toolTipModel(val view: View?, val title:String?, val gravity: Int? = Gravity.END)

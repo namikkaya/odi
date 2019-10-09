@@ -32,5 +32,7 @@ class singleton {
         // silinen video tekrar oynatma kontrolü gerçekleşecek
         var removeVideoPath:String? = null
         var gotoCamera:Boolean = false
+
+        var cameraWidthHolder:Int? = null
     }
 }

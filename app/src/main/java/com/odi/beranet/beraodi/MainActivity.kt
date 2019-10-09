@@ -32,6 +32,7 @@ import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.RelativeLayout
+import android.widget.TextView
 import com.odi.beranet.beraodi.Activities.*
 import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.models.dataBaseProjectModel
@@ -77,6 +78,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         setContentView(R.layout.activity_main)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         println("Takip mainActivity onCreate")
+
+        //Prefs.sharedData!!.setFirstLookCameraTooltip(false)
+        //Prefs.sharedData!!.setFirstLookPreviewTooltip(false)
+
+
+
         configuration()
 
         /*
@@ -145,7 +152,13 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     }
 
 
+    lateinit var versionNumberText:TextView
     private fun configuration() {
+
+        // ekranda versiyon numarısını gösterir.
+        versionNumberText = findViewById(R.id.versionNumber)
+        versionNumberText.text = "odi: ${BuildConfig.VERSION_NAME}"
+
         managersConfiguration()
         navigationBarConfiguration()
         webViewConfiguration()

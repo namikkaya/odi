@@ -18,11 +18,15 @@
                 android:layout_height="wrap_content"/>
 
     </RelativeLayout>
-    <FrameLayout android:orientation="vertical" android:layout_width="match_parent" android:layout_height="match_parent">
+    <FrameLayout android:orientation="vertical"
+                 android:layout_width="match_parent"
+                 android:layout_height="match_parent">
+
         <com.odi.beranet.beraodi.odiLib.AutoFitTextureView
                 android:id="@+id/textureView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
+
     </FrameLayout>
     <RelativeLayout
             android:gravity="bottom"

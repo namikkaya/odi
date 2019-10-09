@@ -59,25 +59,29 @@
 
 
                 <LinearLayout
+                        android:paddingLeft="8dp"
+                        android:paddingRight="40dp"
                         android:weightSum="100"
                         android:orientation="horizontal"
                         android:background="@color/blackTransparent"
                         android:layout_width="match_parent"
-                        android:layout_height="60dp">
+                        android:layout_height="66dp">
 
                     <LinearLayout
                             android:layout_gravity="left"
-                            android:gravity="left"
+                            android:gravity="left|center_vertical"
                             android:layout_weight="50"
                             android:layout_width="0dp"
                             android:layout_height="match_parent">
                         <ImageButton
+                                android:padding="4dp"
                                 android:id="@+id/againButton_previewVideo"
                                 android:background="@null"
                                 android:src="@drawable/replay"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"/>
                         <ImageButton
+                                android:padding="4dp"
                                 android:id="@+id/saveButton_previewVideo"
                                 android:background="@null"
                                 android:src="@drawable/kaydet"
@@ -93,19 +97,34 @@
                             android:layout_width="0dp"
                             android:layout_height="match_parent">
 
-                        <com.odi.beranet.beraodi.odiLib.RoundRectCornerImageView
-                                RoundRectCornerImageView:round="8dp"
+
+                        <RelativeLayout
                                 android:layout_marginRight="8dp"
                                 android:layout_marginTop="4dp"
                                 android:layout_marginBottom="4dp"
-                                android:scaleType="centerCrop"
-                                android:id="@+id/galleryButton"
-                                android:src="@drawable/odi_logo"
-                                android:layout_width="46dp"
-                                android:layout_height="46dp"/>
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content">
+
+
+                            <ImageView
+                                    android:visibility="invisible"
+                                    android:src="@drawable/projegaleri"
+                                    android:id="@+id/projegaleri"
+                                    android:layout_width="46dp"
+                                    android:layout_height="46dp"/>
+                            <com.odi.beranet.beraodi.odiLib.RoundRectCornerImageView
+                                    RoundRectCornerImageView:round="8dp"
+                                    android:scaleType="centerCrop"
+                                    android:id="@+id/galleryButton"
+                                    android:src="@drawable/odi_logo"
+                                    android:layout_width="46dp"
+                                    android:layout_height="46dp"/>
+
+                        </RelativeLayout>
 
 
                         <ImageButton
+                                android:padding="4dp"
                                 android:id="@+id/uploadButton_previewVideo"
                                 android:background="@null"
                                 android:src="@drawable/upload"

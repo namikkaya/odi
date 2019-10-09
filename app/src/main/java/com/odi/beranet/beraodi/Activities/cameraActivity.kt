@@ -32,6 +32,7 @@ import org.json.JSONException
 import org.json.JSONObject
 import org.json.XML
 import java.io.UnsupportedEncodingException
+import java.lang.IllegalStateException
 import java.nio.charset.Charset
 
 
@@ -56,12 +57,15 @@ class cameraActivity() : baseActivity(),
     var projectId:String? = null
     var userId:String? = null
     var processType:nativePage? = null
-
+    var bottomBarHeight:Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        bottomBarHeight = this!!.getBottomHeight()
+
 
         val bundle=intent.extras
         if(bundle!=null)
@@ -78,11 +82,17 @@ class cameraActivity() : baseActivity(),
         orientationInfo = findViewById(R.id.orientationInfo)
 
         window.addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED)
+
         window.decorView.apply {
             systemUiVisibility = /*View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or*/
                     View.SYSTEM_UI_FLAG_FULLSCREEN or
                     View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
-                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                            View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                            View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+
         }
 
 
@@ -90,6 +100,10 @@ class cameraActivity() : baseActivity(),
         cameraFragment.userId = this.userId
         cameraFragment.projectId = this.projectId
         cameraFragment.processType = this.processType
+
+        if (bottomBarHeight != null){
+            cameraFragment.bottomBarHeight = bottomBarHeight
+        }
 
         list.add(cameraFragment)
 
@@ -103,6 +117,21 @@ class cameraActivity() : baseActivity(),
 
         getProjectData()
 
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        window.decorView.apply {
+            systemUiVisibility = /*View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or*/
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+
+        }
     }
 
     private fun nextPage() {
@@ -456,6 +485,22 @@ class cameraActivity() : baseActivity(),
         intent.putExtra("type", processType)
         startActivityForResult(intent, Activity_Result.PREVIEW_VIDEO_RESULT.value)
 
+    }
+
+    private fun getBottomHeight (): Int? {
+        val resources = applicationContext!!.resources
+        val resourcesId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        if (resourcesId > 0) {
+            var returnData:Int? = null
+            try {
+                returnData = resources.getDimensionPixelSize(resourcesId)
+            }catch (e: IllegalStateException){
+                Log.e("$TAG" , "${e.toString()} -> hata: 512")
+            }
+
+            return returnData
+        }
+        return 0
     }
 
 }

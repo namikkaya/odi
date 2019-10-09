@@ -16,6 +16,8 @@ class sharedObject(context: Context){
 
     private val user_id_FileName = "user_id"
     private val user_first_look = "user_first_look"
+    private val user_cameratooltip_look = "user_cameratooltip_look"
+    private val user_previewtooltip_look = "user_previewtooltip_look"
 
     val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILENAME, Context.MODE_PRIVATE)
 
@@ -28,9 +30,35 @@ class sharedObject(context: Context){
         set(value) = prefs.edit().putBoolean(user_first_look, value).apply()
 
 
+    private var userFirstCameraToolTip:Boolean
+        get() = prefs.getBoolean(user_cameratooltip_look, false)
+        set(value) = prefs.edit().putBoolean(user_cameratooltip_look, value).apply()
+
+    private var userFirstPreviewToolTip:Boolean
+        get() = prefs.getBoolean(user_previewtooltip_look, false)
+        set(value) = prefs.edit().putBoolean(user_previewtooltip_look, value).apply()
+
+
     /////////////////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////
     // <user information>
+    fun getFirstLookPreviewTooltip():Boolean? {
+        return userFirstPreviewToolTip
+    }
+
+    fun setFirstLookPreviewTooltip(status:Boolean) {
+        userFirstPreviewToolTip = true
+    }
+
+
+
+    fun getFirstLookCameraTooltip():Boolean? {
+        return userFirstCameraToolTip
+    }
+
+    fun setFirstLookCameraTooltip(status:Boolean) {
+        userFirstCameraToolTip = true
+    }
 
     /**
      * video slayt ilk açıldığında 1 kez gösterilmesi için tutulur

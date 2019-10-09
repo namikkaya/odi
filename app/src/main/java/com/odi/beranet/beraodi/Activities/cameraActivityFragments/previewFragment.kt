@@ -26,16 +26,16 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.RelativeLayout
 import android.widget.TextView
-import com.odi.beranet.beraodi.Activities.previewVideo
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.correctionData
 import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.models.playlistDataModel
+import com.odi.beranet.beraodi.models.toolTipModel
 import com.odi.beranet.beraodi.odiLib.*
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import com.squareup.picasso.Picasso
 import com.vincent.videocompressor.VideoCompress
-import kotlinx.android.synthetic.main.activity_preview_video.*
+import io.github.douglasjunior.androidSimpleTooltip.SimpleTooltip
 import java.io.File
 import java.io.IOException
 import java.lang.IllegalArgumentException
@@ -114,12 +114,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     var projectId:String? = null
     var processType:nativePage? = null
     var recordTypeHolder:RECORD_TYPE? = null // dialog / monolog /play mode hangisinde kayıt yapılıyorsa
+    var bottomBarHeight:Int? = null
 
     private var previewSize:Point? = null
 
     private lateinit var cameraDevice: CameraDevice
 
     private lateinit var mOrientationListener: OrientationEventListener
+
+    private var tooltipManager:tooltipAnimationManager? = null
 
     private var cameraPositionHolder: Camera_Position = Camera_Position.FRONT
     enum class Camera_Position (val value:Int){
@@ -551,12 +554,31 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun transformImage(width:Int, height:Int) {
 
-        textureView.setAspectRatio(width,height)
+        var newWidthData = width
+
+        if (bottomBarHeight != null) {
+            newWidthData = width + bottomBarHeight!!
+
+            if (singleton.cameraWidthHolder == null) {
+                singleton.cameraWidthHolder = newWidthData
+            }else {
+                if (singleton.cameraWidthHolder!! < newWidthData) {
+                    newWidthData = singleton.cameraWidthHolder!!
+                }
+            }
+
+            println("$TAG transformImage: 1 newWidthData: ${newWidthData}")
+            println("$TAG transformImage: 1 width: ${width}")
+        }
+        textureView.setAspectRatio(newWidthData ,height)
+        //textureView.setAspectRatio(1280,720)
+
+        println("$TAG transformImage: previewSize: width 0: $newWidthData")
 
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
 
-        var _width = displayMetrics.widthPixels
+        var _width = newWidthData //displayMetrics.widthPixels
         var _height = displayMetrics.heightPixels
 
         previewSize = Point(_width,_height)
@@ -570,9 +592,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         val matrix = Matrix()
         val rotation = activity?.windowManager?.defaultDisplay?.rotation
 
-        val textureRectF = RectF(0F,0F,width.toFloat(),height.toFloat())
+        val textureRectF = RectF(0F,0F,_width.toFloat(),height.toFloat()) // width
 
-        var previewRectF:RectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat()) // yan olduğu için x ve y yer değiştirir.
+        var previewRectF:RectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat())// previewSize!!.x.toFloat() // yan olduğu için x ve y yer değiştirir.
 
         val centerX = textureRectF.centerX()
         val centerY = textureRectF.centerY()
@@ -594,13 +616,21 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
             val olmasiGereken = (previewSize!!.x.toFloat()*720) / 1280
 
-            matrix.postScale(1F, 1F, centerX, centerY)
+            println("$TAG transformImage: 3 width: ${olmasiGereken} oran")
+
+            //matrix.postScale(1F, 1F, centerX, centerY)
 
             matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL)
 
             matrix.postRotate(90F*(rotation-2),centerX,centerY)
         }
         textureView.setTransform(matrix)
+
+        updateTextureViewsize(_width, _height)
+    }
+
+    private fun updateTextureViewsize(width:Int, height:Int){
+        textureView.setLayoutParams(FrameLayout.LayoutParams(width, height));
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -775,6 +805,39 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         super.onResume()
         setupCamera()
         getGalleryData() // gallery bilgisini alır.
+
+
+        if (processType == nativePage.cameraOdile) {
+            if (Prefs.sharedData!!.getFirstLookCameraTooltip() == null || Prefs.sharedData!!.getFirstLookCameraTooltip() == false) {
+
+                val timer = object: CountDownTimer(2000, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {
+
+                    }
+
+                    override fun onFinish() {
+                        val item1 = toolTipModel(textControlButton,"Altyazıyı kapatıp, açabilirsin.",Gravity.END)
+                        val item2 = toolTipModel(volumeButton,"Dış sesi kapatıp, açabilirsin.",Gravity.END)
+                        //val item3 = toolTipModel(changeCameraButton,"Ön ve arka kamerayı ayarlayabilirsin.",Gravity.END)
+                        //val item4 = toolTipModel(cameraCloseButton,"Kameradan çıkabilirsin.",Gravity.START)
+                        //val item5 = toolTipModel(recordButton,"Görüntü kaydetmek için bu düğmeyi kullanmalısın.",Gravity.START)
+
+                        val toolTipArray:ArrayList<toolTipModel> = ArrayList<toolTipModel>()
+                        toolTipArray.add(item1)
+                        //toolTipArray.add(item3)
+                        toolTipArray.add(item2)
+                        //toolTipArray.add(item4)
+                        //toolTipArray.add(item5)
+
+                        tooltipManager = tooltipAnimationManager(activity!!,toolTipArray)
+                        tooltipManager!!.startTooltip()
+                        Prefs.sharedData!!.setFirstLookCameraTooltip(true)
+                    }
+                }
+                timer.start()
+            }
+        }
+
     }
 
     override fun onPause() {
@@ -929,8 +992,36 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         listener?.onPreviewFragment_closeEvent()
     }
 
+    //var simpleTooltip:SimpleTooltip? = null
+
+
     private fun onTextControlButtonEvent() {
         vibratePhone()
+
+        /*
+        simpleTooltip = SimpleTooltip.Builder(activity)
+            .anchorView(textControlButton)
+            .text("Alt yazı yı açıp kapayabilirsin.")
+            .gravity(Gravity.END)
+            .animated(true)
+            .transparentOverlay(true)
+            .build()
+
+        simpleTooltip!!.show()
+
+        val timer = object: CountDownTimer(5000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                println("$TAG countDown onTick")
+            }
+
+            override fun onFinish() {
+                println("$TAG countDown onFinish")
+                simpleTooltip!!.dismiss()
+            }
+        }
+        timer.start()
+        */
+
         if (textContainer.visibility == View.VISIBLE) {
             textControlButton.setImageResource(R.drawable.textoff)
             textContainerVisible = false

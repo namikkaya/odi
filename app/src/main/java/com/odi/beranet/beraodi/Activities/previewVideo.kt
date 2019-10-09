@@ -9,6 +9,7 @@ import android.media.MediaPlayer
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Bundle
+import android.os.CountDownTimer
 import android.os.Environment
 import android.os.Handler
 import android.provider.MediaStore
@@ -17,13 +18,12 @@ import android.support.v4.content.ContextCompat
 import android.support.v7.app.ActionBar
 import android.support.v7.app.AlertDialog
 import android.util.Log
-import android.view.SurfaceHolder
-import android.view.SurfaceView
-import android.view.View
+import android.view.*
 import android.widget.*
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.correctionData
 import com.odi.beranet.beraodi.models.dataBaseItemModel
+import com.odi.beranet.beraodi.models.toolTipModel
 import com.odi.beranet.beraodi.odiLib.*
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.animationManager
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
@@ -51,7 +51,7 @@ class previewVideo : baseActivity(),
         if (requestCode == Activity_Result.PRELOADER_FINISH.value && resultCode == RESULT_OK) {
 
             if (!videoSaveStatus) {
-                deleteVideoFile()
+                //deleteVideoFile() // yükleme bittiğinde video silinmesi kapatıldığından dolayı commentli
             }
             println("$TAG dbTakip: onActivityResult ")
             Toast.makeText(applicationContext, "Video başarılı bir şekilde yüklendi.", Toast.LENGTH_LONG).show()
@@ -248,6 +248,7 @@ class previewVideo : baseActivity(),
     private lateinit var uploadButton:ImageButton
     private lateinit var thumbImage:ImageView
     private lateinit var galleryButton:RoundRectCornerImageView
+    private lateinit var projegaleri:ImageView
     //lateinit var testImage:ImageView
     private var myActionBar: ActionBar? = null
 
@@ -267,6 +268,11 @@ class previewVideo : baseActivity(),
 
 
     var videoGalleryIntent: Intent? = null
+
+
+    var bottomBarHeight:Int? = null
+
+    private var tooltipManager:tooltipAnimationManager? = null
 
     /**
      * internet durum kontrolü
@@ -309,6 +315,22 @@ class previewVideo : baseActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_preview_video)
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        bottomBarHeight = this!!.getBottomHeight()
+
+        window.decorView.apply {
+            systemUiVisibility = /*View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or*/
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+
+        }
+
 
         navigationBarConfiguration()
         uiconfig()
@@ -349,6 +371,21 @@ class previewVideo : baseActivity(),
 
 
 
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        window.decorView.apply {
+            systemUiVisibility = /*View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or*/
+                View.SYSTEM_UI_FLAG_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or
+                        View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or
+                        View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION or
+                        View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+
+        }
     }
 
 
@@ -392,6 +429,8 @@ class previewVideo : baseActivity(),
         mediaPlayerLayout = findViewById(R.id.mediaPlayerLayout)
         videoView = findViewById(R.id.myVideoView_previewVideo)
         //testImage = findViewById(R.id.testImage)
+
+        projegaleri = findViewById(R.id.projegaleri)
 
         againButton = findViewById(R.id.againButton_previewVideo)
         saveButton = findViewById(R.id.saveButton_previewVideo)
@@ -509,6 +548,35 @@ class previewVideo : baseActivity(),
     var firstStart:Boolean = false
     override fun onResume() {
         super.onResume()
+
+        if (processType == nativePage.cameraOdile) {
+            if (Prefs.sharedData!!.getFirstLookPreviewTooltip() == null || Prefs.sharedData!!.getFirstLookPreviewTooltip() == false) {
+
+                projegaleri.visibility = View.VISIBLE
+
+                val timer = object: CountDownTimer(2000, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {
+
+                    }
+
+                    override fun onFinish() {
+                        val item2 = toolTipModel(projegaleri,"Kaydettiğin videolar proje galerisinde saklanır.", Gravity.START)
+                        val item1 = toolTipModel(saveButton,"Çektiğin videoları kaydedebilirsin.", Gravity.END)
+                        //val item3 = toolTipModel(uploadButton,"Seçili videoyu odiye yollar.", Gravity.START)
+
+                        val toolTipArray:ArrayList<toolTipModel> = ArrayList<toolTipModel>()
+                        //toolTipArray.add(item2)
+                        toolTipArray.add(item1)
+                        toolTipArray.add(item2)
+
+                        tooltipManager = tooltipAnimationManager(this@previewVideo,toolTipArray)
+                        tooltipManager!!.startTooltip(projegaleri)
+                        Prefs.sharedData!!.setFirstLookPreviewTooltip(true)
+                    }
+                }
+                timer.start()
+            }
+        }
 
         if (singleton.gotoCamera) {
             singleton.gotoCamera = false
@@ -982,6 +1050,22 @@ class previewVideo : baseActivity(),
 
             alert.show()
         }
+    }
+
+    private fun getBottomHeight (): Int? {
+        val resources = applicationContext!!.resources
+        val resourcesId = resources.getIdentifier("navigation_bar_height", "dimen", "android")
+        if (resourcesId > 0) {
+            var returnData:Int? = null
+            try {
+                returnData = resources.getDimensionPixelSize(resourcesId)
+            }catch (e: IllegalStateException){
+                Log.e("$TAG" , "${e.toString()} -> hata: 513")
+            }
+
+            return returnData
+        }
+        return 0
     }
 
 

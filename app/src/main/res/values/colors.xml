@@ -13,4 +13,5 @@
     <color name="slideButtonGrey">#AFAFAF</color>
     <color name="slideButtonOrangeLight">#FFB464</color>
     <color name="videoGalleryBlackBackground">#C9161616</color>
+    <color name="simpletooltip_text">#ffffff</color>
 </resources>
