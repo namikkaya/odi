@@ -19,7 +19,6 @@ class videoGalleryManager () {
             myManager?.clearExpired { status: Boolean ->
                 if (status) {
                     println("Bazı proje ve projeye bağlı videolar kaldırıldı")
-
                 } else {
                     println("Kaldırılacak video yok")
                 }

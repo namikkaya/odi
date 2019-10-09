@@ -39,6 +39,9 @@ class gallleryManager (val context: Context){
         myDbManager = dbManager(context)
     }
 
+    /**
+     * Kullanım süresi dolmuş videoları siler
+     */
     fun clearExpired(callback:(Boolean) -> Unit) {
         val allProjectData = myDbManager.allProject
         var status:Boolean = false
@@ -62,7 +65,7 @@ class gallleryManager (val context: Context){
 
             println("$TAG clearExpired: seconds: ${seconds} minutes: ${minutes} hours: ${hours} days: ${daysRemaining}")
 
-            if (daysRemaining >= 10) {
+            if (daysRemaining >= 5) {
                 deleteProject(item)
 
                 status = true

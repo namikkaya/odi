@@ -26,6 +26,7 @@ import com.odi.beranet.beraodi.models.playlistDataModel
 import com.odi.beranet.beraodi.models.playlistItemDataModel
 import com.odi.beranet.beraodi.models.videoData
 import com.odi.beranet.beraodi.odiLib.*
+import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -124,6 +125,14 @@ class cameraActivity() : baseActivity(),
     override fun onResume() {
         super.onResume()
         onCheckFreeSpace()
+
+        videoGalleryManager.clearExpired(applicationContext)  { status:Boolean ->
+            if (status) {
+                println("$TAG silinecek videolar silindi")
+            }else {
+                println("$TAG silinecek video yok")
+            }
+        }
     }
 
     private fun onCheckFreeSpace() {

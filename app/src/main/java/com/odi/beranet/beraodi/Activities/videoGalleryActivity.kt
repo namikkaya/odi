@@ -85,10 +85,10 @@ class videoGalleryActivity : AppCompatActivity(),AdapterView.OnItemClickListener
 
                         var myDays:String? = ""
                         if (daysRemaining < 1) {
-                            daysText.text = "Bugun içinde bu videolar silinecek."
+                            daysText.text = "En iyi odilemeni seç ve yükle. Yüklemediğin videolar ${hours.toString()} saat içinde otomatik olarak silinir."
                         }else{
                             myDays = daysRemaining.toString()
-                            daysText.text = "$myDays gün sonra bu videolar silinecek."
+                            daysText.text = "En iyi odilemeni seç ve yükle. Yüklemediğin videolar ${daysRemaining} gün içinde otomatik olarak silinir."
                         }
 
                     }
