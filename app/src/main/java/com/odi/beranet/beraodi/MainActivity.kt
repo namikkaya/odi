@@ -28,11 +28,14 @@ import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.TextView
+import com.crashlytics.android.Crashlytics
 import com.odi.beranet.beraodi.Activities.*
 import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.models.dataBaseProjectModel
@@ -73,6 +76,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     // bu değişkene yapılacak işlem tutulur tanitim veya showreel
     var processType:nativePage? = null
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -83,6 +87,17 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         //Prefs.sharedData!!.setFirstLookPreviewTooltip(false)
 
 
+        // crash test için----
+        /*
+        val crashButton = Button(this)
+        crashButton.text = "Crash!"
+        crashButton.setOnClickListener {
+            Crashlytics.getInstance().crash() // Force a crash
+        }
+
+        addContentView(crashButton, ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT))*/
 
         configuration()
 
@@ -418,10 +433,12 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
     private fun webViewOnLoad(userId:String?) {
         println("$TAG $userId sayfanın yüklenmesi gerekiyor")
+
         if (userId != null) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=$userId")
             //webView?.reload()
             println("Takip: webViewOnload reload1")
+
         }else {
             if (singleton.onesignal_playerId != null) {
                 webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)

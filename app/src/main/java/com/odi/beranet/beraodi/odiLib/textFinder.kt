@@ -1,5 +1,7 @@
 package com.odi.beranet.beraodi.odiLib
 
+import com.crashlytics.android.Crashlytics
+
 class textFinder {
     val TAG:String = "textFinder: "
     public fun inspector(str:String, completion: (nativePage,String?,String?) -> Unit) {
@@ -15,6 +17,8 @@ class textFinder {
                 if (second == "prf.png") {
                     val userInfo = secondArray[1].split("=")
                     singleton.userId = userInfo[1]
+                    Crashlytics.setUserIdentifier(singleton.userId)
+
                     val userID = singleton.userId
                     println("$TAG userID = $userID")
                     completion(nativePage.getPhotoAlbum,null,null)
@@ -22,6 +26,8 @@ class textFinder {
                 }else if (second == "updateprofil.png") { // kolaj
                     val userInfo = secondArray[1].split("=")
                     singleton.userId = userInfo[1]
+                    Crashlytics.setUserIdentifier(singleton.userId)
+
                     val userID = singleton.userId
                     println("$TAG userID = $userID")
                     completion(nativePage.photoCollage,null,null)
@@ -33,10 +39,12 @@ class textFinder {
                     if (checkTanitimORShowReel[2] == "87") { // showReel
                         val id = checkTanitimORShowReel[1]
                         singleton.userId = id
+                        Crashlytics.setUserIdentifier(singleton.userId)
                         completion(nativePage.cameraShowReel, checkTanitimORShowReel[2], id) // çekim yapılan 87 / userid
                     }else if (checkTanitimORShowReel[2] == "15") { // tanitim
                         val id = checkTanitimORShowReel[1]
                         singleton.userId = id
+                        Crashlytics.setUserIdentifier(singleton.userId)
                         completion(nativePage.cameraIdentification, checkTanitimORShowReel[2], id) // çekim yapılan 87 / userid
                     }
                     println("odi parameter 3")
@@ -50,6 +58,7 @@ class textFinder {
         if (uploadString[0] == "ek") {
             val ds = uploadString[1].split("_")
             singleton.userId = ds[1]
+            Crashlytics.setUserIdentifier(singleton.userId)
             if (ds[0] == "showreel") { // showreel upload
                 completion(nativePage.uploadShowReel, str, ds[1])
             }else{ // tanitim upload
@@ -75,6 +84,8 @@ class textFinder {
                 if ("odile.png?" == checkArray[0]) {
                     val userId:String = checkArray[1]
                     val projectId:String = checkArray[2]
+                    singleton.userId = userId
+                    Crashlytics.setUserIdentifier(singleton.userId)
                     completion(nativePage.cameraOdile,userId,projectId)
                 }
             }

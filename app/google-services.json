@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "659663988558",
+    "firebase_url": "https://odi-android-crash.firebaseio.com",
+    "project_id": "odi-android-crash",
+    "storage_bucket": "odi-android-crash.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:659663988558:android:c09b21e070fb005fd3e01f",
+        "android_client_info": {
+          "package_name": "com.odi.beranet.beraodi"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "659663988558-ardl29u0dd21fvgi44e50kb19vh54mkf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCvOzz46UKZUSr5m5U0jYJIiV6uBsGooEc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "659663988558-ardl29u0dd21fvgi44e50kb19vh54mkf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
