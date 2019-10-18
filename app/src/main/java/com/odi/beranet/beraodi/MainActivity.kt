@@ -101,20 +101,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         configuration()
 
-        /*
-        videoGalleryManager.getAllVideos(applicationContext) { status,data:ArrayList<dataBaseItemModel>? ->
-
-            println("$TAG saveDataBase: $status = data video: ${data!![0].videoPath} thumb: ${data!![0].thumb}")
-        }
-
-        videoGalleryManager.getAllProject(applicationContext) { status,data:ArrayList<dataBaseProjectModel>? ->
-            for (i in 0 until data!!.size) {
-                println("$TAG saveDataBase: project: ${data[i].projectId}")
-            }
-        }
-        */
-
-
     }
 
     private fun onCheckFreeSpace() {
@@ -500,6 +486,9 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         }
     }
 
+
+
+    var imageUriTest:Uri? = null
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         println("takibim: data $data")
@@ -508,6 +497,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             println(TAG + "onActivityResult galeri dönüşü")
             if (data != null) {
                 val contentURI = data!!.data
+
                 val destinationFileName = "SAMPLE_CROPPED_IMAGE_NAME"+".jpg"
 
                 val cropper = UCrop.of(contentURI, Uri.fromFile(File(cacheDir, destinationFileName)))
@@ -525,7 +515,13 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         // CROP
         else if (requestCode == UCrop.REQUEST_CROP) {
             // huvai telefonda crop özelliğinden dolayı image alınamadı
-            handleCropResult(data!!)
+
+            // --- bu kısım cihaz geldiğinde test edilmesi gerekiyor.
+            if(data == null){
+                Toast.makeText(applicationContext, "Seçtiğiniz dosya kaynaktan alınmadı. Lütfen başka kaynak deneyiniz.", Toast.LENGTH_SHORT).show()
+            }else {
+                handleCropResult(data!!)
+            }
 
         }
 
@@ -578,6 +574,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             var myFile = File(path)
             sendProfilePhoto(myFile)
         } else {
+
             Toast.makeText(this, "Resim düzenlenirken bir hata oluştu. kod:12", Toast.LENGTH_SHORT).show()
         }
     }

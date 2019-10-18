@@ -29,14 +29,14 @@ class photoViewModel (val _this:MainActivity) {
 
     private fun choosePhotoFromGallery(){
         val galleryIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-        galleryIntent.putExtra("crop", "true")
+        //galleryIntent.putExtra("crop", "true")
         galleryIntent.type = "image/*"
-        galleryIntent.putExtra("crop", "true")
+        /*galleryIntent.putExtra("crop", "true")
         galleryIntent.putExtra("outputX", 200)
         galleryIntent.putExtra("outputY", 200)
         galleryIntent.putExtra("aspectX", 1)
         galleryIntent.putExtra("aspectY", 1)
-        galleryIntent.putExtra("scale", true)
+        galleryIntent.putExtra("scale", true)*/
         galleryIntent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString())
 
         _this.startActivityForResult(galleryIntent, Activity_Result.GALLERY.value)

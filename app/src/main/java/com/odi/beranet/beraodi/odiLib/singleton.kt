@@ -34,5 +34,9 @@ class singleton {
         var gotoCamera:Boolean = false
 
         var cameraWidthHolder:Int? = null
+
+        var cameraUserID:String? = null
+        var cameraProjectID:String? = null
+        var cameraProcessType:nativePage? = null
     }
 }

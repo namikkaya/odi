@@ -59,6 +59,18 @@ class cameraActivity() : baseActivity(),
     var processType:nativePage? = null
     var bottomBarHeight:Int? = null
 
+    var myCameraFragment:previewFragment? = null
+
+    override fun onPreviewFragment_infoNullEx() {
+        super.onPreviewFragment_infoNullEx()
+        if (myCameraFragment != null) {
+            myCameraFragment!!.userId = this.userId
+            myCameraFragment!!.projectId = this.projectId
+            myCameraFragment!!.processType = this.processType
+        }
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_camera)
@@ -97,9 +109,14 @@ class cameraActivity() : baseActivity(),
 
 
         val cameraFragment = previewFragment.newInstance()
+        myCameraFragment = cameraFragment
         cameraFragment.userId = this.userId
         cameraFragment.projectId = this.projectId
         cameraFragment.processType = this.processType
+
+        singleton.cameraUserID = this.userId
+        singleton.cameraProjectID = this.projectId
+        singleton.cameraProcessType = this.processType
 
         if (bottomBarHeight != null){
             cameraFragment.bottomBarHeight = bottomBarHeight

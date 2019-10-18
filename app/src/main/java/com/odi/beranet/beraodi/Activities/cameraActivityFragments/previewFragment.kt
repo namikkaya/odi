@@ -22,10 +22,7 @@ import android.text.SpannableString
 import android.text.method.ScrollingMovementMethod
 import android.util.*
 import android.view.*
-import android.widget.FrameLayout
-import android.widget.ImageButton
-import android.widget.RelativeLayout
-import android.widget.TextView
+import android.widget.*
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.correctionData
 import com.odi.beranet.beraodi.models.dataBaseItemModel
@@ -68,6 +65,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
          * start Gallery
          */
         fun onPreviewFragment_GalleryActivityStart() {}
+
+        fun onPreviewFragment_infoNullEx() {}
     }
 
     private var myMediaManager:odiMediaManager? = null
@@ -160,6 +159,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             this@previewFragment.activity!!.finish()
         }
     }
+
 
     private lateinit var backgroundThread: HandlerThread
     private lateinit var backgroundHandler: Handler
@@ -268,6 +268,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private fun closeCamera() {
         if (this::captureSession.isInitialized) {
             captureSession.close()
+            // huwai cihazlarda hata alabiliyoruz. Bu kod bloğu sonradan eklendi
+            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
+                captureSession.stopRepeating()
+                captureSession.abortCaptures()
+            }
         }
 
         if (this::cameraDevice.isInitialized) {
@@ -668,6 +673,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun getGalleryData() {
         myCorrectionData = getProjectAndUserData()
+        if (processType == null) {
+            return
+        }
         myCorrectionData?.let { it ->
             println("$TAG saveDataBase: projectId:${it.projectId} - userId:${it.userId}")
             videoGalleryManager.getProjectVideos(activity!!.applicationContext, it.projectId!!) { status, items:ArrayList<dataBaseItemModel>? ->
@@ -1271,12 +1279,32 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private fun getProjectAndUserData() : correctionData {
         var myUserId:String = ""
         var myProjectId:String = ""
-        if (processType == nativePage.cameraOdile) {
-            myUserId = projectId!!
-            myProjectId = userId!!
+        if (processType != null) {
+            if (processType == nativePage.cameraOdile) {
+                myUserId = projectId!!
+                myProjectId = userId!!
+            }else {
+                myUserId = userId!!
+                myProjectId = projectId!!
+            }
         }else {
-            myUserId = userId!!
-            myProjectId = projectId!!
+            if (singleton.cameraProcessType != null){
+                processType = singleton.cameraProcessType
+                projectId = singleton.cameraProjectID
+                userId = singleton.cameraUserID
+            }
+
+            listener?.onPreviewFragment_infoNullEx()
+
+            if (processType != null) {
+                if (processType == nativePage.cameraOdile) {
+                    myUserId = projectId!!
+                    myProjectId = userId!!
+                } else {
+                    myUserId = userId!!
+                    myProjectId = projectId!!
+                }
+            }
         }
         return correctionData(myUserId, myProjectId)
     }

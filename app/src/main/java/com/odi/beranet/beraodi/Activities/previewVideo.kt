@@ -183,7 +183,11 @@ class previewVideo : baseActivity(),
 
     //-------------------------------------------------------------------
     override fun isPlaying(): Boolean {
-        return mp!!.isPlaying
+        var resultStatus:Boolean = false
+        if (mp != null) {
+            resultStatus = mp!!.isPlaying
+        }
+        return resultStatus
     }
 
     override fun canSeekForward(): Boolean {
@@ -191,12 +195,18 @@ class previewVideo : baseActivity(),
     }
 
     override fun getDuration(): Int {
-        return mp!!.duration
+        var resultDuration:Int = 0
+        if (mp != null) {
+            resultDuration = mp!!.duration
+        }
+        return resultDuration
     }
 
     override fun pause() {
         try {
-            mp!!.pause()
+            if (mp != null) {
+                mp!!.pause()
+            }
         }catch (e:IllegalStateException){
             println("$TAG ${e.toString()} -> kod: 126")
         }
@@ -211,7 +221,11 @@ class previewVideo : baseActivity(),
     }
 
     override fun getCurrentPosition(): Int {
-        return mp!!.currentPosition
+        var resultPosition:Int = 0
+        if (mp != null) {
+            resultPosition = mp!!.currentPosition
+        }
+        return resultPosition
     }
 
     override fun canSeekBackward(): Boolean {
@@ -220,7 +234,9 @@ class previewVideo : baseActivity(),
 
     override fun start() {
         try {
-            mp!!.start()
+            if (mp != null) {
+                mp!!.start()
+            }
         }catch (e:IllegalStateException){
             println("$TAG hata: ${e.toString()} -> kod 125")
         }
