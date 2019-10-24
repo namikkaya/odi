@@ -87,7 +87,12 @@ data class playlistItemDataModel(val index:Int?,
      */
     public fun playSound() {
         if (mediaPlayer != null || soundFile != "") {
-            mediaPlayer?.start()
+            try {
+                mediaPlayer?.start()
+            }catch (e:IllegalStateException){
+                println("HATAAAA: -> ${e.toString()} ")
+            }
+
         }
     }
 
@@ -99,8 +104,13 @@ data class playlistItemDataModel(val index:Int?,
 
     public fun stopSound() {
         if (mediaPlayer != null) {
-            mediaPlayer?.pause()
-            mediaPlayer?.seekTo(0)
+            try {
+                mediaPlayer?.pause()
+                mediaPlayer?.seekTo(0)
+            }catch (e:IllegalStateException){
+                println("HATAAAA:-> ${e.toString()} ")
+            }
+
         }
     }
 
@@ -128,6 +138,7 @@ data class playlistItemDataModel(val index:Int?,
                 mediaPlayer?.setDataSource(context, Uri.parse("http://odi.odiapp.com.tr/img/$soundFile"))
                 //mediaPlayer?.prepare()
                 mediaPlayer?.setVolume(1f,1f)
+                //mediaPlayer?.prepare()
                 mediaPlayer?.prepareAsync()
 
                 mediaPlayer?.setOnPreparedListener {

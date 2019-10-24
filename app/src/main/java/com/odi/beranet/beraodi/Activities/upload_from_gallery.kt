@@ -126,10 +126,10 @@ class upload_from_gallery : baseActivity(), odiInterface {
                 if (myFile!!.exists()) {
                     println("$TAG fileSize: video dosyası bulundu")
                     val file_size = (myFile.length() / (1024 * 1024)).toString().toInt()
-                    if (file_size > 50) {
+                    if (file_size > 100) {
                         sendButton.isClickable = false
                         sendButton.alpha = 0.5F
-                        this@upload_from_gallery.infoDialog("Video Boyutu","Video boyutu 50 MB sınırını aşıyor. Lütfen videonuzu tekrar gözden geçirip deneyin.")
+                        this@upload_from_gallery.infoDialog("Video Boyutu","Video boyutu 100 MB sınırını aşıyor. Lütfen videonuzu tekrar gözden geçirip deneyin.")
                     }
                 }else {
                     println("$TAG fileSize: video dosyası bulunamadı")

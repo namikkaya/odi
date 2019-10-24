@@ -24,6 +24,8 @@
 
         <com.odi.beranet.beraodi.odiLib.AutoFitTextureView
                 android:id="@+id/textureView"
+                android:layout_gravity="center"
+                android:foregroundGravity="center"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
 

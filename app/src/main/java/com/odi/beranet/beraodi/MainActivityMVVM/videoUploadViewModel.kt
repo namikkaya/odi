@@ -209,7 +209,65 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
             }
 
         }
-        VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
+
+
+        uri.let {
+            val myFile = getUriToFile(uri!!)
+            myFile.let {
+                if (myFile!!.exists()) {
+                    println("$TAG fileSize: video dosyası bulundu ")
+
+                    val file_size = (myFile.length() / (1024 * 1024)).toString().toInt()
+                    if (file_size < 30) { // video 30MB dan küçük ise
+
+                        println("$TAG video 30MB dan küçük direk yükleme yapılacak")
+
+                        // --
+                        val extStore = Environment.getExternalStorageDirectory().absolutePath
+                        val filePath = myFile.absolutePath
+                        val fileUri = Uri.parse(extStore+myFile.toString())
+
+                        if (myFile.exists()) {
+                            println("$TAG path: dosya var dosya boyu: ${myFile.length()}")
+                        }else {
+                            println("$TAG path: dosya yok")
+                        }
+
+                        val getPath = myFile.path
+                        println("$TAG path outputPath orj: $uri")
+                        println("$TAG path outputPath dir3: $outputDir3")
+                        println("$TAG path outputPath filepath: $filePath")
+                        println("$TAG path outputPath file uri: $fileUri")
+                        println("$TAG path outputPath file getPath: $getPath")
+                        val path = Uri.parse(getPath)
+
+                        fileDeletedEnd_holder = myFile
+
+                        listener?.onCompressVideoStatus(uploadId,null,true)
+
+                        //videoProcess(context, path, type)
+
+                        Thread {
+                            uploadFile(myFile,type,UPLOAD_FILE_TYPE.video)
+                            //getUriToFile(uri)?.let { uploadFile(it,type,UPLOAD_FILE_TYPE.video) } // samsung da çalıştı
+                        }.run()
+
+                        //
+                    }else { // 30 mb büyük ise
+                        println("$TAG video 30MB dan büyük compress yapılacak")
+                        VideoCompress.compressVideoMedium(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
+                    }
+                }else {
+                    println("$TAG fileSize: video dosyası bulunamadı")
+                }
+            }
+        }
+
+
+        //VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
+
+
+
 
         //String filePath = PathUtil.getPath(context,uri);
         //var filePath = PathUtil.getPath(_this.applicationContext, uri)

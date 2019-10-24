@@ -203,6 +203,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         if (session != null) {
                             captureSession = session
 
+
+                            Thread.sleep(500)
+
+                            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
+                                captureSession.stopRepeating()
+                                captureSession.abortCaptures()
+                            }
+
                             captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                             try{
                                 captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
@@ -269,10 +277,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         if (this::captureSession.isInitialized) {
             captureSession.close()
             // huwai cihazlarda hata alabiliyoruz. Bu kod bloğu sonradan eklendi
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
-                captureSession.stopRepeating()
-                captureSession.abortCaptures()
-            }
+
         }
 
         if (this::cameraDevice.isInitialized) {
@@ -575,8 +580,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             println("$TAG transformImage: 1 newWidthData: ${newWidthData}")
             println("$TAG transformImage: 1 width: ${width}")
         }
+
         textureView.setAspectRatio(newWidthData ,height)
         //textureView.setAspectRatio(1280,720)
+        //textureView.setAspectRatio(1920 ,1080)
 
         println("$TAG transformImage: previewSize: width 0: $newWidthData")
 
@@ -584,9 +591,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
 
         var _width = newWidthData //displayMetrics.widthPixels
-        var _height = displayMetrics.heightPixels
+        var _height = (newWidthData/1.77).toInt()//displayMetrics.heightPixels
 
+        // orwinal
         previewSize = Point(_width,_height)
+
         println("$TAG orientation: previewSize: width: ${previewSize!!.x} height: ${previewSize!!.y}")
 
         if (previewSize == null || textureView == null) {
