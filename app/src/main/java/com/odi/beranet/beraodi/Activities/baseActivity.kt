@@ -3,8 +3,10 @@ package com.odi.beranet.beraodi.Activities
 import android.os.Bundle
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
+import com.odi.beranet.beraodi.odiLib.versionControlManager
 import ua.eshcherbinock.reachability.Reachability
 import ua.eshcherbinock.reachability.ReachabilityStateObserver
+import java.net.URL
 
 
 abstract class baseActivity: AppCompatActivity(), ReachabilityStateObserver {

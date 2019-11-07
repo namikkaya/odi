@@ -16,7 +16,9 @@
     <string name="exitSaveVideoDesc">Geriye döndüğünüzde bu video silinecek. Bu işlemi yapmak istediğinize emin
         misiniz?
     </string>
-    <string name="galleriGidis">Daha önce kaydettiğiniz videoları seçmek istiyorsanız ilk önce bu video için karar vermelisiniz. Videoyu kaydetmeden bu adıma devam ederseniz bu video silinir.</string>
+    <string name="galleriGidis">Daha önce kaydettiğiniz videoları seçmek istiyorsanız ilk önce bu video için karar
+        vermelisiniz. Videoyu kaydetmeden bu adıma devam ederseniz bu video silinir.
+    </string>
     <string name="exitSaveButtonYes">Çık</string>
     <string name="exitSaveButtonNext">Devam Et</string>
     <string name="exitSaveButtonNo">İptal</string>
@@ -39,7 +41,9 @@
     </string>
     <string name="rotateImageDesc">Ekran Çevirme</string>
     <string name="videoRemoveTitle">Video Silinecek</string>
-    <string name="videoRemoveDesc">Seçtiğiniz video silindikten sonra geriye alamazsınız. Bu işlemi yapmak istiyor musunuz?</string>
+    <string name="videoRemoveDesc">Seçtiğiniz video silindikten sonra geriye alamazsınız. Bu işlemi yapmak istiyor
+        musunuz?
+    </string>
     <string name="videoRemoveYes">Sil</string>
     <string name="videoRemoveNo">İptal</string>
 </resources>

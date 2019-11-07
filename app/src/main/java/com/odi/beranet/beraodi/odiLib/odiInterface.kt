@@ -41,4 +41,5 @@ interface odiInterface {
     fun OnPlaylistItemPlayerEnd(index: Int?, type:RECORD_TYPE){}
 
 
+    fun versionControlManagerDelegate(map: HashMap<String, String>?){}
 }

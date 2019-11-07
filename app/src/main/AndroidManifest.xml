@@ -27,11 +27,16 @@
             android:supportsRtl="true"
             android:theme="@style/AppTheme"
             android:usesCleartextTraffic="true">
-        <activity android:name=".Activities.videoGalleryActivity"
+        <activity android:name=".Activities.versionControlActivity"
                   android:launchMode="singleTop"
-                  android:configChanges="keyboardHidden|orientation|screenSize"
-                  android:windowSoftInputMode="adjustResize"
-                  android:theme="@style/Theme.AppCompat.NewTrans">
+                  android:theme="@style/Theme.AppCompat.Translucent">
+        </activity>
+        <activity
+                android:name=".Activities.videoGalleryActivity"
+                android:configChanges="keyboardHidden|orientation|screenSize"
+                android:launchMode="singleTop"
+                android:theme="@style/Theme.AppCompat.NewTrans"
+                android:windowSoftInputMode="adjustResize">
         </activity>
         <activity
                 android:name=".Activities.previewVideo"

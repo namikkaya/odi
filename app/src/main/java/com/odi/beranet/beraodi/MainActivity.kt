@@ -37,10 +37,13 @@ import android.widget.RelativeLayout
 import android.widget.TextView
 import com.crashlytics.android.Crashlytics
 import com.odi.beranet.beraodi.Activities.*
+import com.odi.beranet.beraodi.models.async_versionControlModel
 import com.odi.beranet.beraodi.models.dataBaseItemModel
 import com.odi.beranet.beraodi.models.dataBaseProjectModel
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
+import java.net.URL
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import android.webkit.WebViewClient as WebViewClient1
 
 
@@ -99,8 +102,52 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT))*/
 
+
+
         configuration()
 
+        myAppVersionControl()
+
+    }
+
+    private fun myAppVersionControl() {
+        var url = URL("http://odi.odiapp.com.tr/img/androidVersionControl.xml")
+        val myModel = async_versionControlModel(url,this)
+        versionControlManager().execute(myModel)
+        versionControlHandler = object : Handler(Looper.getMainLooper()) {
+            override fun handleMessage(message: Message) {
+                val msg: HashMap<String, String>? = message.obj as? HashMap<String, String>
+                msg.let { value ->
+                    Thread(Runnable { // versiyon problemi oluyor mu kontro
+                        if (value?.get("minAndroidSDK") != null) {
+                            val target_os = value?.get("minAndroidSDK")!!.toInt()
+                            val android_os = android.os.Build.VERSION.SDK_INT
+                            val targetBuildCode = value?.get("versionCode")!!.toInt()
+                            if (android_os >= target_os){
+                                println("evrim main: güncelleme yapabilir. --")
+                                if (BuildConfig.VERSION_CODE < targetBuildCode) {
+                                    println("evrim main :Güncelleme yapması gerekiyor...")
+
+                                }else {
+                                    println("evrim main :Uygulama güncel")
+                                }
+
+                            }else {
+                                println("evrim main: android versiyonu uygun değil")
+                            }
+                        }
+                    }).start()
+                }
+            }
+        }
+    }
+
+    var versionControlHandler: Handler? = null
+
+    override fun versionControlManagerDelegate(map: HashMap<String, String>?) {
+        super.versionControlManagerDelegate(map)
+        var message: Message = versionControlHandler!!.obtainMessage(1,map)
+        message.sendToTarget()
     }
 
     private fun onCheckFreeSpace() {

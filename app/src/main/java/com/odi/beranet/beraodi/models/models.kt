@@ -15,6 +15,7 @@ import android.os.Handler
 import android.view.Gravity
 import android.view.View
 import java.io.Serializable
+import java.net.URL
 
 
 class Model_images {
@@ -197,3 +198,6 @@ data class correctionData(val userId:String?, val projectId:String?)
 
 // tooltip
 data class toolTipModel(val view: View?, val title:String?, val gravity: Int? = Gravity.END)
+
+data class async_versionControlModel (val _url:URL?,
+                                      val _listener: odiInterface) {}
