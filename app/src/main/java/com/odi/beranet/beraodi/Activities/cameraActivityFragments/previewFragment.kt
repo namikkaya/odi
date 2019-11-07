@@ -203,16 +203,19 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         if (session != null) {
                             captureSession = session
 
-
-                            Thread.sleep(500)
-
+                            // burası sonradan eklendi problem doğurabilir.
+                            //
                             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
                                 captureSession.stopRepeating()
                                 captureSession.abortCaptures()
                             }
 
+                            Thread.sleep(500)
+
                             captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
                             try{
+                                // değişiklik yapılıyor...
+                                //captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
                                 captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
                             }catch (e:IllegalStateException){
                                 Log.e(TAG, e.toString()+ " - previewSession captureSession")
@@ -230,7 +233,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun recordSession() {
         isRecording = true
-        //mediaRecorder!!.start()
+        //mediaRecorder!!.start()onConfigured
         try {
             mediaRecorder!!.start()
         }catch (e:IllegalStateException) {
@@ -420,8 +423,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setAudioChannels(2)
                 setOutputFile(createVideoFile())
                 //setVideoEncodingBitRate(10000000)
-                setVideoEncodingBitRate(cpHigh.videoBitRate)
-                setVideoFrameRate(cpHigh.videoFrameRate)
+                // bunlar şimdilik kapatıldı test için
+                //setVideoEncodingBitRate(cpHigh.videoBitRate)
+                //setVideoFrameRate(cpHigh.videoFrameRate)
                 DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
                 //setVideoSize(1280, 720)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
