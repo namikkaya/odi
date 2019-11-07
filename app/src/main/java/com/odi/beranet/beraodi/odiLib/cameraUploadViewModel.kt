@@ -320,6 +320,7 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
             }
 
         }
+
         VideoCompress.compressVideoMedium(uri.path, outputVideoName, newListener)
 
     }

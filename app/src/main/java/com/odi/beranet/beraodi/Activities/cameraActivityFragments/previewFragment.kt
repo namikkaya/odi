@@ -424,8 +424,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setOutputFile(createVideoFile())
                 //setVideoEncodingBitRate(10000000)
                 // bunlar şimdilik kapatıldı test için
-                //setVideoEncodingBitRate(cpHigh.videoBitRate)
-                //setVideoFrameRate(cpHigh.videoFrameRate)
+                setVideoEncodingBitRate(cpHigh.videoBitRate)
+                setVideoFrameRate(cpHigh.videoFrameRate)
                 DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
                 //setVideoSize(1280, 720)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
@@ -586,8 +586,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         }
 
         textureView.setAspectRatio(newWidthData ,height)
-        //textureView.setAspectRatio(1280,720)
-        //textureView.setAspectRatio(1920 ,1080)
 
         println("$TAG transformImage: previewSize: width 0: $newWidthData")
 
