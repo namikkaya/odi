@@ -110,6 +110,15 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
     }
 
+    var versionIntent:Intent? = null
+    fun versionControlIntentStart(desc:String) {
+        versionIntent = Intent(this, versionControlActivity::class.java)
+        versionIntent?.putExtra("desc", desc)
+        versionIntent?.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        versionIntent?.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        startActivity(versionIntent)
+    }
+
     private fun myAppVersionControl() {
         var url = URL("http://odi.odiapp.com.tr/img/androidVersionControl.xml")
         val myModel = async_versionControlModel(url,this)
@@ -123,11 +132,14 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                             val target_os = value?.get("minAndroidSDK")!!.toInt()
                             val android_os = android.os.Build.VERSION.SDK_INT
                             val targetBuildCode = value?.get("versionCode")!!.toInt()
+                            val versionDec:String = value?.get("appDesc")!!.toString()
                             if (android_os >= target_os){
                                 println("evrim main: güncelleme yapabilir. --")
                                 if (BuildConfig.VERSION_CODE < targetBuildCode) {
                                     println("evrim main :Güncelleme yapması gerekiyor...")
-
+                                    if (versionDec != null) {
+                                        versionControlIntentStart(versionDec)
+                                    }
                                 }else {
                                     println("evrim main :Uygulama güncel")
                                 }
