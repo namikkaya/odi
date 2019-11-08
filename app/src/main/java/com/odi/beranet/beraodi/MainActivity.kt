@@ -106,8 +106,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         configuration()
 
-        myAppVersionControl()
-
     }
 
     var versionIntent:Intent? = null
@@ -194,6 +192,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     override fun onResume() {
         super.onResume()
         println("Takip mainactivity onResume")
+        myAppVersionControl()
         onCheckFreeSpace()
 
         videoGalleryManager.clearExpired(applicationContext)  { status:Boolean ->
