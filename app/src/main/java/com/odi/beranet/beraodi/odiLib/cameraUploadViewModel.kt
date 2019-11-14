@@ -5,10 +5,7 @@ import android.content.ContextWrapper
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
 import android.net.Uri
-import android.os.Environment
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
+import android.os.*
 import android.provider.MediaStore
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
@@ -17,7 +14,9 @@ import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.async_upload_video
 import com.odi.beranet.beraodi.models.async_upload_video_complete
 import com.vincent.videocompressor.VideoCompress
+import org.jetbrains.anko.doAsync
 import java.io.*
+import java.lang.Thread.sleep
 import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
@@ -78,6 +77,8 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
             val thumb = getThumbnail(uri)
             val thumbFile = bitmapToFile(thumb, name)
+
+            println("$TAG ")
 
             val outputpath = outputDir4 + orgVideoName?.replace(".mp4", "_out.mp4")
             outputVideoName = outputpath
@@ -191,6 +192,20 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
                             if (value._uploadFileType == UPLOAD_FILE_TYPE.video) {
 
                                 request(value!!.requestPath!!)
+
+                                //sendGet(value!!.requestPath!!)
+
+                                val future = doAsync {
+                                    // do your background thread task
+                                    //result = someTask
+                                    /*
+                                    uiThread {
+                                        // use result here if you want to update ui
+                                        updateUI(result)
+                                    }*/
+                                }
+
+
                                 // bitti
                                 println("$TAG request atılmadı. işlem sona erdirildi. ${value!!.requestPath}")
 
@@ -215,13 +230,34 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
             }
         }
 
+        println("$TAG userId: $userId - $projectId")
         val myModel = async_upload_video(projectId, file, this, type, userId!!, uploadType!!)
         uploadClass = asyncUploadFile().execute(myModel) as asyncUploadFile?
 
     }
 
+    /*fun sendGet(url:String) {
+        val url = URL(url)
+
+        with(url.openConnection() as HttpURLConnection) {
+            requestMethod = "GET"  // optional default is GET
+
+            println("\nSent 'GET' request to URL : $url; Response Code : $responseCode")
+
+            inputStream.bufferedReader().use {
+                it.lines().forEach { line ->
+                    println("$TAG line: $line")
+                }
+            }
+            println("$TAG request atılmış olması gerekiyor-----")
+        }
+
+        listener?.onUploadVideoStatus(projectId,null,true)
+    }*/
+
     @Throws(IOException::class)
     fun request(uri: String): String {
+        println("$TAG request atılacak")
         val ab = StringBuilder()
         val url = URL(uri)
         val conn = url.openConnection() as HttpURLConnection
@@ -246,7 +282,6 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
                 // kaydedilmiş dosya ise silinmesin yoksa silinecek ---
 
 
-
                 /*if (fileDeletedEnd_holder != null) {
                     if (fileDeletedEnd_holder!!.exists()) {
                         if (fileDeletedEnd_holder!!.delete()) {
@@ -254,9 +289,11 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
                         }
                     }
                 }*/
-
                 listener?.onUploadVideoStatus(projectId,null,true)
+
             }
+            println("$TAG request atılmış olması gerekiyor-----")
+            //listener?.onUploadVideoStatus(projectId,null,true)
 
         } finally {
             conn.disconnect()
@@ -327,7 +364,15 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
 
     private fun getThumbnail(uri:Uri): Bitmap {
-        val bitmap = ThumbnailUtils.createVideoThumbnail(uri.path, MediaStore.Images.Thumbnails.MINI_KIND)
+        println("bitmapTakip: uri: "+ uri)
+        sleep(100)
+        var bitmap = ThumbnailUtils.createVideoThumbnail(uri.path, MediaStore.Images.Thumbnails.MINI_KIND)
+        if (bitmap == null) {
+            var file:File = File(uri.path)
+            sleep(100)
+            bitmap = ThumbnailUtils.createVideoThumbnail(uri.path, MediaStore.Images.Thumbnails.MINI_KIND)
+            sleep(100)
+        }
         val ism = _this as? previewVideo
         //_this.testImage.setImageBitmap(bitmap)
         /*ism?.let {

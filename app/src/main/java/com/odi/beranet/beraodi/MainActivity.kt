@@ -207,7 +207,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     override fun onPause() {
         super.onPause()
         println("Takip mainactivity onPause")
-
     }
 
 

@@ -129,6 +129,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         BACK(CameraCharacteristics.LENS_FACING_BACK)
     }
 
+
     /**
      * ekran duruşunu simgeler
      */
@@ -212,7 +213,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
                             Thread.sleep(500)
 
-                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE)
+                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
                             try{
                                 // değişiklik yapılıyor...
                                 //captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
@@ -230,6 +231,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         }
 
     }
+
 
     private fun recordSession() {
         isRecording = true
@@ -311,6 +313,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             return "showreel_$userId.mp4"
         }else {
             val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
+            println("videoFileName: ${this.userId}_${this.projectId}_VID_$timestamp.mp4")
             return "${this.userId}_${this.projectId}_VID_$timestamp.mp4"
         }
     }
@@ -335,6 +338,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         val videoFile = File(videoFolder, newName)
 
         currentVideoFilePath = videoFile.absolutePath
+
+        println("createVideo: currentVideoFilePath $currentVideoFilePath")
 
         return videoFile
     }
@@ -391,7 +396,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         val rotation = activity?.windowManager?.defaultDisplay?.rotation
         val sensorOrientation = cameraCharacteristics(
-            cameraId(cameraPositionHolder.value), //LENS_FACING_FRONT
+            cameraId(cameraPositionHolder.value),
             CameraCharacteristics.SENSOR_ORIENTATION
         )
 
@@ -592,8 +597,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
 
-        var _width = newWidthData //displayMetrics.widthPixels
-        var _height = (newWidthData/1.77).toInt()//displayMetrics.heightPixels
+        var _width = newWidthData
+        var _height = (newWidthData/1.77).toInt()
 
         // orwinal
         previewSize = Point(_width,_height)
@@ -616,8 +621,18 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         val centerY = textureRectF.centerY()
 
 
-        var myRate:Float = 0F
         if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
+
+            // front kamera için dönüş
+
+            var myDegress:Int = 0
+            when(rotation) {
+                Surface.ROTATION_0 ->  { myDegress = 0 }
+                Surface.ROTATION_90 -> { myDegress = 90 }
+                Surface.ROTATION_180 -> { myDegress = 180 }
+                Surface.ROTATION_270 -> { myDegress = 270 }
+            }
+
             previewRectF.offset(centerX - previewRectF.centerX(), centerY - previewRectF.centerY())
 
             matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL) // FILL idi önce ki
@@ -634,7 +649,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
             println("$TAG transformImage: 3 width: ${olmasiGereken} oran")
 
-            //matrix.postScale(1F, 1F, centerX, centerY)
+
+
+            //matrix.postScale(-1F, 1F, centerX, centerY)
 
             matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL)
 
@@ -787,6 +804,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     var fileStatus:Boolean = false
 
     private fun startRecordSession() {
+        // focus ekleme
+        captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
         recordSession()
     }
 
@@ -797,7 +816,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         uiCameraDesing(UIDESIGN.NORMAL)
         // thumbnail
-        //createRoundThumb() // bitmap olarak dönecek
+        // createRoundThumb() // bitmap olarak dönecek
     }
 
     private fun createVideoThumb() = ThumbnailUtils.createVideoThumbnail(currentVideoFilePath, MediaStore.Video.Thumbnails.MINI_KIND)
@@ -980,20 +999,45 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             Log.d(TAG, "stopRecording")
             // işlem buraya
 
+            println("$TAG onRecordButtonEvent ${currentVideoFilePath}")
 
             val newVideoPath = VideoCompress.parseVideo(currentVideoFilePath)
             println("$TAG onRecordButtonEvent parseVideoPath: $newVideoPath")
             //val myUri = Uri.fromFile(File(currentVideoFilePath)) // standart çalışan uygulama
             val myUri = Uri.fromFile(File(newVideoPath))
 
+            var newFile = renameFile(myUri!!.path , currentVideoFilePath)
+
+            val sendUri = Uri.fromFile(newFile)
+
+            println("$TAG onRecordButtonEvent sonAdım: ${newFile!!.path}")
+
 
             //val myUri = Uri.fromFile(File(currentVideoFilePath))
-            listener?.onPreviewFragment_Record_Success(myUri)
+            listener?.onPreviewFragment_Record_Success(sendUri)
 
             /*val myUri = Uri.fromFile(File(currentVideoFilePath))
             listener?.onPreviewFragment_Record_Success(myUri)*/
         }else {
            startCountDown()
+        }
+    }
+
+    private val VIDEO_DIRECTORY_2 = "videoOfOdiRecord"
+    private fun renameFile(oldName:String, newName:String):File? {
+        val dir = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY_2)
+        if (dir.exists()) {
+            var from = File(oldName)
+            var to = File(newName)
+            if (from.exists()) {
+                from.renameTo(to)
+                println("$TAG dbTakip rename file from: ${from.path} -- to: ${to.path}")
+                return to
+            }else {
+                return null
+            }
+        }else {
+            return null
         }
     }
 

@@ -76,7 +76,21 @@ class asyncUploadFile: AsyncTask<async_upload_video, Int, String?>() {
             }
         }else if (type == nativePage.cameraOdile) { // camera odile
 
-            val requestPath = "http://odi.odiapp.com.tr/upld.php?fileName=${params[0]?._uploadFile?.name}&uzanti=mp4"
+            var str = params[0]?._uploadFile?.name
+            var delimiter1 = "_"
+            val parts = str!!.split(delimiter1, ignoreCase = true)
+
+            var requestPath = "http://odi.odiapp.com.tr/upld.php?fileName=${params[0]?._uploadFile?.name}&uzanti=mp4"
+            if (parts[0] == "VID") {
+                requestPath = "http://odi.odiapp.com.tr/upld.php?fileName=${params[0]?.userId}_${params[0]?._id}_${params[0]?._uploadFile?.name}&uzanti=mp4"
+            }
+
+            //print(parts)
+
+            println("cameraUploadViewModel: async  userID: ${params[0]?.userId} - ${params[0]?._id}")
+
+
+            //val requestPath = "http://odi.odiapp.com.tr/upld.php?fileName=${params[0]?._uploadFile?.name}&uzanti=mp4"
 
             if (uploadFileType == UPLOAD_FILE_TYPE.video) {
                 returningRequestPath = requestPath
