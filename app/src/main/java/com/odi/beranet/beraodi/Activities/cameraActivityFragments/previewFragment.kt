@@ -817,6 +817,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         uiCameraDesing(UIDESIGN.NORMAL)
         // thumbnail
         // createRoundThumb() // bitmap olarak dönecek
+        // yeni
     }
 
     private fun createVideoThumb() = ThumbnailUtils.createVideoThumbnail(currentVideoFilePath, MediaStore.Video.Thumbnails.MINI_KIND)
