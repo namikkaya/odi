@@ -313,14 +313,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             return "showreel_$userId.mp4"
         }else {
             val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
-            println("videoFileName: ${this.userId}_${this.projectId}_VID_$timestamp.mp4")
+            //println("videoFileName: ${this.userId}_${this.projectId}_VID_$timestamp.mp4")
             return "${this.userId}_${this.projectId}_VID_$timestamp.mp4"
         }
     }
 
     private fun createVideoFile():File {
 
-        println("createVideo: video dosyası oluşturulacak")
+        //println("createVideo: video dosyası oluşturulacak")
         var folder = Environment.getExternalStorageDirectory()
 
         var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"videoOfOdiRecord")
@@ -328,7 +328,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             videoFolder.mkdirs()
 
         var newName = createVideoFileName()
-        println("createVideo: video ismi $newName")
         /*val removeFile = File(videoFolder, newName)
         if (removeFile.exists()) {
             removeFile.delete()
@@ -505,7 +504,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                     reset()
                 }
             }catch(stopException:RuntimeException){
-                Log.e(TAG, stopException.toString())
+                Log.e(TAG, stopException.toString() + " stopMediaRecorder 12")
             }
         }
     }
@@ -522,10 +521,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun cameraId(lens:Int):String {
         var deviceId = listOf<String>()
-
+        
         try {
             val cameraIdList = cameraManager.cameraIdList
             deviceId = cameraIdList.filter { lens == cameraCharacteristics(it,CameraCharacteristics.LENS_FACING) }
+            print("$TAG deviceID: ${deviceId}")
         }catch (e:CameraAccessException){
             Log.e(TAG, e.toString() + " cameraId")
         }
@@ -615,19 +615,16 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         val textureRectF = RectF(0F,0F,_width.toFloat(),height.toFloat()) // width
 
-        var previewRectF:RectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat())// previewSize!!.x.toFloat() // yan olduğu için x ve y yer değiştirir.
+        var previewRectF = RectF(0F,0F,previewSize!!.y.toFloat(),previewSize!!.x.toFloat())// previewSize!!.x.toFloat() // yan olduğu için x ve y yer değiştirir.
 
         val centerX = textureRectF.centerX()
         val centerY = textureRectF.centerY()
 
-
         if (rotation == Surface.ROTATION_90 || rotation == Surface.ROTATION_270) {
-
             // front kamera için dönüş
-
             var myDegress:Int = 0
             when(rotation) {
-                Surface.ROTATION_0 ->  { myDegress = 0 }
+                Surface.ROTATION_0 -> { myDegress = 0 }
                 Surface.ROTATION_90 -> { myDegress = 90 }
                 Surface.ROTATION_180 -> { myDegress = 180 }
                 Surface.ROTATION_270 -> { myDegress = 270 }
@@ -644,19 +641,13 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             //val newWidth = previewSize!!.y.toFloat() * (1280/720)
             //val calcWidth = previewSize!!.x.toFloat() / newWidth
             //val scale = Math.max(calcWidth , 1F)
-
-            val olmasiGereken = (previewSize!!.x.toFloat()*720) / 1280
-
-            println("$TAG transformImage: 3 width: ${olmasiGereken} oran")
-
-
-
-            //matrix.postScale(-1F, 1F, centerX, centerY)
+            //val olmasiGereken = (previewSize!!.x.toFloat()*720)/1280
+            //println("$TAG transformImage: 3 width: ${olmasiGereken} oran")
 
             matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL)
-
             matrix.postRotate(90F*(rotation-2),centerX,centerY)
         }
+
         textureView.setTransform(matrix)
 
         updateTextureViewsize(_width, _height)
@@ -842,6 +833,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     override fun onResume() {
         super.onResume()
+        println("$TAG onResume: ")
         setupCamera()
         getGalleryData() // gallery bilgisini alır.
 
@@ -880,8 +872,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     override fun onPause() {
-        removeCamera()
         super.onPause()
+        println("$TAG onPause ")
+        removeCamera()
     }
 
     override fun onDestroy() {
@@ -896,9 +889,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun removeCamera() {
         stopRecordSession()
-        stopBackgroundThread()
         closeCamera()
-
+        stopBackgroundThread()
         mOrientationListener?.let {
             it.disable()
         }

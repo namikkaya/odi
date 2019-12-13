@@ -2,15 +2,12 @@ package com.odi.beranet.beraodi.odiLib
 
 import android.content.Context
 import android.content.ContextWrapper
-import android.graphics.Bitmap
 import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.*
 import android.provider.MediaStore
-import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import com.odi.beranet.beraodi.Activities.previewVideo
-import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.async_upload_video
 import com.odi.beranet.beraodi.models.async_upload_video_complete
 import com.vincent.videocompressor.VideoCompress
@@ -21,6 +18,14 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.*
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+
+
+
+
+
+
 
 
 class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterface?): odiInterface  {
@@ -373,12 +378,24 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
             bitmap = ThumbnailUtils.createVideoThumbnail(uri.path, MediaStore.Images.Thumbnails.MINI_KIND)
             sleep(100)
         }
-        val ism = _this as? previewVideo
-        //_this.testImage.setImageBitmap(bitmap)
-        /*ism?.let {
-            it.testImage.setImageBitmap(bitmap)
-        }*/
-        return bitmap
+
+        val rate:Double = bitmap.width.toDouble() / bitmap.height.toDouble()
+        val width:Double = 320.0
+        val height = width / rate
+
+        print("resim: width : ${bitmap.width} - ${bitmap.height} - rate: $rate")
+
+        val resizeBitmapFile = resizeBitmap(bitmap,width.toInt(),height.toInt())
+
+        val out = ByteArrayOutputStream()
+        resizeBitmapFile.compress(Bitmap.CompressFormat.JPEG, 70, out)
+
+        return ByteArrayToBitmap(out.toByteArray())
+    }
+
+    fun ByteArrayToBitmap(byteArray: ByteArray): Bitmap {
+        val arrayInputStream = ByteArrayInputStream(byteArray)
+        return BitmapFactory.decodeStream(arrayInputStream)
     }
 
     private fun bitmapToFile(bitmap:Bitmap, name:String): File {
@@ -399,5 +416,16 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
         val returningFile:File = File(file.absolutePath)
         return returningFile
     }
+
+    // Method to resize a bitmap programmatically
+    private fun resizeBitmap(bitmap:Bitmap, width:Int, height:Int):Bitmap{
+        return Bitmap.createScaledBitmap(
+            bitmap,
+            width,
+            height,
+            true
+        )
+    }
+
 
 }
