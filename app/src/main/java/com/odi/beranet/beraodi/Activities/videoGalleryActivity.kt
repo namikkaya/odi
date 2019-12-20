@@ -261,7 +261,6 @@ class videoGalleryActivity : AppCompatActivity(),AdapterView.OnItemClickListener
 
 
     override fun onBackPressed() {
-        //super.onBackPressed()
         onCloseButtonEvent()
     }
 

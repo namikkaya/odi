@@ -20,6 +20,25 @@ import android.content.ContentValues
 import android.content.Intent
 
 
+object FolderManager{
+    val VIDEO_DIRECTORY_TEMP = "odiTemporyVideoFile"
+
+    /**
+     * video Temp folder oluşturur.
+     */
+    fun tempFolder():File? {
+        val dir = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY_TEMP)
+        if (dir.exists()) {
+            print("tempFolder: zaten oluşturulmuş yolu yollanıyor $dir")
+            return dir
+        }else {
+            print("tempFolder: yeni oluşturuldu. $dir")
+            dir.mkdirs()
+            return dir
+        }
+    }
+}
+
 class upload_from_gallery : baseActivity(), odiInterface {
 
     private val TAG:String = "upload_from_gallery"
@@ -36,17 +55,20 @@ class upload_from_gallery : baseActivity(), odiInterface {
     private lateinit var cancelButton:Button
     private lateinit var sendButton:Button
 
+    private var tempFolder:File? = null
+
     // -- values
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(com.odi.beranet.beraodi.R.layout.activity_upload_from_gallery)
+        setContentView(R.layout.activity_upload_from_gallery)
+
+        tempFolder = FolderManager.tempFolder()
 
         navigationBarConfiguration()
         onGetIntentData()
         onGalleryConfiguration()
         onUIDesignConfiguration()
-
     }
 
     var warningIntent: Intent? = null
@@ -126,10 +148,10 @@ class upload_from_gallery : baseActivity(), odiInterface {
                 if (myFile!!.exists()) {
                     println("$TAG fileSize: video dosyası bulundu")
                     val file_size = (myFile.length() / (1024 * 1024)).toString().toInt()
-                    if (file_size > 100) {
+                    if (file_size > 150) {
                         sendButton.isClickable = false
                         sendButton.alpha = 0.5F
-                        this@upload_from_gallery.infoDialog("Video Boyutu","Video boyutu 100 MB sınırını aşıyor. Lütfen videonuzu tekrar gözden geçirip deneyin.")
+                        this@upload_from_gallery.infoDialog("Video Boyutu","Video boyutu 150 MB sınırını aşıyor. Lütfen videonuzu tekrar gözden geçirip deneyin.")
                     }
                 }else {
                     println("$TAG fileSize: video dosyası bulunamadı")
@@ -300,14 +322,8 @@ class upload_from_gallery : baseActivity(), odiInterface {
 
 
     private fun saveVideoGallery(filePath: File?) {
-        var randomName:String = getRandomString(8)
         val values = ContentValues(3)
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-        //values.put(MediaStore.Video.Media.TITLE, "odi_$randomName");
-        //values.put(MediaStore.Video.Media.DATA, filePath?.getAbsolutePath());
-        //values.put(MediaStore.Video.Media.DATA, f.getAbsolutePath());
-
-        // Add a new record (identified by uri) without the video, but with the values just set.
         val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
 
         try {

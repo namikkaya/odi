@@ -590,9 +590,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         if (resultCode == Activity.RESULT_OK &&
             requestCode == Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value) {
-
             val selectedImageUri:Uri = data!!.data
-
             val intent = Intent(this, upload_from_gallery::class.java)
             intent.putExtra("selectedPath", selectedImageUri.toString())
             println("yükleme: mainActivity $processType")
@@ -622,12 +620,60 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         }
     }
 
+    // Method to resize a bitmap programmatically
+    private fun resizeBitmap(bitmap:Bitmap, width:Int, height:Int):Bitmap{
+        return Bitmap.createScaledBitmap(
+            bitmap,
+            width,
+            height,
+            true
+        )
+    }
+
     // ucrop event dönüşü
     private fun handleCropResult(@NonNull result:Intent) {
         val resultUri: Uri? = UCrop.getOutput(result)
         if (resultUri != null) {
             val bitmap = MediaStore.Images.Media.getBitmap(this.contentResolver, resultUri)
-            val path = saveImage(bitmap)
+
+            var sendBitmap:Bitmap?
+
+
+            if (bitmap.width > 500 || bitmap.height > 500) {
+                if (bitmap.width >= bitmap.height) {
+                    val rate:Double = bitmap.width.toDouble() / bitmap.height.toDouble()
+                    val width = 500
+                    val height:Double = width / rate
+
+                    val bitmapResizeFile = resizeBitmap(bitmap, width.toInt(), height.toInt())
+                    val outputStream = ByteArrayOutputStream()
+                    bitmapResizeFile.compress(Bitmap.CompressFormat.JPEG,80,outputStream)
+
+                    sendBitmap = bitmapResizeFile
+                }else {
+
+                    val rate:Double = bitmap.height.toDouble() / bitmap.width.toDouble()
+                    val height = 500
+                    val width:Double = height / rate
+
+                    val bitmapResizeFile = resizeBitmap(bitmap, width.toInt(), height.toInt())
+                    val outputStream = ByteArrayOutputStream()
+                    bitmapResizeFile.compress(Bitmap.CompressFormat.JPEG,80,outputStream)
+
+                    sendBitmap = bitmapResizeFile
+
+                }
+
+            }else {
+                val bitmapResizeFile = resizeBitmap(bitmap, bitmap.width, bitmap.height)
+                val outputStream = ByteArrayOutputStream()
+                bitmapResizeFile.compress(Bitmap.CompressFormat.JPEG,80,outputStream)
+
+                sendBitmap = bitmapResizeFile
+            }
+
+
+            val path = saveImage(sendBitmap)
             var myFile = File(path)
             sendProfilePhoto(myFile)
         } else {
@@ -674,7 +720,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         try
         {
-            println("$TAG image gallery Saving")
             val f = File(wallpaperDirectory, ((Calendar.getInstance()
                 .timeInMillis).toString() + ".jpg"))
             f.createNewFile()
@@ -683,7 +728,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             MediaScannerConnection.scanFile(this, arrayOf(f.getPath()), arrayOf("image/jpeg"), null)
             fo.close()
 
-            println(TAG + " image gallery saved")
 
             return f.getAbsolutePath()
         }

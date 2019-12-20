@@ -33,6 +33,7 @@ import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import com.squareup.picasso.Picasso
 import com.vincent.videocompressor.VideoCompress
 import io.github.douglasjunior.androidSimpleTooltip.SimpleTooltip
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.IOException
 import java.lang.IllegalArgumentException
@@ -107,7 +108,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private var myCorrectionData:correctionData? = null
     private var videoGalleryStatus:Boolean = false
 
-    val cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P)
+    val cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_CIF) // QUALITY_720P
 
     var userId:String? = null
     var projectId:String? = null
@@ -130,8 +131,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
 
+    private var DISPLAY_WIDTH:Int? = 1280
+    private var DISPLAY_HEIGHT:Int? = 720
+
+    var restart:Boolean = false
+
     /**
      * ekran duruşunu simgeler
+     * @property LAND_SCAPE : yan duruş
+     * @property OTHER : yan hariç diğerleri
      */
     enum class Orientation_Status {
         LAND_SCAPE,
@@ -142,7 +150,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private val deviceStateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(camera: CameraDevice) {
-            Log.d(TAG , "managerProblem ")
             if(camera != null) {
                 cameraDevice = camera
                 previewSession()
@@ -150,13 +157,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         }
 
         override fun onDisconnected(camera: CameraDevice) {
-            Log.d(TAG, "camera device disconnected")
             camera.close()
             cameraDevice.close()
         }
 
         override fun onError(camera: CameraDevice, error: Int) {
-            Log.d(TAG, "camera device error")
             this@previewFragment.activity!!.finish()
         }
     }
@@ -177,15 +182,16 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private fun previewSession() {
         setupMediaRecorder()
 
+
+        runBlocking {
+            captureSessionRelease()
+        }
+
         try {
             val surfaceTexture = textureView.surfaceTexture
-
-
             surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
             val surface = Surface(surfaceTexture)
-
             val recordSurface = mediaRecorder!!.surface
-
             captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD) // TEMPLATE_PREVIEW
             captureRequestBuilder.addTarget(surface)
             captureRequestBuilder.addTarget(recordSurface)
@@ -204,19 +210,17 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         if (session != null) {
                             captureSession = session
 
-                            // burası sonradan eklendi problem doğurabilir.
-                            //
                             if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
                                 captureSession.stopRepeating()
                                 captureSession.abortCaptures()
                             }
+                            println("$TAG captureSession => onConfigured")
+
 
                             Thread.sleep(500)
 
                             captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
                             try{
-                                // değişiklik yapılıyor...
-                                //captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
                                 captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
                             }catch (e:IllegalStateException){
                                 Log.e(TAG, e.toString()+ " - previewSession captureSession")
@@ -232,39 +236,20 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     }
 
+    suspend fun captureSessionRelease() {
+        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
+            captureSession.stopRepeating()
+            captureSession.abortCaptures()
+        }
+    }
+
 
     private fun recordSession() {
         isRecording = true
-        //mediaRecorder!!.start()onConfigured
         try {
             mediaRecorder!!.start()
         }catch (e:IllegalStateException) {
             Log.e(TAG, e.toString() + " kod 124")
-
-
-
-            /*
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle("Androidly Alert")
-            builder.setMessage("We have a message")
-
-
-            builder.setPositiveButton(android.R.string.yes) { dialog, which ->
-                Toast.makeText(applicationContext,
-                    android.R.string.yes, Toast.LENGTH_SHORT).show()
-            }
-
-            builder.setNegativeButton(android.R.string.no) { dialog, which ->
-                Toast.makeText(applicationContext,
-                    android.R.string.no, Toast.LENGTH_SHORT).show()
-            }
-
-            builder.setNeutralButton("Maybe") { dialog, which ->
-                Toast.makeText(applicationContext,
-                    "Maybe", Toast.LENGTH_SHORT).show()
-            }
-            builder.show()*/
-
             var alertBuilder = AlertDialog.Builder(previewFragment@this.activity)
             alertBuilder.setTitle(R.string.recordAlertTitle)
             alertBuilder.setMessage(R.string.recordAlertDesc)
@@ -278,23 +263,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         uiCameraDesing(UIDESIGN.RECORDING)
     }
 
-    private fun closeCamera() {
-        if (this::captureSession.isInitialized) {
-            captureSession.close()
-            // huwai cihazlarda hata alabiliyoruz. Bu kod bloğu sonradan eklendi
-
-        }
-
-        if (this::cameraDevice.isInitialized) {
-            cameraDevice.close()
-        }
-    }
-
+    // arka plan işleri başlangıç
     private fun startBackgroundThread() {
         backgroundThread = HandlerThread("Camera2 Kotlin").also { it.start() }
         backgroundHandler = Handler(backgroundThread.looper)
     }
-
+    // arka plan işleri kapat
     private fun stopBackgroundThread() {
         backgroundThread.quitSafely()
 
@@ -313,14 +287,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             return "showreel_$userId.mp4"
         }else {
             val timestamp = SimpleDateFormat("yyMMdd_HHmmss").format(Date())
-            //println("videoFileName: ${this.userId}_${this.projectId}_VID_$timestamp.mp4")
             return "${this.userId}_${this.projectId}_VID_$timestamp.mp4"
         }
     }
 
     private fun createVideoFile():File {
-
-        //println("createVideo: video dosyası oluşturulacak")
         var folder = Environment.getExternalStorageDirectory()
 
         var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"videoOfOdiRecord")
@@ -328,17 +299,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             videoFolder.mkdirs()
 
         var newName = createVideoFileName()
-        /*val removeFile = File(videoFolder, newName)
-        if (removeFile.exists()) {
-            removeFile.delete()
-            println("createVideo: video aynı isimde vardı temizlendi")
-        }*/
 
         val videoFile = File(videoFolder, newName)
-
         currentVideoFilePath = videoFile.absolutePath
-
-        println("createVideo: currentVideoFilePath $currentVideoFilePath")
 
         return videoFile
     }
@@ -359,37 +322,16 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun getDirFile() {
-
         val letDirectory = File(context?.filesDir, "")
-        //println("allfiles: ${letDirectory.mkdirs()}")
         val files = letDirectory.listFiles()
-        //println("allfiles item files: ${files}")
         for (i in 0 until files.size){
             if (files[i].name.endsWith(".mp4")){
                 files[i].delete()
             }
-            //println("allfiles item: ${files[i].absolutePath}")
         }
     }
 
     private fun setupMediaRecorder() {
-        if (mediaRecorder != null) {
-            try {
-                mediaRecorder?.stop()
-
-            }catch (e:IllegalStateException) {
-                Log.e(TAG, e.toString() + " setupMediaRecorder")
-            }
-
-        }
-        try {
-            mediaRecorder?.reset()
-        }catch (e:IllegalStateException){
-            Log.e("TAG", e.toString())
-        }
-        //mediaRecorder?.reset()
-        mediaRecorder?.release()
-        mediaRecorder = null
 
         mediaRecorder = MediaRecorder()
 
@@ -426,28 +368,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
                 setOutputFile(createVideoFile())
-                //setVideoEncodingBitRate(10000000)
-                // bunlar şimdilik kapatıldı test için
                 setVideoEncodingBitRate(cpHigh.videoBitRate)
                 setVideoFrameRate(cpHigh.videoFrameRate)
+
                 DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
+
                 //setVideoSize(1280, 720)
                 setVideoEncoder(MediaRecorder.VideoEncoder.H264)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC) //acc AMR_NB
-
-                /*
-                        setVideoSource(MediaRecorder.VideoSource.SURFACE)
-                        setAudioSource(MediaRecorder.AudioSource.MIC)
-                        setAudioEncodingBitRate(44100)
-                        setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                        setAudioChannels(2)
-                        setOutputFile(createVideoFile())
-                        setVideoEncodingBitRate(10000000)
-                        setVideoFrameRate(30)
-                        setVideoSize(1280,720)
-                        setVideoEncoder(MediaRecorder.VideoEncoder.H264)
-                        setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                        */
 
                 prepare()
 
@@ -457,15 +385,17 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 Log.e(TAG, "$e mediaRecorder 2")
             }catch (e:IOException) {
                 Log.e(TAG, "$e mediaRecorder 3")
+                // note: yeni => alt tarafı kapattık 19 12 2019
+                /*
                 if (!restart) {
                     var intent = activity?.intent
                     activity?.finish()
                     startActivity(intent)
-                    activity!!.overridePendingTransition(0,0);
+                    activity!!.overridePendingTransition(0,0)
                     restart = true
                 }else {
                     restart = false
-                }
+                }*/
 
             }
 
@@ -475,31 +405,19 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         orientationListenerConfig()
     }
 
-    var restart:Boolean = false
 
-    //private File tempSoundFile; and then if(Build.VERSION.SDK_INT < 26) { recorder.setOutputFile(tempSoundFile.getAbsolutePath()); } else{ recorder.setOutputFile(tempSoundFile); }
-    //private var tempSon
 
     private fun stopMediaRecorder() {
         if (mediaRecorder != null) {
             try{
-
                 mediaRecorder?.apply {
                     try {
                         stop()
-                        release()
+                        reset() // nesne tekrar kullanılabilir
+                        //release() // nesne tekrar kullanılamaz. sonlandırır.
                         //prepare()
                     }catch (e:IllegalStateException){
                         Log.e(TAG, e.toString() + " stopMediaRecorder 11")
-                        /*val alert = AlertDialog.Builder(activity)
-                        alert.setTitle(R.string.recordAlert2Title)
-                        alert.setMessage(R.string.recordAlert2Desc)
-                        alert.setCancelable(false)
-
-                        alert.setPositiveButton(R.string.permissionGeneralButton) { dialogInterface: DialogInterface, i: Int ->
-                            activity!!.finish()
-                        }
-                        alert.show()*/
                     }
                     reset()
                 }
@@ -525,7 +443,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         try {
             val cameraIdList = cameraManager.cameraIdList
             deviceId = cameraIdList.filter { lens == cameraCharacteristics(it,CameraCharacteristics.LENS_FACING) }
-            print("$TAG deviceID: ${deviceId}")
         }catch (e:CameraAccessException){
             Log.e(TAG, e.toString() + " cameraId")
         }
@@ -561,8 +478,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         }
     }
 
-    private var DISPLAY_WIDTH:Int? = 1280
-    private var DISPLAY_HEIGHT:Int? = 720
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -585,14 +500,10 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                     newWidthData = singleton.cameraWidthHolder!!
                 }
             }
-
-            println("$TAG transformImage: 1 newWidthData: ${newWidthData}")
-            println("$TAG transformImage: 1 width: ${width}")
         }
 
         textureView.setAspectRatio(newWidthData ,height)
 
-        println("$TAG transformImage: previewSize: width 0: $newWidthData")
 
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
@@ -600,10 +511,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         var _width = newWidthData
         var _height = (newWidthData/1.77).toInt()
 
-        // orwinal
         previewSize = Point(_width,_height)
-
-        println("$TAG orientation: previewSize: width: ${previewSize!!.x} height: ${previewSize!!.y}")
 
         if (previewSize == null || textureView == null) {
             println("$TAG orientation: transformImage return ")
@@ -634,8 +542,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
             matrix.setRectToRect(textureRectF, previewRectF, Matrix.ScaleToFit.FILL) // FILL idi önce ki
 
-            println("$TAG transformImage: 1 width: ${width.toFloat()} - height: ${height.toFloat()}")
-            println("$TAG transformImage: 2 width: ${previewSize!!.x.toFloat()} - height: ${previewSize!!.y.toFloat()}")
 
             //val scale = Math.max(width.toFloat() / previewSize!!.x.toFloat(), height.toFloat() / previewSize!!.y.toFloat() )
             //val newWidth = previewSize!!.y.toFloat() * (1280/720)
@@ -720,7 +626,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         }
     }
 
-
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
@@ -737,7 +642,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         volumeButton.setOnClickListener(clickListener)
         cameraGalleryButton.setOnClickListener(clickListener)
 
-        // video unutma
         getDirFile()
     }
 
@@ -782,13 +686,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     fun openCamera() {
-
         val displayMetrics = DisplayMetrics()
         activity!!.windowManager.defaultDisplay.getMetrics(displayMetrics)
         var width = displayMetrics.widthPixels
         var height = displayMetrics.heightPixels
         previewSize = Point(width,height)
-
         checkCameraPermission()
     }
 
@@ -803,12 +705,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private fun stopRecordSession() {
         fileStatus = true
         stopMediaRecorder()
-        //previewSession()
-
         uiCameraDesing(UIDESIGN.NORMAL)
-        // thumbnail
-        // createRoundThumb() // bitmap olarak dönecek
-        // yeni
     }
 
     private fun createVideoThumb() = ThumbnailUtils.createVideoThumbnail(currentVideoFilePath, MediaStore.Video.Thumbnails.MINI_KIND)
@@ -818,26 +715,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         return drawable
     }
 
-    private fun onChangeCamera() {
-        vibratePhone()
-        if (cameraPositionHolder == Camera_Position.FRONT) {
-            cameraPositionHolder = Camera_Position.BACK
-            removeCamera()
-            setupCamera()
-        }else {
-            cameraPositionHolder = Camera_Position.FRONT
-            removeCamera()
-            setupCamera()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        println("$TAG onResume: ")
-        setupCamera()
-        getGalleryData() // gallery bilgisini alır.
-
-
+    private fun toolTipCheckStart() {
         if (processType == nativePage.cameraOdile) {
             if (Prefs.sharedData!!.getFirstLookCameraTooltip() == null || Prefs.sharedData!!.getFirstLookCameraTooltip() == false) {
 
@@ -849,9 +727,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                     override fun onFinish() {
                         val item1 = toolTipModel(textControlButton,"Altyazıyı kapatıp, açabilirsin.",Gravity.END)
                         val item2 = toolTipModel(volumeButton,"Dış sesi kapatıp, açabilirsin.",Gravity.END)
-                        //val item3 = toolTipModel(changeCameraButton,"Ön ve arka kamerayı ayarlayabilirsin.",Gravity.END)
-                        //val item4 = toolTipModel(cameraCloseButton,"Kameradan çıkabilirsin.",Gravity.START)
-                        //val item5 = toolTipModel(recordButton,"Görüntü kaydetmek için bu düğmeyi kullanmalısın.",Gravity.START)
 
                         val toolTipArray:ArrayList<toolTipModel> = ArrayList<toolTipModel>()
                         toolTipArray.add(item1)
@@ -868,13 +743,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 timer.start()
             }
         }
-
-    }
-
-    override fun onPause() {
-        super.onPause()
-        println("$TAG onPause ")
-        removeCamera()
     }
 
     override fun onDestroy() {
@@ -887,23 +755,59 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     }
 
-    private fun removeCamera() {
-        stopRecordSession()
+    private fun onChangeCamera() {
+        vibratePhone()
+        if (cameraPositionHolder == Camera_Position.FRONT) {
+            cameraPositionHolder = Camera_Position.BACK
+            closeCamera()
+            setupCamera()
+        }else {
+            cameraPositionHolder = Camera_Position.FRONT
+            closeCamera()
+            setupCamera()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        println("$TAG onResume: ")
+        // Thread
+        startBackgroundThread()
+        closeCamera()
+        setupCamera()
+        getGalleryData() // Database galeri bilgisini çeker
+        toolTipCheckStart()
+    }
+
+    override fun onPause() {
+        super.onPause()
         closeCamera()
         stopBackgroundThread()
+        println("$TAG onPause ")
+    }
+
+    private fun closeCamera() {
+        if (this::captureSession.isInitialized) {
+            captureSession.close()
+        }
+
+        if (this::cameraDevice.isInitialized) {
+            cameraDevice.close()
+        }
+    }
+
+    private fun removeCamera() {
+        stopRecordSession() // note: yeni
+        closeCamera()
         mOrientationListener?.let {
             it.disable()
         }
-
     }
 
     private fun setupCamera() {
-        startBackgroundThread()
         if (textureView.isAvailable) {
-            println("$TAG onResume textureView.isAvailable true openCamera")
             openCamera()
         } else {
-            println("$TAG onResume textureView.isAvailable false textureview surface listener add")
             textureView.surfaceTextureListener = surfaceListener
         }
     }
@@ -911,8 +815,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private val surfaceListener = object: TextureView.SurfaceTextureListener {
 
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
-            Log.d(TAG, "textureSurface width: $width height: $height")
-            println("$TAG textureSurface width: $width height: $height")
             transformImage(width, height)
             openCamera()
         }
@@ -920,7 +822,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?) = true
 
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
-            println("$TAG textureSurface width: $width height: $height")
+            //println("$TAG textureSurface width: $width height: $height")
         }
 
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) = Unit
@@ -1008,6 +910,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
             //val myUri = Uri.fromFile(File(currentVideoFilePath))
             listener?.onPreviewFragment_Record_Success(sendUri)
+
+
+            if (mediaRecorder != null) {
+                mediaRecorder!!.reset()
+                mediaRecorder!!.release()
+            }
 
             /*val myUri = Uri.fromFile(File(currentVideoFilePath))
             listener?.onPreviewFragment_Record_Success(myUri)*/

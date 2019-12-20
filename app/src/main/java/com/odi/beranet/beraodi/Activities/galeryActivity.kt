@@ -96,7 +96,6 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
         setContentView(R.layout.activity_galery)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         userId = singleton.userId
-        println("$TAG onCreate userId: $userId")
         uiActionBar()
         checkGalleryPermission()
     }
@@ -478,9 +477,43 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
         rightBottomImage?.buildDrawingCache()
         val bitmap3 = Bitmap.createBitmap(rightBottomImage?.drawingCache)
 
-        val bitmapFinal = combineImageIntoOne(bitmap1, bitmap2, bitmap3)
+        var _bitmapFinal = combineImageIntoOne(bitmap1, bitmap2, bitmap3)
 
-        //   bitmapFinal=addWaterMark(bitmapFinal);
+        var bitmapFinal:Bitmap?
+
+        if (_bitmapFinal.width.toDouble() > 1000 || _bitmapFinal.height > 1000) {
+            if (_bitmapFinal.width >= _bitmapFinal.height) {
+                val rate:Double = _bitmapFinal.width.toDouble() / _bitmapFinal.height.toDouble()
+                val width = 1000.0
+                val height:Double = width / rate
+
+                val bitmapResizeFile = resizeBitmap(_bitmapFinal, width.toInt(), height.toInt())
+                val outputStream = ByteArrayOutputStream()
+                bitmapResizeFile.compress(Bitmap.CompressFormat.JPEG,100,outputStream)
+
+                bitmapFinal = bitmapResizeFile
+
+            }else {
+                val rate:Double = _bitmapFinal.height.toDouble() / _bitmapFinal.width.toDouble()
+                val height = 1000.0
+                val width:Double = height / rate
+
+                val bitmapResizeFile = resizeBitmap(_bitmapFinal, width.toInt(), height.toInt())
+                val outputStream = ByteArrayOutputStream()
+                bitmapResizeFile.compress(Bitmap.CompressFormat.JPEG,100,outputStream)
+
+                bitmapFinal = bitmapResizeFile
+            }
+
+
+        }else {
+            val bitmapResizeFile = resizeBitmap(_bitmapFinal, _bitmapFinal.width, _bitmapFinal.height)
+            val outputStream = ByteArrayOutputStream()
+            bitmapResizeFile.compress(Bitmap.CompressFormat.JPEG,80,outputStream)
+
+            bitmapFinal = bitmapResizeFile
+        }
+
 
         contentPreloader.visibility = View.VISIBLE
 
@@ -493,17 +526,16 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
             dest.delete()
         }
         try {
-
             val out = FileOutputStream(dest)
             bitmapFinal.setPixel(bitmapFinal.width - 1, bitmapFinal.height - 1, PixelFormat.RGBA_8888)
-            bitmapFinal.compress(Bitmap.CompressFormat.JPEG, 100, out)
+            bitmapFinal.compress(Bitmap.CompressFormat.JPEG, 80, out)
+
             out.flush()
             out.close()
 
             MediaStore.Images.Media.insertImage(contentResolver, dest.absolutePath, dest.name, dest.name)
 
             filepath = dest.path
-
 
             uploadProfilePhotoMessageHandler = object : Handler(Looper.getMainLooper()) {
                 override fun handleMessage(message: Message) {
@@ -529,13 +561,20 @@ class galeryActivity : baseActivity(), AdapterView.OnItemClickListener, odiInter
                 val responseserver = multipart.finish()
                 println("$TAG multipart response: $responseserver ")
             }).start()
-
-
-
         } catch (e: Exception) {
             Toast.makeText(applicationContext, e.message, Toast.LENGTH_LONG).show()
         }
 
+    }
+
+    // Method to resize a bitmap programmatically
+    private fun resizeBitmap(bitmap:Bitmap, width:Int, height:Int):Bitmap{
+        return Bitmap.createScaledBitmap(
+            bitmap,
+            width,
+            height,
+            true
+        )
     }
 
     private fun combineImageIntoOne(bLeft: Bitmap, RightTop: Bitmap, RightBot: Bitmap): Bitmap {

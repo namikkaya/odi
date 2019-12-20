@@ -118,7 +118,7 @@ class cameraActivity() : baseActivity(),
         singleton.cameraProjectID = this.projectId
         singleton.cameraProcessType = this.processType
 
-        if (bottomBarHeight != null){
+        if (bottomBarHeight != null) {
             cameraFragment.bottomBarHeight = bottomBarHeight
         }
 
@@ -133,7 +133,6 @@ class cameraActivity() : baseActivity(),
         viewPager.addOnPageChangeListener(this)
 
         getProjectData()
-
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -171,7 +170,6 @@ class cameraActivity() : baseActivity(),
     override fun onResume() {
         super.onResume()
         onCheckFreeSpace()
-
         videoGalleryManager.clearExpired(applicationContext)  { status:Boolean ->
             if (status) {
                 println("$TAG silinecek videolar silindi")
@@ -214,7 +212,7 @@ class cameraActivity() : baseActivity(),
         return
     }
 
-    fun fixEncodingUnicode(response: String): String {
+    private fun fixEncodingUnicode(response: String): String {
         var str = ""
         try {
             val charset: Charset = Charsets.UTF_8
@@ -228,8 +226,7 @@ class cameraActivity() : baseActivity(),
     }
 
     var dataTypeHolder:RECORD_TYPE? = null
-    fun getProjectData() {
-        // Instantiate the RequestQueue.
+    private fun getProjectData() {
         val queue = Volley.newRequestQueue(this)
 
         var url:String = ""
@@ -239,13 +236,10 @@ class cameraActivity() : baseActivity(),
             url = "http://odi.odiapp.com.tr/core/odi.php?id=$projectId"
         }
 
-        println("$TAG jsonData: strResp url: $url ->url ")
-
         val stringReq = StringRequest(Request.Method.GET, url,
             Response.Listener<String> { response ->
 
                 var strResp = response.toString()
-                println("$TAG jsonData: strResp str: $strResp")
 
                 var data:JSONObject? = null
                 try {
@@ -257,7 +251,6 @@ class cameraActivity() : baseActivity(),
 
                 try {
                     val in_data = data?.getJSONObject("PROJE")
-                    println("$TAG jsonData: strRespAll : $in_data")
                     val in_projectType: Int? = in_data?.getInt("TIP") // 1
 
                     when (in_projectType) {
@@ -268,17 +261,15 @@ class cameraActivity() : baseActivity(),
 
                     if (dataTypeHolder != null) {
                         if (dataTypeHolder == RECORD_TYPE.MONOLOG) {
-                            val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
-                            //println("$TAG jsonData: strResp : $in_Attr")
+                            val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR")
                             jsonParser(dataTypeHolder, in_Attr, null)
                         }
                         if (dataTypeHolder == RECORD_TYPE.DIALOG) {
                             val intAttrArray:JSONArray? = in_data?.getJSONArray("ATTR")
-                            //println("$TAG jsonData: strResp dialog : $intAttrArray")
                             jsonParser(dataTypeHolder, null, intAttrArray)
                         }
                         if(dataTypeHolder == RECORD_TYPE.PLAYMODE) {
-                            val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR") //ATTR
+                            val in_Attr: JSONObject? = in_data?.getJSONObject("ATTR")
                             jsonParser(dataTypeHolder, in_Attr, null)
                         }
                     }
@@ -340,9 +331,7 @@ class cameraActivity() : baseActivity(),
                         contentPreloader.visibility = View.VISIBLE
 
                         for (i in 0 until attr2.length()) {
-                            //println("$TAG jsonData: strResp item : ${attr2[i]} i: $i ")
                             val itemData = attr2[i] as JSONObject
-                            //println("$TAG jsonData: final : ${itemData.getString("text")} i: $i ")
                             val in_index:Int? = itemData?.getInt("index")
                             val in_text:String? = fixEncodingUnicode(itemData?.getString("text"))
                             val in_soundFilePath:String? = itemData?.getString("soundfile")
@@ -357,9 +346,6 @@ class cameraActivity() : baseActivity(),
                             }
 
                             val in_type:String? = itemData?.getString("type")
-
-                            println("$TAG jsonData: sound: soundfile:$in_soundFilePath - type: $in_type duration: $duration")
-
 
                             val _playlistItemDataModel = playlistItemDataModel(in_index,
                                 in_text,
@@ -414,7 +400,6 @@ class cameraActivity() : baseActivity(),
         println("$TAG onCameraActivity_playlistSoundComplete: $index nolu indexli item yüklendi")
         soundCounter ++
         if (soundFileCountHolder <= soundCounter) {
-            println("$TAG onCameraActivity_playlistSoundComplete SUCCESS")
 
             when(dataTypeHolder) {
                 RECORD_TYPE.DIALOG -> {
@@ -422,10 +407,8 @@ class cameraActivity() : baseActivity(),
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.DIALOG, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
                     myFragment.getData(playlistDataModel)
-                    println("Tektik: playMode dialog get data çalıştı")
                 }
                 RECORD_TYPE.PLAYMODE -> {
-                    println("Tektik: playMode playModeget data çalıştı")
                     contentPreloader.visibility = View.INVISIBLE
                     var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
                     var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
@@ -464,11 +447,14 @@ class cameraActivity() : baseActivity(),
                 println("$TAG dbTakip: geri dönüş okey")
             }else if (data?.getStringExtra("STATUS") == "RESET" || singleton.cameraResult == 2) {
                 singleton.cameraResult = 0
+
+                /*
                 var intent = intent
                 this.finish()
                 startActivity(intent)
                 overridePendingTransition(0,0)
                 println("$TAG takip: geri dönüş reset")
+                */
             }
 
         }

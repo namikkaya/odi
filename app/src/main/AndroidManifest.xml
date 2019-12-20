@@ -57,7 +57,8 @@
                 android:configChanges="keyboardHidden|orientation|screenSize"
                 android:screenOrientation="landscape"
                 android:theme="@style/Theme.AppCompat.Light.NoActionBar.FullScreen"
-                android:windowSoftInputMode="adjustResize">
+                android:windowSoftInputMode="adjustResize"
+                android:hardwareAccelerated="true">
         </activity>
         <activity
                 android:name=".Activities.placeHolderPage"

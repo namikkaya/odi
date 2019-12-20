@@ -73,9 +73,6 @@ class previewVideo : baseActivity(),
                         singleton.thumbPath = myModel.thumb
 
                         singleton.cameraResult = 2
-                        /*var myFile = File(myModel.videoPath)
-                        vMyUri = Uri.fromFile(myFile)
-                        addMediaController()*/
                     }
                 }
 
@@ -87,8 +84,6 @@ class previewVideo : baseActivity(),
             }
         }
     }
-
-    var preloaderIntent: Intent? = null
 
     private fun preloader() {
         preloaderIntent = Intent(this, preloaderActivity::class.java)
@@ -265,7 +260,6 @@ class previewVideo : baseActivity(),
     private lateinit var thumbImage:ImageView
     private lateinit var galleryButton:RoundRectCornerImageView
     private lateinit var projegaleri:ImageView
-    //lateinit var testImage:ImageView
     private var myActionBar: ActionBar? = null
 
     private var projectId:String? = null
@@ -281,14 +275,14 @@ class previewVideo : baseActivity(),
     var videoUploadController: cameraUploadViewModel? = null
 
     public var errorVideoProblem:Boolean = false
-
-
     var videoGalleryIntent: Intent? = null
-
-
     var bottomBarHeight:Int? = null
 
     private var tooltipManager:tooltipAnimationManager? = null
+
+    var preloaderIntent: Intent? = null
+    private val VIDEO_DIRECTORY = "videosOfOdi"
+    private val VIDEO_DIRECTORY_2 = "videoOfOdiRecord"
 
     /**
      * internet durum kontrolü
@@ -382,10 +376,7 @@ class previewVideo : baseActivity(),
             saveButton.visibility = View.INVISIBLE
         }
 
-
         videoUploadController = cameraUploadViewModel(this,this)
-
-
 
     }
 
@@ -414,26 +405,18 @@ class previewVideo : baseActivity(),
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
         mediaPlayerConfig(holder)
-        println("$TAG surfaceCreated")
     }
 
     private fun mediaPlayerConfig(holder:SurfaceHolder?) {
-        println("$TAG mediaPlayerConfig init ${vMyUri?.path}")
-
-
         try {
             mp!!.setDataSource(this,vMyUri)
             mp!!.prepare()
             mp!!.setDisplay(holder)
 
-
             surfaceHolder = holder
 
             mp?.setOnPreparedListener(this)
             mp?.setOnCompletionListener(this)
-            // oynatılan video silinmeye giderse
-
-            //mp!!.start()
         }catch (e:IOException) {
             println("$TAG ${e.toString()} -- hata32")
         }catch (e:IllegalStateException) {
@@ -444,7 +427,6 @@ class previewVideo : baseActivity(),
     private fun uiconfig() {
         mediaPlayerLayout = findViewById(R.id.mediaPlayerLayout)
         videoView = findViewById(R.id.myVideoView_previewVideo)
-        //testImage = findViewById(R.id.testImage)
 
         projegaleri = findViewById(R.id.projegaleri)
 
@@ -462,22 +444,12 @@ class previewVideo : baseActivity(),
         videoView.setOnClickListener(clickListener)
         galleryButton.setOnClickListener(clickListener)
 
-        /*
-        videoGalleryManager.getProjectVideos(applicationContext,projectId!!){ status: Boolean, data: ArrayList<dataBaseItemModel>? ->
-            data.let {
-
-            }
-
-        }
-*/
-
     }
 
     private fun getGalleryData() {
         val correction = getProjectAndUserData()
         videoGalleryManager.getProjectVideos(applicationContext, correction.projectId!!) { status, items:ArrayList<dataBaseItemModel>? ->
             items?.let { itv ->
-                println("$TAG saveDataBase: projeye ait video sayısı: ${itv.size}")
                 itv.reverse()
                 if (itv.size > 0) {
                     galleryButton.visibility = View.VISIBLE
@@ -550,7 +522,6 @@ class previewVideo : baseActivity(),
 
     override fun onPause() {
         super.onPause()
-        println("$TAG onPause")
         if (mp != null) {
             try {
                mp?.pause()
@@ -561,10 +532,7 @@ class previewVideo : baseActivity(),
         }
     }
 
-    var firstStart:Boolean = false
-    override fun onResume() {
-        super.onResume()
-
+    private fun toolTipCheckStart() {
         if (processType == nativePage.cameraOdile) {
             if (Prefs.sharedData!!.getFirstLookPreviewTooltip() == null || Prefs.sharedData!!.getFirstLookPreviewTooltip() == false) {
 
@@ -593,6 +561,13 @@ class previewVideo : baseActivity(),
                 timer.start()
             }
         }
+    }
+
+    var firstStart:Boolean = false
+    override fun onResume() {
+        super.onResume()
+
+        toolTipCheckStart()
 
         if (singleton.gotoCamera) {
             singleton.gotoCamera = false
@@ -673,7 +648,6 @@ class previewVideo : baseActivity(),
 
     private fun OnAgainButtonEvent() {
         vibratePhone()
-        println("$TAG onAgainButtonEvent")
 
         singleton.uriPath = null
         singleton.thumbPath = null
@@ -689,17 +663,12 @@ class previewVideo : baseActivity(),
 
     private fun onAlert_againAlert() {
         val alert = AlertDialog.Builder(this)
-
         alert.setTitle(R.string.exitSaveVideoTitle)
         alert.setMessage(R.string.exitSaveVideoDesc)
-
         alert.setCancelable(false)
-
         alert.setPositiveButton(R.string.exitSaveButtonYes){ dialog, which ->
             vibratePhone()
             deleteVideoFile()
-            //finish()
-
             intent.putExtra("STATUS", "RESET")
             setResult(RESULT_OK, intent)
             finish()
@@ -710,14 +679,10 @@ class previewVideo : baseActivity(),
         }
 
         alert.show()
-
-        println("$TAG onAlertdialog open")
     }
 
     private fun OnSaveButtonEvent() {
         vibratePhone()
-
-
         saveButton.isEnabled = false
         saveButton.alpha = 0.5f
 
@@ -729,8 +694,6 @@ class previewVideo : baseActivity(),
 
         check_writeRead_permission { status ->
             if (status == true) {
-                var myFile = File(vMyUri!!.path)
-                //saveVideoGallery(myFile)
                 saveDataBase()
             }else {
                 Toast.makeText(applicationContext, "Okuma ve Yazma izinleriniz eksik.", Toast.LENGTH_LONG).show()
@@ -769,19 +732,13 @@ class previewVideo : baseActivity(),
 
 
 
-    private val VIDEO_DIRECTORY = "videosOfOdi"
-    private val VIDEO_DIRECTORY_2 = "videoOfOdiRecord"
-
     // video telefon galerisine kaydeder...
     private fun saveVideoGallery(filePath: File?) {
 
         saveButton.isEnabled = false
 
-        var randomName:String = getRandomString(8)
         val values = ContentValues(3)
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-        //values.put(MediaStore.Video.Media.TITLE, "odi_$randomName")
-        //values.put(MediaStore.Video.Media.DATA, filePath?.absolutePath)
 
         val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
 
@@ -829,7 +786,6 @@ class previewVideo : baseActivity(),
             output?.close()
             output = null
 
-            //val newFile = File("$outputPath.mp4")
             sendBroadcast(Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, uri))
 
             if (newfile.exists()) {

@@ -20,12 +20,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-
-
-
-
-
-
+import kotlinx.coroutines.runBlocking
 
 
 class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterface?): odiInterface  {
@@ -51,6 +46,8 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
     var fileDeletedEnd_holder:File? = null
 
     var outputVideoName:String? = null
+
+    private val VIDEO_DIRECTORY_2 = "videoOfOdiRecord"
 
     /***
      * @param uploadId => projectId
@@ -78,15 +75,18 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
 
         if (type == nativePage.cameraOdile) {
-            var name = videoFile!!.name!!.replace(".mp4", "_out.jpg")
+            //var name = videoFile!!.name!!.replace(".mp4", "_out.jpg")
 
+            var name = videoFile!!.name!!.replace(".mp4", ".jpg")
             val thumb = getThumbnail(uri)
             val thumbFile = bitmapToFile(thumb, name)
 
-            println("$TAG ")
+            println("$TAG thumbnail path image: $name")
 
             val outputpath = outputDir4 + orgVideoName?.replace(".mp4", "_out.mp4")
             outputVideoName = outputpath
+
+            println("$TAG thumbnail path video: $outputpath")
 
             uploadFile(thumbFile!!, type!!, UPLOAD_FILE_TYPE.bitmap)
         }
@@ -132,7 +132,6 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
     }
 
 
-    private val VIDEO_DIRECTORY_2 = "videoOfOdiRecord"
     private fun renameFile(oldName:String, newName:String):File? {
         val dir = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY_2)
         if (dir.exists()) {
@@ -155,7 +154,6 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
         var message: Message = uploadVideoMessageHandler!!.obtainMessage(1,resultData)
         message.sendToTarget()
-
     }
 
     private fun uploadFile(file:File, type:nativePage, uploadType:UPLOAD_FILE_TYPE) {
@@ -167,8 +165,6 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
                     if (value!!._id == "error") {
                         listener?.onUploadExitPreloader()
-
-                        //_this.uploadVideoError = true
                         Thread(Runnable { // yükleme işlemi bitti request atılacak
                             val myThis = _this as? previewVideo
                             if (myThis != null) {
@@ -282,23 +278,12 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
                 }
                 ab.append(inputLine)
 
-                // Bu dosya silinmememesi gerekiyor 10 gün sonra kendi silinecek
-
-                // kaydedilmiş dosya ise silinmesin yoksa silinecek ---
-
-
-                /*if (fileDeletedEnd_holder != null) {
-                    if (fileDeletedEnd_holder!!.exists()) {
-                        if (fileDeletedEnd_holder!!.delete()) {
-                            println("$TAG delete file: dosya başarı ile silindi")
-                        }
-                    }
-                }*/
-                listener?.onUploadVideoStatus(projectId,null,true)
+                // note: yeni 19 12 2019
+                //listener?.onUploadVideoStatus(projectId,null,true)
 
             }
             println("$TAG request atılmış olması gerekiyor-----")
-            //listener?.onUploadVideoStatus(projectId,null,true)
+            listener?.onUploadVideoStatus(projectId,null,true)
 
         } finally {
             conn.disconnect()
@@ -311,6 +296,7 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
     fun videoUploadStart(context: Context, uri:Uri, type:nativePage) {
 
+        /*
         val newListener = object: VideoCompress.CompressListener {
             override fun onStart() {
 
@@ -363,14 +349,43 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
 
         }
 
-        VideoCompress.compressVideoMedium(uri.path, outputVideoName, newListener)
+        VideoCompress.compressVideoMedium(uri.path, outputVideoName, newListener)*/
+        // note: yeni 19 12 2019 yukarıda ki kompresor kaldırıldı.
 
+        val lFile = File(uri.path)
+        //val newFile = renameFileName(lFile, outputVideoName!!)
+        Thread {
+            if (lFile != null) {
+                uploadFile(lFile,type,UPLOAD_FILE_TYPE.video)
+            }
+        }.run()
+        /*
+        runBlocking {
+            val newFile = renameFileName(lFile, outputVideoName!!)
+            Thread {
+                if (newFile != null) {
+                    uploadFile(newFile,type,UPLOAD_FILE_TYPE.video)
+                }
+            }.run()
+        }*/
+
+    }
+
+    fun renameFileName(file:File, newName:String):File? {
+        var from = file
+        var to = File(newName)
+        if (from.exists()) {
+            from.renameTo(to)
+            println("$TAG dbTakip rename file from: ${from.path} -- to: ${to.path}")
+            return from
+        }else {
+            return null
+        }
     }
 
 
     private fun getThumbnail(uri:Uri): Bitmap {
         println("bitmapTakip: uri: "+ uri)
-        sleep(100)
         var bitmap = ThumbnailUtils.createVideoThumbnail(uri.path, MediaStore.Images.Thumbnails.MINI_KIND)
         if (bitmap == null) {
             var file:File = File(uri.path)
@@ -382,11 +397,7 @@ class cameraUploadViewModel(val _this: AppCompatActivity, val listener:odiInterf
         val rate:Double = bitmap.width.toDouble() / bitmap.height.toDouble()
         val width:Double = 320.0
         val height = width / rate
-
-        print("resim: width : ${bitmap.width} - ${bitmap.height} - rate: $rate")
-
         val resizeBitmapFile = resizeBitmap(bitmap,width.toInt(),height.toInt())
-
         val out = ByteArrayOutputStream()
         resizeBitmapFile.compress(Bitmap.CompressFormat.JPEG, 70, out)
 

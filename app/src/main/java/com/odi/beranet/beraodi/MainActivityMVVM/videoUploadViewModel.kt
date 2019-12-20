@@ -8,17 +8,16 @@ import android.database.Cursor
 import android.graphics.Bitmap
 import android.media.ThumbnailUtils
 import android.net.Uri
-import android.os.Environment
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
+import android.os.*
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
+import com.arthenica.mobileffmpeg.*
 import com.odi.beranet.beraodi.Activities.FilePath
+import com.odi.beranet.beraodi.Activities.FolderManager
 import com.odi.beranet.beraodi.R
 import com.odi.beranet.beraodi.models.async_upload_video
 import com.odi.beranet.beraodi.models.async_upload_video_complete
@@ -66,11 +65,31 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
         val thumb = getThumbnail(uri)
 
-        val thumbFile = bitmapToFile(thumb)
+
+        val rate:Double = thumb.width.toDouble() / thumb.height.toDouble()
+        val width:Double = 320.0
+        val height = width / rate
+        val resizeBitmapFile = resizeBitmap(thumb,width.toInt(),height.toInt())
+        val out = ByteArrayOutputStream()
+        resizeBitmapFile.compress(Bitmap.CompressFormat.JPEG, 70, out)
+
+
+
+        val thumbFile = bitmapToFile(resizeBitmapFile)
 
         uploadFile(thumbFile, pageType!!, UPLOAD_FILE_TYPE.bitmap)
 
         return null
+    }
+
+    // Method to resize a bitmap programmatically
+    private fun resizeBitmap(bitmap:Bitmap, width:Int, height:Int):Bitmap{
+        return Bitmap.createScaledBitmap(
+            bitmap,
+            width,
+            height,
+            true
+        )
     }
 
     override fun uploadVideoAsyncTaskComplete(resultData: async_upload_video_complete?) {
@@ -89,8 +108,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
                     if (value!!._id == "error") {
                         listener?.onUploadExitPreloader()
-
-                        // yükleme hatası oluştu alert açtır.
 
                         val builder = AlertDialog.Builder(_this)
                         builder.setTitle(R.string.UploadError)
@@ -152,14 +169,94 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
 
     }
 
+
     // işlem bittiğinde en son bu dosya silinecek
     /**
      * samsung hata uri dosyası boş geliyor...
      * yeniden test edilmesi gerekiyor...
      */
-    var fileDeletedEnd_holder:File? = null
+
+    var sendFileStatus:Boolean = false
+    var videoCheckCount:Int = 0
+    var sendStart:Boolean = false
     fun videoUploadStart(context: Context, uri:Uri, type:nativePage) {
 
+        //var myVideoFile = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"sil_ffmpegfile_odi_22.mp4")
+        var myVideoFile_string = FolderManager.tempFolder()!!.absolutePath + File.separator + getRandomString(8) + "_odi.mp4"//"odi_tempVideo_tikitiki.mp4"
+
+        var myVideoFile = File(myVideoFile_string)
+
+        val myFile = getUriToFile(uri)
+        Thread(Runnable {
+
+            val rc = FFmpeg.getLastReturnCode()
+            if (rc == FFmpeg.RETURN_CODE_SUCCESS) {
+                println("$TAG : bubo4 işlem takibi")
+            } else if (rc == FFmpeg.RETURN_CODE_CANCEL) {
+                println("$TAG bubo4: Kullanıcı işlemi durdurdu.")
+            } else {
+                println("$TAG bubo4: komut başarısız oldu")
+            }
+
+            var duration:Long = 0L
+            val info = FFmpeg.getMediaInformation(myFile!!.absolutePath)
+            duration = info!!.duration
+
+
+            Config.enableLogCallback(object : LogCallback {
+                override fun apply(message: LogMessage?) {
+                    println("$TAG hata mesage1 : ${message!!.text}")
+                    println("$TAG hata mesage2 : ${message!!.level.value}")
+                    if (message!!.level == Level.AV_LOG_QUIET) {
+                        println("$TAG AV_LOG_QUIET: --")
+                        videoCheckCount += 1
+                        if (!sendFileStatus && sendStart && videoCheckCount == 4) {
+                            println("$TAG bubo4 : video göndiriliyor -8")
+                            sendFileStatus = true
+                            sendStart = false
+                            videoCheckCount = 0
+                            listener?.onCompressVideoStatus(uploadId,null,true)
+                            uploadFile(myVideoFile,type,UPLOAD_FILE_TYPE.video)
+                        }
+                    }else if (message!!.level == Level.AV_LOG_ERROR) {
+                        println("$TAG AV_LOG_ERROR: --")
+                    }
+                }
+
+
+            })
+
+            Config.enableStatisticsCallback(object: StatisticsCallback {
+                override fun apply(statistics: Statistics?) {
+                    statistics.let {
+                        val checekTime:Int = statistics!!.time
+                        val calc = (100*checekTime)/ (duration.toInt())
+                        sendStart = true
+                        println("$TAG bubo4 frame: ${statistics!!.videoFrameNumber} : time: ${statistics.time} totalduration: ${duration} yuzde: $calc")
+                        listener?.onCompressVideoStatus(uploadId,calc,false)
+
+                        if (checekTime >= duration.toInt()) {
+                            if (!sendFileStatus) {
+                                println("$TAG bubo4 video bitti gönderiliyor normal")
+                                sendFileStatus = true
+                                sendStart = false
+                                videoCheckCount = 0
+                                listener?.onCompressVideoStatus(uploadId,null,true)
+                                uploadFile(myVideoFile,type,UPLOAD_FILE_TYPE.video)
+                            }
+                        }
+                    }
+                }
+
+            } )
+
+            FFmpeg.execute("-i " + myFile!!.absolutePath + " -vcodec libx264 -acodec aac -vf scale=960:540 -b:v 1.5M " + myVideoFile.absolutePath)
+
+        }).start()
+
+
+
+        /*
         val newListener = object: VideoCompress.CompressListener {
             override fun onStart() {
 
@@ -208,9 +305,10 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                 listener?.onCompressVideoStatus(uploadId,percent.toInt(),false)
             }
 
-        }
+        }*/
 
 
+        /*
         uri.let {
             val myFile = getUriToFile(uri!!)
             myFile.let {
@@ -261,7 +359,7 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
                     println("$TAG fileSize: video dosyası bulunamadı")
                 }
             }
-        }
+        }*/
 
 
         //VideoCompress.compressVideoLow(getRealPathFromURI(_this.applicationContext,uri), "$outputDir3.mp4", newListener)
@@ -278,6 +376,13 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         //var newUri = FilePath.getPath(_this,uri)
         //VideoCompress.compressVideoLow(getRealPathFromURI(_this,uri), "$outputDir3.mp4", newListener)
 
+    }
+
+    fun getRandomString(length: Int) : String {
+        val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz"
+        return (1..length)
+            .map { allowedChars.random() }
+            .joinToString("")
     }
 
     private fun getUriToFile(myUri:Uri):File? {
