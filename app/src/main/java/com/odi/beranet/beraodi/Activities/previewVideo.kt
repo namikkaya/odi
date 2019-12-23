@@ -633,8 +633,11 @@ class previewVideo : baseActivity(),
         mHandler = Handler()
         mHandler?.post(Runnable {
             kotlin.run {
-                mediaController?.isEnabled = true
-                mediaController?.show(0)
+                if (mediaController != null) {
+                    mediaController?.isEnabled = true
+                    mediaController?.show(0)
+                }
+
             }
         })
     }

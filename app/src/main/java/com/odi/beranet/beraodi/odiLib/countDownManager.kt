@@ -71,7 +71,9 @@ class countDownManager(val layout:RelativeLayout, val context:Activity) {
     var finalMediaPlayer:MediaPlayer? = null
 
     fun tickPlay() {
-        tickMediaPlayer!!.start()
+        Thread(Runnable {
+            tickMediaPlayer!!.start()
+        }).start()
     }
 
     fun tickPrepare() {
@@ -85,7 +87,9 @@ class countDownManager(val layout:RelativeLayout, val context:Activity) {
     }
 
     fun finalPlay() {
-        finalMediaPlayer?.start()
+        Thread(Runnable {
+            finalMediaPlayer?.start()
+        }).start()
     }
 
     fun finalPrepare() {

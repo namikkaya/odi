@@ -322,7 +322,6 @@ class cameraActivity() : baseActivity(),
                         /*var playlistDataModel = playlistDataModel(RECORD_TYPE.PLAYMODE, playlistArray)
                         var myFragment = pagerAdapter.getCurrentFragment() as previewFragment
                         myFragment.getData(playlistDataModel)*/
-
                     }
                 }
                 RECORD_TYPE.DIALOG -> {
@@ -420,6 +419,7 @@ class cameraActivity() : baseActivity(),
 
     override fun onPreviewFragment_Record_Success(path: Uri?) {
         super.onPreviewFragment_Record_Success(path)
+
         goToPreviewVideo(path)
     }
 

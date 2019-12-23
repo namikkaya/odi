@@ -59,25 +59,30 @@ class dialogManager {
                          type:String?,
                          replikItem:playlistReplik?) {
         if (duration != null && subtitle != null) {
-            val textLength:Int = subtitle.length
-            println("$TAG character duration1: $duration length: $textLength")
-            var characterDuration:Double = ( duration.toDouble() / textLength.toDouble() ) // bir karakter için harcanacak zaman
-            println("$TAG character duration2: $characterDuration long ${characterDuration.toLong()}")
 
-            if (type == "0") { // dış ses
-                if (volumeStatus!!) {
-                    replikItem?.item?.mediaPlayerSetVolume(1f)
-                }else {
-                    replikItem?.item?.mediaPlayerSetVolume(0f)
+            Thread(Runnable {
+                val textLength:Int = subtitle.length
+                println("$TAG character duration1: $duration length: $textLength")
+                var characterDuration:Double = ( duration.toDouble() / textLength.toDouble() ) // bir karakter için harcanacak zaman
+                println("$TAG character duration2: $characterDuration long ${characterDuration.toLong()}")
+
+                if (type == "0") { // dış ses
+                    if (volumeStatus!!) {
+                        replikItem?.item?.mediaPlayerSetVolume(1f)
+                    }else {
+                        replikItem?.item?.mediaPlayerSetVolume(0f)
+                    }
+                    replikItem?.item?.playSound()
+                    holder = replikItem?.item
+                    startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#0083B2"))
+                    listener?.dialogManagerListener_dialogNextButtonVisible(false)
+                }else { // ben
+                    startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#FF8400"))
+                    listener?.dialogManagerListener_dialogNextButtonVisible(true)
                 }
-                replikItem?.item?.playSound()
-                holder = replikItem?.item
-                startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#0083B2"))
-                listener?.dialogManagerListener_dialogNextButtonVisible(false)
-            }else { // ben
-                startAnimation(subtitle, characterDuration.toLong(), Color.parseColor("#FF8400"))
-                listener?.dialogManagerListener_dialogNextButtonVisible(true)
-            }
+            }).start()
+
+
 
 
         }

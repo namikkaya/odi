@@ -9,6 +9,7 @@ import android.graphics.*
 import android.hardware.SensorManager
 import android.hardware.camera2.*
 import android.media.CamcorderProfile
+import android.media.ImageReader
 import android.media.MediaRecorder
 import android.media.ThumbnailUtils
 import android.net.Uri
@@ -40,6 +41,8 @@ import java.lang.IllegalArgumentException
 import java.lang.IllegalStateException
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Semaphore
+import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
 private const val _this = "param1"
@@ -102,13 +105,18 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     private var isRecording:Boolean = false
     private var MAX_PREVIEW_WIDTH:Int = 1280
     private var MAX_PREVIEW_HEIGT:Int = 720
-    private lateinit var  captureSession: CameraCaptureSession
+
+    private val cameraOpenCloseLock = Semaphore(1)
+
+
+
+    private var captureSession: CameraCaptureSession? = null
+
     private lateinit var captureRequestBuilder: CaptureRequest.Builder
 
     private var myCorrectionData:correctionData? = null
     private var videoGalleryStatus:Boolean = false
 
-    val cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_CIF) // QUALITY_720P
 
     var userId:String? = null
     var projectId:String? = null
@@ -118,7 +126,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private var previewSize:Point? = null
 
-    private lateinit var cameraDevice: CameraDevice
+    private var cameraDevice: CameraDevice? = null
 
     private lateinit var mOrientationListener: OrientationEventListener
 
@@ -136,6 +144,14 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     var restart:Boolean = false
 
+    var cpHigh:CamcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_720P) // QUALITY_720P
+    private val FALLBACK_QUALITY_LEVELS = arrayOf(
+        CamcorderProfile.QUALITY_720P,
+        CamcorderProfile.QUALITY_1080P,
+        CamcorderProfile.QUALITY_2160P,
+        CamcorderProfile.QUALITY_HIGH)
+
+
     /**
      * ekran duruşunu simgeler
      * @property LAND_SCAPE : yan duruş
@@ -152,17 +168,26 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         override fun onOpened(camera: CameraDevice) {
             if(camera != null) {
                 cameraDevice = camera
+                cameraOpenCloseLock.release()
                 previewSession()
             }
         }
 
         override fun onDisconnected(camera: CameraDevice) {
+            cameraOpenCloseLock.release()
             camera.close()
-            cameraDevice.close()
+            cameraDevice?.let {
+                cameraDevice!!.close()
+            }
+
         }
 
         override fun onError(camera: CameraDevice, error: Int) {
             this@previewFragment.activity!!.finish()
+        }
+
+        override fun onClosed(camera: CameraDevice) {
+            super.onClosed(camera)
         }
     }
 
@@ -180,66 +205,80 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
 
     private fun previewSession() {
-        setupMediaRecorder()
-
-
-        runBlocking {
-            captureSessionRelease()
+        if (mediaRecorder == null) {
+            setupMediaRecorder()
         }
 
-        try {
-            val surfaceTexture = textureView.surfaceTexture
-            surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
-            val surface = Surface(surfaceTexture)
-            val recordSurface = mediaRecorder!!.surface
-            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD) // TEMPLATE_PREVIEW
-            captureRequestBuilder.addTarget(surface)
-            captureRequestBuilder.addTarget(recordSurface)
-            val surfaces = ArrayList<Surface>().apply {
-                add(surface)
-                add(recordSurface)
-            }
 
-            cameraDevice.createCaptureSession(surfaces,
-                object: CameraCaptureSession.StateCallback() {
+        captureSessionRelease()
+
+        if (cameraDevice != null ) {
+            try {
+                val surfaceTexture = textureView.surfaceTexture
+                surfaceTexture.setDefaultBufferSize(MAX_PREVIEW_WIDTH, MAX_PREVIEW_HEIGT)
+                val surface = Surface(surfaceTexture)
+                val recordSurface = mediaRecorder!!.surface
+
+                captureRequestBuilder = cameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_RECORD) // TEMPLATE_PREVIEW TEMPLATE_RECORD
+                captureRequestBuilder.addTarget(surface)
+                captureRequestBuilder.addTarget(recordSurface)
+
+
+
+                val surfaces = ArrayList<Surface>().apply {
+                    add(surface)
+                    add(recordSurface)
+                }
+
+                cameraDevice!!.createCaptureSession(surfaces, object: CameraCaptureSession.StateCallback() {
+
                     override fun onConfigureFailed(session: CameraCaptureSession) {
                         Log.e(TAG, "creating capture session failed!")
                     }
 
                     override fun onConfigured(session: CameraCaptureSession) {
+                        println("session status: ${session}")
+
                         if (session != null) {
                             captureSession = session
-
-                            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
-                                captureSession.stopRepeating()
-                                captureSession.abortCaptures()
-                            }
-                            println("$TAG captureSession => onConfigured")
-
-
                             Thread.sleep(500)
 
-                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+                            /*captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);*/
                             try{
-                                captureSession.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
+                                captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+                                captureSession.let { cpS->
+                                    cpS!!.setRepeatingRequest(captureRequestBuilder!!.build(), null, null)
+                                }
                             }catch (e:IllegalStateException){
                                 Log.e(TAG, e.toString()+ " - previewSession captureSession")
                             }
                         }
                     }
                 }, backgroundHandler)
-        }catch (e:IllegalStateException){
-            Log.e(TAG, e.toString() + " - previewSession 2")
-        }catch (e:NullPointerException){
-            Log.e(TAG, e.toString() + " - previewSession 3")
+            }catch (e:IllegalStateException){
+                Log.e(TAG, e.toString() + " - previewSession 2")
+            }catch (e:NullPointerException){
+                Log.e(TAG, e.toString() + " - previewSession 3")
+            }
         }
+
+
+
 
     }
 
-    suspend fun captureSessionRelease() {
+    fun captureSessionRelease() {
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
-            captureSession.stopRepeating()
-            captureSession.abortCaptures()
+            Thread(Runnable {
+                Thread.sleep(100)
+                captureSession!!.let { cps ->
+                    cps.stopRepeating()
+                    cps.abortCaptures()
+                }
+            }).start()
+
         }
     }
 
@@ -292,7 +331,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun createVideoFile():File {
-        var folder = Environment.getExternalStorageDirectory()
+        //var folder = Environment.getExternalStorageDirectory()
 
         var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"videoOfOdiRecord")
         if(!videoFolder.exists())
@@ -312,7 +351,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"odiVideo/")
         if(videoFolder.exists()) {
             val files = videoFolder.listFiles()
-
             for (i in 0 until files.size){
                 if (files[i].name.endsWith(".mp4")){
                     files[i].delete()
@@ -330,6 +368,8 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             }
         }
     }
+
+
 
     private fun setupMediaRecorder() {
 
@@ -355,6 +395,15 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             }
         }
 
+        var levelCount = 0
+        for (level in FALLBACK_QUALITY_LEVELS) {
+            if (CamcorderProfile.hasProfile(level)) {
+                cpHigh = CamcorderProfile.get(level)
+                println("$TAG camcorderprofile : ${level}")
+                break
+            }
+        }
+
         mediaRecorder?.apply {
             try {
 
@@ -368,8 +417,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
                 setOutputFile(createVideoFile())
-                setVideoEncodingBitRate(cpHigh.videoBitRate)
+                //setVideoEncodingBitRate(cpHigh.videoBitRate)
+
+                setVideoEncodingBitRate(1000000)
                 setVideoFrameRate(cpHigh.videoFrameRate)
+
+                println("video frame rate: ${cpHigh.videoFrameRate}")
 
                 DISPLAY_HEIGHT?.let { DISPLAY_WIDTH?.let { it1 -> setVideoSize(it1, it) } }
 
@@ -416,10 +469,13 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         reset() // nesne tekrar kullanılabilir
                         //release() // nesne tekrar kullanılamaz. sonlandırır.
                         //prepare()
+
+                        mediaRecorder = null
+
+                        println("stop media recorder")
                     }catch (e:IllegalStateException){
                         Log.e(TAG, e.toString() + " stopMediaRecorder 11")
                     }
-                    reset()
                 }
             }catch(stopException:RuntimeException){
                 Log.e(TAG, stopException.toString() + " stopMediaRecorder 12")
@@ -433,8 +489,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             CameraCharacteristics.LENS_FACING -> characteristics.get(key)
             CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP -> characteristics.get(key)
             CameraCharacteristics.SENSOR_ORIENTATION -> characteristics.get(key)
+            // ekeleme not 23 aralik 2019
+            CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES -> characteristics.get(key)
             else-> throw IllegalArgumentException("key not recognized")
         }
+
+
     }
 
     private fun cameraId(lens:Int):String {
@@ -445,18 +505,24 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             deviceId = cameraIdList.filter { lens == cameraCharacteristics(it,CameraCharacteristics.LENS_FACING) }
         }catch (e:CameraAccessException){
             Log.e(TAG, e.toString() + " cameraId")
+            println("$TAG hata mesajı ${e.toString()} + cameraId()")
         }
         return deviceId[0]
     }
+
 
     private fun connectCamera() {
 
         uiCameraDesing(UIDESIGN.NORMAL)
         transformImage(textureView.width, textureView.height)
 
-        val deviceId = cameraId(cameraPositionHolder.value) // Front
-        println("$TAG connectCamera: $deviceId")
+        val deviceId = cameraId(cameraPositionHolder.value)
+
         try {
+            if (!cameraOpenCloseLock.tryAcquire(2500, TimeUnit.MILLISECONDS)) {
+                throw RuntimeException("Time out waiting to lock camera opening.")
+            }
+
             cameraManager.openCamera(deviceId, deviceStateCallback, backgroundHandler)
         }catch (e:CameraAccessException) {
             Log.e(TAG, e.toString() + " - connectCamera")
@@ -485,6 +551,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             println("$TAG onCreate init")
         }
     }
+
+
+
 
     private fun transformImage(width:Int, height:Int) {
 
@@ -558,6 +627,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
         updateTextureViewsize(_width, _height)
     }
+
 
     private fun updateTextureViewsize(width:Int, height:Int){
         textureView.setLayoutParams(FrameLayout.LayoutParams(width, height));
@@ -698,7 +768,12 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
     private fun startRecordSession() {
         // focus ekleme
-        captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+        try {
+            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
+        }catch (e:CameraAccessException) {
+            println("$TAG CameraAccessException")
+        }
+
         recordSession()
     }
 
@@ -787,12 +862,29 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
     }
 
     private fun closeCamera() {
-        if (this::captureSession.isInitialized) {
-            captureSession.close()
-        }
 
-        if (this::cameraDevice.isInitialized) {
-            cameraDevice.close()
+
+
+
+        try {
+            cameraOpenCloseLock.acquire()
+
+
+            if (cameraDevice != null) {
+                cameraDevice!!.close()
+            }
+
+            captureSession?.let {
+                captureSession!!.close()
+
+                captureSessionRelease()
+                captureSession = null
+            }
+
+        } catch (e: InterruptedException) {
+            throw RuntimeException("Interrupted while trying to lock camera closing.", e)
+        } finally {
+            cameraOpenCloseLock.release()
         }
     }
 
@@ -819,7 +911,20 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             openCamera()
         }
 
-        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?) = true
+        override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
+            //TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+            println("$TAG onSurfaceTextureDestroyed: error: surface => ${surface}")
+
+            if(cameraDevice != null){
+                closeCamera()
+
+                cameraDevice = null
+            }
+            return false;
+
+            //return true
+        }
 
         override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture?, width: Int, height: Int) {
             //println("$TAG textureSurface width: $width height: $height")
@@ -890,6 +995,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
             if (myMediaManager != null) {
                 myMediaManager!!.stopAnimation()
+
             }
             Log.d(TAG, "stopRecording")
             // işlem buraya
@@ -910,12 +1016,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
 
             //val myUri = Uri.fromFile(File(currentVideoFilePath))
             listener?.onPreviewFragment_Record_Success(sendUri)
-
-
-            if (mediaRecorder != null) {
-                mediaRecorder!!.reset()
-                mediaRecorder!!.release()
-            }
 
             /*val myUri = Uri.fromFile(File(currentVideoFilePath))
             listener?.onPreviewFragment_Record_Success(myUri)*/
@@ -1073,6 +1173,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 if (videoGalleryStatus) {
                     cameraGalleryButton.visibility = View.VISIBLE
                 }
+                subtitleText.text = ""
             }
             UIDESIGN.RECORDING -> {
                 uiDesingHolder = UIDESIGN.RECORDING
@@ -1140,6 +1241,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         uiCameraDesing(UIDESIGN.ENDING)
         val myUri = Uri.fromFile(File(currentVideoFilePath))
         listener?.onPreviewFragment_Record_Success(myUri)
+        subtitleText.text = ""
     }
 
     // -- Monolog bitti
@@ -1154,6 +1256,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         if (myScrollPositionManager != null) {
             myScrollPositionManager?.positionManage(subtitleText,charIndex)
         }
+        subtitleText.text = ""
     }
 
     override fun odiMediaManagerListener_dialogTextComplete() {
@@ -1171,6 +1274,7 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         //val myUri = Uri.fromFile(File(currentVideoFilePath)) // standart çalışan uygulama
         val myUri = Uri.fromFile(File(newVideoPath))
         listener?.onPreviewFragment_Record_Success(myUri)
+        subtitleText.text = ""
     }
 
     override fun odiMediaManagerListener_nextButtonVisible(status: Boolean?) {
@@ -1270,5 +1374,36 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         listener?.onPreviewFragment_GalleryActivityStart()
     }
 
+
+    private lateinit var previewSizeNew: Size
+
+    private fun configureTransform(viewWidth: Int, viewHeight: Int) {
+        val fragmentActivity = activity ?: return
+        val rotation = activity!!.windowManager.defaultDisplay.rotation
+        val matrix = Matrix()
+        val viewRect = RectF(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat())
+        val bufferRect = RectF(0f, 0f, previewSizeNew.height.toFloat(), previewSizeNew.width.toFloat())
+        val centerX = viewRect.centerX()
+        val centerY = viewRect.centerY()
+
+        if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation) {
+            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY())
+            val scale = Math.max(
+                viewHeight.toFloat() / previewSizeNew.height,
+                viewWidth.toFloat() / previewSizeNew.width)
+            with(matrix) {
+                setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL)
+                postScale(scale, scale, centerX, centerY)
+                postRotate((90 * (rotation - 2)).toFloat(), centerX, centerY)
+            }
+        } else if (Surface.ROTATION_180 == rotation) {
+            matrix.postRotate(180f, centerX, centerY)
+        }
+        textureView.setTransform(matrix)
+    }
+
+
+
 }
+
 
