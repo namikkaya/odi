@@ -116,24 +116,30 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 msg.let { value ->
                     Thread(Runnable { // versiyon problemi oluyor mu kontrol
                         if (value?.get("minAndroidSDK") != null) {
-                            val target_os = value?.get("minAndroidSDK")!!.toInt()
-                            val android_os = android.os.Build.VERSION.SDK_INT
-                            val targetBuildCode = value?.get("versionCode")!!.toInt()
-                            val versionDec:String = value?.get("appDesc")!!.toString()
-                            if (android_os >= target_os){
-                                println("evrim main: güncelleme yapabilir. --")
-                                if (BuildConfig.VERSION_CODE < targetBuildCode) {
-                                    println("evrim main :Güncelleme yapması gerekiyor...")
-                                    if (versionDec != null) {
-                                        versionControlIntentStart(versionDec)
+                            try {
+                                val target_os = value?.get("minAndroidSDK")!!.toInt()
+                                val android_os = android.os.Build.VERSION.SDK_INT
+                                val targetBuildCode = value?.get("versionCode")!!.toInt()
+                                val versionDec:String = value?.get("appDesc")!!.toString()
+                                if (android_os >= target_os){
+                                    println("evrim main: güncelleme yapabilir. --")
+                                    if (BuildConfig.VERSION_CODE < targetBuildCode) {
+                                        println("evrim main :Güncelleme yapması gerekiyor...")
+                                        if (versionDec != null) {
+                                            versionControlIntentStart(versionDec)
+                                        }
+                                    }else {
+                                        println("evrim main :Uygulama güncel")
                                     }
-                                }else {
-                                    println("evrim main :Uygulama güncel")
-                                }
 
-                            }else {
-                                println("evrim main: android versiyonu uygun değil")
+                                }else {
+                                    println("evrim main: android versiyonu uygun değil")
+                                }
+                            }catch (e:KotlinNullPointerException) {
+                                println("version kontrolunde hata var.")
                             }
+
+
                         }
                     }).start()
                 }
