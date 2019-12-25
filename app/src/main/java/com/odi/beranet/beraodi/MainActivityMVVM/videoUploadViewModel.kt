@@ -412,7 +412,6 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
         file = File(file,"mdroid.jpg")
 
         try{
-            // Compress the bitmap and save in jpg format
             val stream:OutputStream = FileOutputStream(file)
             bitmap.compress(Bitmap.CompressFormat.JPEG,100,stream)
             stream.flush()
@@ -426,13 +425,15 @@ class videoUploadViewModel (val _this: AppCompatActivity, val listener:odiInterf
     }
 
     internal fun check_writeRead_permission(completion: (Boolean?) -> Unit) {
-        if (ContextCompat.checkSelfPermission(_this,
-                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
-            ContextCompat.checkSelfPermission(_this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(_this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(_this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+            ContextCompat.checkSelfPermission(_this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED  ) {
             completion(true)
         } else {
             completion(false)
-            ActivityCompat.requestPermissions(_this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), Permission_Result.UPLOAD_VIDEO_GALLERY.value)
+            ActivityCompat.requestPermissions(_this,
+                arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.CAMERA),
+                Permission_Result.UPLOAD_VIDEO_GALLERY.value)
         }
     }
 

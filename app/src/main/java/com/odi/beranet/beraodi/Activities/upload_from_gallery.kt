@@ -18,6 +18,9 @@ import java.io.*
 import java.util.*
 import android.content.ContentValues
 import android.content.Intent
+import android.media.MediaPlayer
+import android.support.v7.app.AlertDialog
+import java.lang.NullPointerException
 
 
 object FolderManager{
@@ -29,12 +32,27 @@ object FolderManager{
     fun tempFolder():File? {
         val dir = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY_TEMP)
         if (dir.exists()) {
-            print("tempFolder: zaten oluşturulmuş yolu yollanıyor $dir")
+            println("tempFolder: zaten oluşturulmuş yolu yollanıyor $dir")
             return dir
         }else {
-            print("tempFolder: yeni oluşturuldu. $dir")
+            println("tempFolder: yeni oluşturuldu. $dir")
             dir.mkdirs()
             return dir
+        }
+    }
+
+    fun clearTempFolder() {
+        val dir = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY_TEMP)
+        if (dir.exists()) {
+            val files = dir.listFiles()
+            if (files != null) {
+                for (i in 0 until files.size){
+                    if (files[i].name.endsWith(".mp4")){
+                        files[i].delete()
+                        println("clearTempFolder: dosya temizlendi...")
+                    }
+                }
+            }
         }
     }
 }
@@ -109,6 +127,7 @@ class upload_from_gallery : baseActivity(), odiInterface {
         val uriString = intent.getStringExtra("selectedPath") as String
         selectedUri = Uri.parse(uriString)
         processType = intent.getSerializableExtra("processType") as? nativePage
+        println("$TAG onSendButtonEvent onGetIntentData: processType ${processType}")
     }
 
     private fun onUIDesignConfiguration() {
@@ -142,26 +161,87 @@ class upload_from_gallery : baseActivity(), odiInterface {
         videoView?.requestFocus()
         videoView?.start()
 
-        selectedUri.let {
-            val myFile = getUriToFile(selectedUri!!)
-            myFile.let {
-                if (myFile!!.exists()) {
-                    println("$TAG fileSize: video dosyası bulundu")
-                    val file_size = (myFile.length() / (1024 * 1024)).toString().toInt()
-                    if (file_size > 150) {
-                        sendButton.isClickable = false
-                        sendButton.alpha = 0.5F
-                        this@upload_from_gallery.infoDialog("Video Boyutu","Video boyutu 150 MB sınırını aşıyor. Lütfen videonuzu tekrar gözden geçirip deneyin.")
+
+
+        try {
+            selectedUri.let {
+                val myFile = getUriToFile(selectedUri!!)
+                myFile.let {
+                    if (myFile!!.exists()) {
+                        println("$TAG fileSize: video dosyası bulundu")
+                        val file_size = (myFile.length() / (1024 * 1024)).toString().toInt()
+                        if (file_size > 150) {
+                            sendButton.isClickable = false
+                            sendButton.alpha = 0.5F
+                            this@upload_from_gallery.infoDialog("Video Boyutu","Video boyutu 150 MB sınırını aşıyor. Lütfen videonuzu tekrar gözden geçirip deneyin.")
+                            return
+                        }
+                    }else {
+                        println("$TAG fileSize: video dosyası bulunamadı")
                     }
-                }else {
-                    println("$TAG fileSize: video dosyası bulunamadı")
                 }
             }
+        }catch (e:KotlinNullPointerException){
+            this@upload_from_gallery.infoDialogDismiss("Video Hatası","Video hazırlanırken bir problem oluştu lütfen tekrar deneyin.")
         }
+
+
+
+        try {
+            videoView?.setOnPreparedListener(object:MediaPlayer.OnPreparedListener{
+                override fun onPrepared(mp: MediaPlayer?) {
+                    println("videoSize: ${mp?.videoWidth} : ${mp?.videoHeight}")
+
+                    mp?.videoWidth.let {
+                        if (mp!!.videoHeight >= mp!!.videoWidth) {
+                            sendButton.alpha = 0.5F
+                            sendButton.isEnabled = false
+                            this@upload_from_gallery.infoDialog("Video ölçüleri hatalı!","Videolarınızın yatay olarak çekilmiş olması gerekmektedir.","Tamam")
+                            return
+                        }else {
+                            sendButton.alpha = 1F
+                            sendButton.isEnabled = true
+                        }
+                    }
+
+                }
+
+            })
+        }catch (e:KotlinNullPointerException) {
+            this@upload_from_gallery.infoDialogDismiss("Video Hatası","Video hazırlanırken bir problem oluştu lütfen tekrar deneyin.")
+        }
+
+
+
+        /*
+        selectedUri.let{
+            val path = selectedUri!!.path
+
+            var file = File(path)
+            println("video path : ${file.absolutePath}")
+            val strArray = path.split("/").toTypedArray()
+            println("video path strArray: ${strArray[strArray.size-1]}")
+        }*/
+    }
+
+    fun infoDialogDismiss(_title:String = "", _desc:String = "", _okeyButton:String = "Tamam") {
+        val alert = AlertDialog.Builder(this)
+        alert.setTitle(_title)
+        alert.setMessage(_desc)
+        alert.setCancelable(true)
+        alert.setPositiveButton(_okeyButton) { _, _ ->
+            finish();
+        }
+
+        val builder = alert.create()
+        builder.show()
     }
 
     private fun getUriToFile(myUri:Uri):File? {
         val path = FilePath.getPath(this,myUri)
+        if (path == null) {
+            return null
+        }
         val myFile = File(path)
         return myFile
     }
@@ -192,7 +272,16 @@ class upload_from_gallery : baseActivity(), odiInterface {
         videoView?.pause()
         preloader()
 
+        println("$TAG onSendbuttonEvent - ekTest selectedUri: ${selectedUri}")
+
         val myFile = getUriToFile(selectedUri!!)
+        if (myFile == null) {
+            this@upload_from_gallery.infoDialog("Video Okunamadı","Video erişiminde bir problem yaşandı. Lütfen tekrar deneyin. Hata devam ediyor ise videoda bir bozukluk veya format hatası olabilir. Başka bir video ile yeniden deneyin.")
+
+            return
+        }
+
+        println("$TAG onSendbuttonEvent - selectedUri: ${selectedUri} - processType: ${processType} - myfile: ${myFile}")
         videoUploadController?.getImageUrlWithAuthority("videoUpload", this, selectedUri!!, processType!!, myFile)
     }
 

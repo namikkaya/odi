@@ -23,37 +23,29 @@ import java.lang.Exception
 import java.util.*
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.database.Cursor
 import com.odi.beranet.beraodi.MainActivityMVVM.videoUploadViewModel
 import android.os.Bundle
+import android.provider.OpenableColumns
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
-import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.TextView
-import com.crashlytics.android.Crashlytics
 import com.odi.beranet.beraodi.Activities.*
 import com.odi.beranet.beraodi.models.async_versionControlModel
-import com.odi.beranet.beraodi.models.dataBaseItemModel
-import com.odi.beranet.beraodi.models.dataBaseProjectModel
 import com.odi.beranet.beraodi.odiLib.dataBaseLibrary.videoGalleryManager
 import java.net.URL
-import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import android.webkit.WebViewClient as WebViewClient1
 
 
 class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
-
-
     private val TAG: String? = MainActivity::class.qualifiedName
-
-
     companion object {
         private const val IMAGE_DIRECTORY = "/odi"
     }
@@ -63,7 +55,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
     // -- object
     var webView:ClickableWebView? = null
     var myActionBar:ActionBar? = null
-    //var imageView: ImageView? = null
     lateinit var myAnimationLayout:RelativeLayout
 
     // -- class
@@ -102,8 +93,6 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT))*/
 
-
-
         configuration()
 
     }
@@ -125,7 +114,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             override fun handleMessage(message: Message) {
                 val msg: HashMap<String, String>? = message.obj as? HashMap<String, String>
                 msg.let { value ->
-                    Thread(Runnable { // versiyon problemi oluyor mu kontro
+                    Thread(Runnable { // versiyon problemi oluyor mu kontrol
                         if (value?.get("minAndroidSDK") != null) {
                             val target_os = value?.get("minAndroidSDK")!!.toInt()
                             val android_os = android.os.Build.VERSION.SDK_INT
@@ -202,6 +191,8 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 println("$TAG silinecek video yok")
             }
         }
+
+        FolderManager.clearTempFolder()
     }
 
     override fun onPause() {
@@ -362,20 +353,23 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             }
 
             nativePage.uploadTanitim -> {
+                processType = nativePage.uploadTanitim
                 println(TAG + "upload Tanitim")
                 videoUploadController?.check_writeRead_permission { status->
                     if (status == true) {
-                        processType = nativePage.uploadTanitim
+
+                        println("onSendButtonEvent : uploadTanitim : ${processType}")
                         openSelectVideo()
                     }
                 }
             }
 
             nativePage.uploadShowReel -> { // SHOWREEL upload için
+                processType = nativePage.uploadShowReel
                 // izin kontrollleri
                 videoUploadController?.check_writeRead_permission { status->
                     if (status == true) {
-                        processType = nativePage.uploadShowReel
+                        println("onSendButtonEvent : uploadShowReel : ${processType}")
                         openSelectVideo()
                     }
                 }
@@ -385,32 +379,16 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
             nativePage.cameraShowReel -> {
                 println("$TAG cameraDurumu: cameraShowReel buttonId: $buttonId sendId: $sendId")
                 checkCameraControl(buttonId, sendId, nativePage.cameraShowReel, Activity_Result.CAMERA_SHOW_REEL_RESULT)
-                /*
-                val intent = Intent(this, cameraActivity::class.java)
-                intent.putExtra("userId", buttonId)
-                intent.putExtra("projectId", sendId)
-                intent.putExtra("type", nativePage.cameraShowReel)
-                startActivityForResult(intent, Activity_Result.CAMERA_SHOW_REEL_RESULT.value)*/
             }
 
             nativePage.cameraIdentification -> {
                 println("$TAG cameraDurumu: cameraIdentification buttonId: $buttonId sendId: $sendId")
                 checkCameraControl(buttonId, sendId, nativePage.cameraIdentification, Activity_Result.CAMERA_TANITIM_RESULT)
-                /*val intent = Intent(this, cameraActivity::class.java)
-                intent.putExtra("userId", buttonId)
-                intent.putExtra("projectId", sendId)
-                intent.putExtra("type", nativePage.cameraIdentification)
-                startActivityForResult(intent, Activity_Result.CAMERA_TANITIM_RESULT.value)*/
             }
 
             nativePage.cameraOdile -> {
                 println("$TAG cameraDurumu: cameraIdentification buttonId: $buttonId sendId: $sendId")
                 checkCameraControl(buttonId, sendId, nativePage.cameraOdile, Activity_Result.CAMERA_ODILE_RESULT)
-                /*val intent = Intent(this, cameraActivity::class.java)
-                intent.putExtra("userId", sendId)
-                intent.putExtra("projectId", buttonId)
-                intent.putExtra("type", nativePage.cameraOdile)
-                startActivityForResult(intent, Activity_Result.CAMERA_ODILE_RESULT.value)*/
             }
 
         }
@@ -515,6 +493,7 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (Permission_Result.UPLOAD_VIDEO_GALLERY.value == requestCode) {
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED && grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+
                 openSelectVideo()
             }else {
                 setResult(RESULT_OK)
@@ -582,18 +561,33 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
 
         }
 
+        // foto kolaj
         if (Activity_Result.PHOTO_COLLAGE.value == requestCode) {
             webView?.loadUrl("http://odi.odiapp.com.tr/?kulID=" + singleton.onesignal_playerId)
             //webView?.reload()
             println("Takip: PHOTO_COLLAGE reload4")
         }
 
-        if (resultCode == Activity.RESULT_OK &&
-            requestCode == Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value) {
+        if (resultCode == Activity.RESULT_OK && requestCode == Activity_Result.PICK_VIDEO_FOR_UPLOAD_SHOWREEL.value) {
+
+
             val selectedImageUri:Uri = data!!.data
+
+            val name = getFileName(selectedImageUri)
+
+            if (name != null) {
+                val newName = name!!.split(".")[0]
+                val status = getLatinCharacterValid(newName)
+                if (!status) {
+                    characterAlert()
+                    return
+                }
+            }
+
+            println("$TAG video name: ${name}")
             val intent = Intent(this, upload_from_gallery::class.java)
             intent.putExtra("selectedPath", selectedImageUri.toString())
-            println("yükleme: mainActivity $processType")
+            println("onSendButtonEvent yükleme: mainActivity: processType $processType")
             intent.putExtra("processType", processType)
             startActivityForResult(intent, Activity_Result.UPLOAD_VIDEO_PAGE_RESULT.value)
         }
@@ -618,6 +612,42 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                 webView?.reload()
             }
         }
+    }
+
+    val MY_REGEX = "^[A-Za-z0-9_.]+$"
+    fun getLatinCharacterValid(str: String): Boolean {
+        return MY_REGEX.toRegex().matches(str)
+    }
+
+    public fun getFileName(uri:Uri?):String? {
+        if (uri == null) {
+            return null
+        }
+        var result:String? = null
+        if (uri?.scheme == "content") {
+            var cursor = contentResolver.query(uri,null,null,null,null)
+            try {
+                if (cursor != null && cursor.moveToFirst()) {
+                    result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME))
+                }
+            }finally {
+                cursor.close()
+            }
+        }
+        if (result == null) {
+            result = uri.path!!
+            var cut:Int = result.lastIndexOf("/")
+            if (cut != -1) {
+                result = result.substring(cut+1)
+            }
+        }
+        return result
+    }
+
+    fun checkVideoName(name:String):Boolean {
+
+
+        return false
     }
 
     // Method to resize a bitmap programmatically
@@ -797,6 +827,22 @@ class MainActivity : baseActivity(), OnWebViewClicked, odiInterface {
                     setResult(Activity.RESULT_FIRST_USER, intent)
                     webView?.reload()
                     println("Takip: showUploadProfilePhotoAlert reload6")
+                }
+            val alert = builder.create()
+            alert.show()
+        } catch (ex: Exception) {
+            Toast.makeText(applicationContext, ex.message, Toast.LENGTH_LONG).show()
+            return
+        }
+    }
+
+    private fun characterAlert() {
+        try {
+            val builder = android.app.AlertDialog.Builder(this)
+            builder.setMessage("Video isminizde desteklenmeyen karakterler var. Lütfen video isminden türkçe karakterleri, boşlukları ve özel karakterleri kaldırın. Örnek: kaya_ornek_videom.mp4").setTitle("Video İsmi Hatalı")
+                .setCancelable(false)
+                .setPositiveButton("Tamam") { dialog, id ->
+
                 }
             val alert = builder.create()
             alert.show()

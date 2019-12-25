@@ -242,10 +242,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                         if (session != null) {
                             captureSession = session
                             Thread.sleep(500)
-
-                            /*captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
-                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-                            captureRequestBuilder!!.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);*/
                             try{
                                 captureRequestBuilder!!.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_VIDEO)
                                 captureSession.let { cpS->
@@ -263,10 +259,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 Log.e(TAG, e.toString() + " - previewSession 3")
             }
         }
-
-
-
-
     }
 
     fun captureSessionRelease() {
@@ -351,9 +343,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         var videoFolder = File(Environment.getExternalStorageDirectory().absolutePath+File.separator+"odiVideo/")
         if(videoFolder.exists()) {
             val files = videoFolder.listFiles()
-            for (i in 0 until files.size){
-                if (files[i].name.endsWith(".mp4")){
-                    files[i].delete()
+            if (files != null) {
+                for (i in 0 until files.size){
+                    if (files[i].name.endsWith(".mp4")){
+                        files[i].delete()
+                    }
                 }
             }
         }
@@ -368,8 +362,6 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
             }
         }
     }
-
-
 
     private fun setupMediaRecorder() {
 

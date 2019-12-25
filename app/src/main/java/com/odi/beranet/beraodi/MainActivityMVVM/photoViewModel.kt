@@ -61,8 +61,7 @@ class photoViewModel (val _this:MainActivity) {
     }
 
     private fun CHECKGALLERYPERMISSION() {
-        if (ContextCompat.checkSelfPermission(_this,
-                Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
+        if (ContextCompat.checkSelfPermission(_this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED &&
             ContextCompat.checkSelfPermission(_this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED &&
                 ContextCompat.checkSelfPermission(_this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             permissionOkey()
