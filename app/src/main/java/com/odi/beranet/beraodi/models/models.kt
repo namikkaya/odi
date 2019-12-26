@@ -87,14 +87,18 @@ data class playlistItemDataModel(val index:Int?,
      * ses dosyasını çalar
      */
     public fun playSound() {
-        if (mediaPlayer != null || soundFile != "") {
-            try {
-                mediaPlayer?.start()
-            }catch (e:IllegalStateException){
-                println("HATAAAA: -> ${e.toString()} ")
-            }
+        // android 7 için thread eklendi...
+        Thread(Runnable {
+            if (mediaPlayer != null || soundFile != "") {
+                try {
+                    mediaPlayer?.start()
+                }catch (e:IllegalStateException){
+                    println("HATAAAA: -> ${e.toString()} ")
+                }
 
-        }
+            }
+        }).start()
+
     }
 
     public fun mediaPlayerSetVolume(volume:Float) {

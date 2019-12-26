@@ -265,9 +265,9 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
             Thread(Runnable {
                 Thread.sleep(100)
-                captureSession!!.let { cps ->
-                    cps.stopRepeating()
-                    cps.abortCaptures()
+                if (captureSession != null) {
+                    captureSession?.stopRepeating()
+                    captureSession?.abortCaptures()
                 }
             }).start()
 
@@ -408,7 +408,11 @@ class previewFragment : Fragment(), odiMediaManager.odiMediaManagerListener, cou
                 setAudioEncodingBitRate(96000)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioChannels(2)
-                setOutputFile(createVideoFile())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    setOutputFile(createVideoFile())
+                }else {
+                    setOutputFile(createVideoFile().absolutePath)
+                }
                 //setVideoEncodingBitRate(cpHigh.videoBitRate)
 
                 setVideoEncodingBitRate(1000000)

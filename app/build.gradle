@@ -35,10 +35,10 @@ android {
                 onesignal_google_project_number: 'REMOTE'
         ]
 
-        minSdkVersion 26
+        minSdkVersion 24 // 26 orjinal
         targetSdkVersion 28
-        versionCode 29
-        versionName "2.0.8"
+        versionCode 30
+        versionName "2.0.9"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
 
