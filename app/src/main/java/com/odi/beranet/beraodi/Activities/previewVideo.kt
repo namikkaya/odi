@@ -731,10 +731,9 @@ class previewVideo : baseActivity(),
 
             processType = nativePage.cameraShowReel
 
-            println("$TAG uploadID: processId: ${processType}")
         }
 
-        println("$TAG uploadID: projectID: p:${data.projectId} - u:${data.userId} - pt: ${processType}")
+        //println("$TAG uploadID: projectID: p:${data.projectId} - u:${data.userId} - pt: ${processType}")
         videoUploadController?.let {
             //it.uploadStart(projectId!!, userId!!, this, vMyUri!!, processType!!, myFile)
             it.uploadStart(data.projectId!!, data.userId!!, this, vMyUri!!, processType!!, myFile)
