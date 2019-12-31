@@ -707,16 +707,37 @@ class previewVideo : baseActivity(),
 
     private fun OnUploadbuttonEvent() {
         vibratePhone()
-
         preloader()
         mp?.let {
             it.pause()
         }
-
         var myFile = File(vMyUri!!.path)
 
+
+        println("$TAG uploadID: ${projectId}")
+
+        val data = getProjectAndUserData()
+
+        println("$TAG uploadID: userID: ${data.userId} - projetId: ${data.projectId} ")
+
+        // bu idler geldiğinde showreel projesi olarak kaydet...
+        if (data.projectId == "87" ||
+            data.projectId == "663" ||
+            data.projectId == "661" ||
+            data.projectId == "664" ||
+            data.projectId == "665" ||
+            data.projectId == "666" ||
+            data.projectId == "667") {
+
+            processType = nativePage.cameraShowReel
+
+            println("$TAG uploadID: processId: ${processType}")
+        }
+
+        println("$TAG uploadID: projectID: p:${data.projectId} - u:${data.userId} - pt: ${processType}")
         videoUploadController?.let {
-            it.uploadStart(projectId!!,userId!!,this,vMyUri!!,processType!!,myFile)
+            //it.uploadStart(projectId!!, userId!!, this, vMyUri!!, processType!!, myFile)
+            it.uploadStart(data.projectId!!, data.userId!!, this, vMyUri!!, processType!!, myFile)
         }
     }
 
@@ -731,9 +752,6 @@ class previewVideo : baseActivity(),
             sb.append(ALLOWED_CHARACTERS_RANDOM[random.nextInt(ALLOWED_CHARACTERS_RANDOM.length)])
         return sb.toString()
     }
-
-
-
 
     // video telefon galerisine kaydeder...
     private fun saveVideoGallery(filePath: File?) {
@@ -754,16 +772,11 @@ class previewVideo : baseActivity(),
                 f1.mkdirs()
             }
 
-
             var wallpaperDirectory = File(Environment.getExternalStorageDirectory().absolutePath + File.separator + VIDEO_DIRECTORY)
-
             var newfile = File(wallpaperDirectory, Calendar.getInstance().timeInMillis.toString() + ".mp4")
-
-
 
             var inputStream: InputStream = FileInputStream(currentFile)
             var output: OutputStream? = contentResolver.openOutputStream(uri)
-
 
             val dir = newfile
             if (!dir.exists()) {
@@ -783,7 +796,6 @@ class previewVideo : baseActivity(),
             }
 
             inputStream?.close()
-
 
             output?.flush()
             output?.close()
@@ -846,7 +858,6 @@ class previewVideo : baseActivity(),
         if (vMyUri == null) {
             return
         }
-
         var myFile = File(vMyUri!!.path)
         if (myFile.exists()) {
             myFile.delete()
@@ -860,10 +871,8 @@ class previewVideo : baseActivity(),
 
     private fun saveDataBase() {
         val correction = getProjectAndUserData()
-
         val bitmap = createVideoThumb(vMyUri!!.path)
         var randomName:String = getRandomString(16)
-
         val imageFile = createImage(randomName, bitmap)
 
         thumbImage.setImageBitmap(bitmap)
@@ -882,7 +891,6 @@ class previewVideo : baseActivity(),
         var videoPath = vMyUri!!.path
         if (processType == nativePage.cameraShowReel || processType == nativePage.cameraIdentification) {
             val newName = randomName + ".mp4"
-
             val myFileName = File(f1,newName)
 
             println("$TAG saveDataBase dbTakip yeni: ${myFileName.path} -- ")
